@@ -1,0 +1,5 @@
+{"key":"1","value":{"order_status_id":"1","name":"Pending"}}
+{"key":"2","value":{"order_status_id":"2","name":"Confirmed"}}
+{"key":"3","value":{"order_status_id":"3","name":"In Progress"}}
+{"key":"4","value":{"order_status_id":"4","name":"Completed"}}
+{"key":"5","value":{"order_status_id":"5","name":"Cancelled"}}

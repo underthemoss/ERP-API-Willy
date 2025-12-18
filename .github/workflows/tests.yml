@@ -1,0 +1,315 @@
+name: Tests
+
+run-name: 'Tests – ${{ github.ref_name }} (#${{ github.run_number }})'
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main, develop, fix/**, feature/**]
+
+jobs:
+  test:
+    name: Test • Shard ${{ matrix.shard }}/16
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      fail-fast: false # Continue running all shards even if one fails
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] # Run 16 parallel shards
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        id: cache-node-modules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Cache TypeScript build
+        uses: actions/cache@v4
+        id: cache-ts-build
+        with:
+          path: |
+            build
+            src/graphql/schema/generated
+            src/test/e2e/generated
+          key: ${{ runner.os }}-ts-build-${{ hashFiles('src/**/*.ts', 'tsconfig.json') }}
+          restore-keys: |
+            ${{ runner.os }}-ts-build-
+
+      - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Pre-pull ksqlDB image
+        run: docker pull confluentinc/cp-ksqldb-server:8.0.2
+
+      - name: Run codegen
+        run: |
+          npm run generate:schema
+          npm run codegen
+
+      - name: Verify NYC installation
+        run: |
+          echo "Checking NYC installation..."
+          npx nyc --version
+          echo "NYC is available via npx"
+
+      - name: Run tests (shard ${{ matrix.shard }}/16)
+        env:
+          CI_NODE_TOTAL: 16
+          CI_NODE_INDEX: ${{ matrix.shard }}
+        run: node scripts/jest-shard.js
+
+      - name: Check coverage output
+        if: always()
+        run: |
+          echo "Checking for .nyc_output directory..."
+          if [ -d ".nyc_output" ]; then
+            echo "✅ .nyc_output directory exists"
+            echo "Contents:"
+            ls -la .nyc_output/ || true
+            find .nyc_output -type f -name "*.json" | head -5 || true
+          else
+            echo "❌ .nyc_output directory does NOT exist"
+            echo "Current directory: $(pwd)"
+            echo "Directory contents:"
+            ls -la
+          fi
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-shard-${{ matrix.shard }}
+          path: junit.xml
+
+      - name: Upload coverage data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-shard-${{ matrix.shard }}
+          path: .nyc_output
+          include-hidden-files: true
+
+  code-review:
+    name: Code Review
+    needs: [test]
+    runs-on: ubuntu-latest
+    if: always()
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        id: cache-node-modules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Download test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: test-results
+
+      - name: Merge and report coverage
+        run: |
+          echo "Debugging coverage file structure..."
+          
+          # Check the actual structure of downloaded artifacts
+          echo "Contents of test-results directory:"
+          ls -la test-results/
+          
+          echo -e "\nChecking coverage-shard-1 structure:"
+          ls -la test-results/coverage-shard-1/ || echo "coverage-shard-1 not found"
+          
+          echo -e "\nFinding all JSON files:"
+          find test-results -name "*.json" -type f | head -10
+          
+          echo -e "\nMerging coverage from all shards..."
+          
+          # Create temp directory for all coverage files
+          mkdir -p coverage-temp
+          
+          # Copy all coverage JSON files from all shards into one directory
+          # Try both potential locations
+          if find test-results/coverage-shard-*/.nyc_output -name "*.json" -type f 2>/dev/null | head -1 | grep -q .; then
+            echo "Found JSON files in .nyc_output subdirectories"
+            find test-results/coverage-shard-*/.nyc_output -name "*.json" -type f -exec cp {} coverage-temp/ \;
+          elif find test-results/coverage-shard-* -maxdepth 1 -name "*.json" -type f 2>/dev/null | head -1 | grep -q .; then
+            echo "Found JSON files directly in coverage-shard directories"
+            find test-results/coverage-shard-* -maxdepth 1 -name "*.json" -type f -exec cp {} coverage-temp/ \;
+          else
+            echo "WARNING: No JSON files found in coverage directories"
+            echo "Checking for any JSON files recursively:"
+            find test-results/coverage-shard-* -name "*.json" -type f
+          fi
+          
+          # Count files found
+          FILE_COUNT=$(find coverage-temp -name "*.json" -type f | wc -l)
+          echo "Found $FILE_COUNT coverage JSON files"
+          
+          if [ "$FILE_COUNT" -eq 0 ]; then
+            echo "⚠️ No coverage files found to merge. Skipping coverage reports."
+            exit 0
+          fi
+          
+          # Create output directory
+          mkdir -p .nyc_output
+          
+          # Merge from single directory to a coverage file
+          npx nyc merge coverage-temp .nyc_output/coverage.json
+          
+          echo "Generating coverage reports..."
+          
+          # Generate text summary for console/logs
+          npx nyc report --reporter=text --reporter=text-summary
+          
+          # Generate HTML report for artifact
+          npx nyc report --reporter=html --report-dir=coverage-html
+          
+          echo "Coverage reports generated successfully"
+
+      - name: Upload merged coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage-html
+
+      - name: Run Claude Code Review
+        if: github.event_name == 'pull_request'
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          track_progress: true
+          allowed_bots: 'claude[bot]'
+
+          prompt: |
+            REPO: ${{ github.repository }}
+            TEST RESULTS STATUS: ${{ needs.test.result }}
+
+            This is a TypeScript Nexus GraphQL API with MongoDB. You are reviewing a PR after tests have completed.
+
+            # STEP 1: Test Statistics & Performance Analysis (ALWAYS provide this)
+
+            Test results and coverage from 16 parallel shards are located in the test-results directory:
+            - Test results: test-results/test-results-shard-{1-16}/junit.xml
+            - Coverage data: test-results/coverage-shard-{1-16}/*.json (NYC raw coverage files)
+
+            **Coverage Reports Available:**
+            A "Merge and report coverage" step has run before this review, which:
+            - Merged all 16 shards' coverage data into `.nyc_output/`
+            - Generated a text summary (visible in the job logs above this step)
+            - Generated an HTML report in `coverage-html/` (uploaded as artifact)
+            
+            You can view the merged coverage summary by looking at the logs from the "Merge and report coverage" step,
+            or by running `npx nyc report --reporter=text-summary` to regenerate it from the merged data. You should run `npx nyc report --reporter=text-summary`
+
+            **Analyze JUnit XML files and coverage data to provide high-level statistics:**
+
+            1. **Overall Test Statistics**:
+               - Total tests run
+               - Total test suites
+               - Pass/fail rates (even if all passed)
+               - Overall execution time
+
+            2. **Test Suite Performance**:
+               - List all test suites with their metrics:
+                 * Suite name (test file)
+                 * Number of tests in suite
+                 * Execution time
+                 * Status (pass/fail)
+               - Present top 10 slowest test suites in a table
+               - Identify any test suites taking >30 seconds
+
+            3. **Performance Insights**:
+               - Average test execution time
+               - Slowest individual test
+               - Distribution of test execution times
+               - Flag any performance concerns or bottlenecks
+
+            4. **Test Health**:
+               - Identify any flaky patterns (timeouts, intermittent failures)
+               - Flag test suites that need optimization
+               - Recommend splitting large test suites if needed
+
+            5. **If Tests Failed** (only if applicable):
+               - List each failed test with shard number
+               - Extract error messages and root causes
+               - Examine source code for failed tests
+               - Identify patterns (timeouts, flaky tests, etc.)
+               - Suggest specific fixes
+
+            # STEP 2: Code Review
+
+            Review the PR focusing on:
+
+            ## Architecture & Best Practices
+            - **Layer Separation**: GraphQL schema → Services → Models
+            - Services should handle authorization and business logic
+            - Models should only handle database access (no authorization)
+            - Dependencies in service constructors/factories are REQUIRED, never optional
+
+            ## GraphQL Specific
+            - All GraphQL field names MUST use camelCase (e.g., `userId`, `createdAt`)
+
+            ## Code Quality
+            - TypeScript best practices and type safety
+            - Proper error handling and validation
+            - Security concerns (auth, input validation, SQL injection prevention)
+            - Performance implications (N+1 queries, inefficient operations)
+
+            ## Database & Models
+            - All DB access must go through models or migration scripts
+            - Check that created_at, created_by, updated_at, updated_by metadata is captured
+            - Server-side fields should never be updated by client/GraphQL directly
+
+            ## Testing
+            - Tests should ONLY call public GraphQL API (no direct DB/service calls)
+            - Correlate any test failures with code changes
+
+            # Output Format
+
+            Provide a comprehensive review combining test analysis (if tests failed) and code review.
+            Be constructive and specific in your feedback, referencing the project's .clinerules/CODEDOCS.md when relevant.
+
+            Note: The PR branch is already checked out in the current working directory.
+
+            Use `gh pr comment` to post your review as a top-level PR comment. Reuse old comments to make them sticky.
+            Do NOT use inline code comments - only post a single comprehensive review comment.
+            Only post GitHub comments - don't submit review text as messages.
+          claude_args: |
+            --model claude-sonnet-4-5-20250929
+            --allowedTools "Bash(cat:*),Bash(grep:*),Bash(find:*),Bash(ls:*),Bash(head:*),Bash(tail:*),Bash(mkdir:*),Bash(cp:*),Bash(npm:*),Bash(npx:*),Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh pr diff:*),Read"

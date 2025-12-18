@@ -1,0 +1,1556 @@
+{
+  "definitions": [
+    {
+      "name": "erp/charge",
+      "comment": "",
+      "relations": [
+        {
+          "name": "workspace",
+          "comment": "",
+          "parentDefinitionName": "erp/charge",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/workspace",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "read",
+          "comment": "",
+          "parentDefinitionName": "erp/charge"
+        },
+        {
+          "name": "update",
+          "comment": "",
+          "parentDefinitionName": "erp/charge"
+        },
+        {
+          "name": "delete",
+          "comment": "",
+          "parentDefinitionName": "erp/charge"
+        }
+      ]
+    },
+    {
+      "name": "erp/contact",
+      "comment": "",
+      "relations": [
+        {
+          "name": "workspace",
+          "comment": "",
+          "parentDefinitionName": "erp/contact",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/workspace",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "read",
+          "comment": "",
+          "parentDefinitionName": "erp/contact"
+        },
+        {
+          "name": "update",
+          "comment": "",
+          "parentDefinitionName": "erp/contact"
+        },
+        {
+          "name": "delete",
+          "comment": "",
+          "parentDefinitionName": "erp/contact"
+        }
+      ]
+    },
+    {
+      "name": "erp/domain",
+      "comment": "",
+      "relations": [
+        {
+          "name": "member",
+          "comment": "",
+          "parentDefinitionName": "erp/domain",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "is_member",
+          "comment": "",
+          "parentDefinitionName": "erp/domain"
+        }
+      ]
+    },
+    {
+      "name": "erp/file",
+      "comment": "",
+      "relations": [
+        {
+          "name": "workspace",
+          "comment": "",
+          "parentDefinitionName": "erp/file",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/workspace",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "sales_order",
+          "comment": "",
+          "parentDefinitionName": "erp/file",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/sales_order",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "purchase_order",
+          "comment": "",
+          "parentDefinitionName": "erp/file",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/purchase_order",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "invoice",
+          "comment": "",
+          "parentDefinitionName": "erp/file",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/invoice",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "pricebook",
+          "comment": "",
+          "parentDefinitionName": "erp/file",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/pricebook",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "project",
+          "comment": "",
+          "parentDefinitionName": "erp/file",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/project",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "read",
+          "comment": "",
+          "parentDefinitionName": "erp/file"
+        },
+        {
+          "name": "update",
+          "comment": "",
+          "parentDefinitionName": "erp/file"
+        },
+        {
+          "name": "delete",
+          "comment": "",
+          "parentDefinitionName": "erp/file"
+        }
+      ]
+    },
+    {
+      "name": "erp/fulfilment",
+      "comment": "",
+      "relations": [
+        {
+          "name": "workspace",
+          "comment": "",
+          "parentDefinitionName": "erp/fulfilment",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/workspace",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "sales_order",
+          "comment": "",
+          "parentDefinitionName": "erp/fulfilment",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/sales_order",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "read",
+          "comment": "// TODO: Consider adding more specific roles like fulfilment_agent or rental_coordinator\n// instead of relying solely on can_manage_sales_orders permission",
+          "parentDefinitionName": "erp/fulfilment"
+        },
+        {
+          "name": "update",
+          "comment": "",
+          "parentDefinitionName": "erp/fulfilment"
+        },
+        {
+          "name": "manage_rental_period",
+          "comment": "",
+          "parentDefinitionName": "erp/fulfilment"
+        },
+        {
+          "name": "delete",
+          "comment": "",
+          "parentDefinitionName": "erp/fulfilment"
+        }
+      ]
+    },
+    {
+      "name": "erp/intake_form",
+      "comment": "",
+      "relations": [
+        {
+          "name": "workspace",
+          "comment": "",
+          "parentDefinitionName": "erp/intake_form",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/workspace",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "invited_to_submit",
+          "comment": "",
+          "parentDefinitionName": "erp/intake_form",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            },
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isPublicWildcard",
+                "isPublicWildcard": true
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "read",
+          "comment": "",
+          "parentDefinitionName": "erp/intake_form"
+        },
+        {
+          "name": "update",
+          "comment": "",
+          "parentDefinitionName": "erp/intake_form"
+        },
+        {
+          "name": "create_submission",
+          "comment": "// submissions made to this form",
+          "parentDefinitionName": "erp/intake_form"
+        },
+        {
+          "name": "read_submissions",
+          "comment": "",
+          "parentDefinitionName": "erp/intake_form"
+        },
+        {
+          "name": "update_submissions",
+          "comment": "",
+          "parentDefinitionName": "erp/intake_form"
+        }
+      ]
+    },
+    {
+      "name": "erp/intake_form_submission",
+      "comment": "",
+      "relations": [
+        {
+          "name": "submitter",
+          "comment": "",
+          "parentDefinitionName": "erp/intake_form_submission",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "intake_form",
+          "comment": "",
+          "parentDefinitionName": "erp/intake_form_submission",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/intake_form",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "buyers_workspace",
+          "comment": "",
+          "parentDefinitionName": "erp/intake_form_submission",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/workspace",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "read",
+          "comment": "",
+          "parentDefinitionName": "erp/intake_form_submission"
+        },
+        {
+          "name": "update",
+          "comment": "",
+          "parentDefinitionName": "erp/intake_form_submission"
+        }
+      ]
+    },
+    {
+      "name": "erp/invoice",
+      "comment": "",
+      "relations": [
+        {
+          "name": "workspace",
+          "comment": "",
+          "parentDefinitionName": "erp/invoice",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/workspace",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "read",
+          "comment": "",
+          "parentDefinitionName": "erp/invoice"
+        },
+        {
+          "name": "update",
+          "comment": "",
+          "parentDefinitionName": "erp/invoice"
+        }
+      ]
+    },
+    {
+      "name": "erp/platform",
+      "comment": "",
+      "relations": [
+        {
+          "name": "user_admin",
+          "comment": "",
+          "parentDefinitionName": "erp/platform",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "service_account_admin",
+          "comment": "",
+          "parentDefinitionName": "erp/platform",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/service_account",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "is_admin",
+          "comment": "",
+          "parentDefinitionName": "erp/platform"
+        }
+      ]
+    },
+    {
+      "name": "erp/pricebook",
+      "comment": "",
+      "relations": [
+        {
+          "name": "workspace",
+          "comment": "",
+          "parentDefinitionName": "erp/pricebook",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/workspace",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "intake_form",
+          "comment": "",
+          "parentDefinitionName": "erp/pricebook",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/intake_form",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "read",
+          "comment": "",
+          "parentDefinitionName": "erp/pricebook"
+        },
+        {
+          "name": "update",
+          "comment": "",
+          "parentDefinitionName": "erp/pricebook"
+        }
+      ]
+    },
+    {
+      "name": "erp/pricebook_price",
+      "comment": "",
+      "relations": [
+        {
+          "name": "workspace",
+          "comment": "",
+          "parentDefinitionName": "erp/pricebook_price",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/workspace",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "pricebook",
+          "comment": "",
+          "parentDefinitionName": "erp/pricebook_price",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/pricebook",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "quote",
+          "comment": "",
+          "parentDefinitionName": "erp/pricebook_price",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/quote",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "read",
+          "comment": "",
+          "parentDefinitionName": "erp/pricebook_price"
+        },
+        {
+          "name": "update",
+          "comment": "",
+          "parentDefinitionName": "erp/pricebook_price"
+        }
+      ]
+    },
+    {
+      "name": "erp/project",
+      "comment": "",
+      "relations": [
+        {
+          "name": "workspace",
+          "comment": "",
+          "parentDefinitionName": "erp/project",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/workspace",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "read",
+          "comment": "",
+          "parentDefinitionName": "erp/project"
+        },
+        {
+          "name": "update",
+          "comment": "",
+          "parentDefinitionName": "erp/project"
+        }
+      ]
+    },
+    {
+      "name": "erp/purchase_order",
+      "comment": "",
+      "relations": [
+        {
+          "name": "workspace",
+          "comment": "",
+          "parentDefinitionName": "erp/purchase_order",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/workspace",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "quote",
+          "comment": "",
+          "parentDefinitionName": "erp/purchase_order",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/quote",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "read",
+          "comment": "",
+          "parentDefinitionName": "erp/purchase_order"
+        },
+        {
+          "name": "update",
+          "comment": "",
+          "parentDefinitionName": "erp/purchase_order"
+        }
+      ]
+    },
+    {
+      "name": "erp/quote",
+      "comment": "",
+      "relations": [
+        {
+          "name": "sellers_workspace",
+          "comment": "",
+          "parentDefinitionName": "erp/quote",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/workspace",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "buyers_workspace",
+          "comment": "",
+          "parentDefinitionName": "erp/quote",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/workspace",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "buyer",
+          "comment": "",
+          "parentDefinitionName": "erp/quote",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "read",
+          "comment": "",
+          "parentDefinitionName": "erp/quote"
+        },
+        {
+          "name": "update",
+          "comment": "",
+          "parentDefinitionName": "erp/quote"
+        },
+        {
+          "name": "accept",
+          "comment": "",
+          "parentDefinitionName": "erp/quote"
+        },
+        {
+          "name": "reject",
+          "comment": "",
+          "parentDefinitionName": "erp/quote"
+        }
+      ]
+    },
+    {
+      "name": "erp/rfq",
+      "comment": "",
+      "relations": [
+        {
+          "name": "buyers_workspace",
+          "comment": "",
+          "parentDefinitionName": "erp/rfq",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/workspace",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "invited_seller",
+          "comment": "",
+          "parentDefinitionName": "erp/rfq",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "read",
+          "comment": "",
+          "parentDefinitionName": "erp/rfq"
+        },
+        {
+          "name": "update",
+          "comment": "",
+          "parentDefinitionName": "erp/rfq"
+        }
+      ]
+    },
+    {
+      "name": "erp/sales_order",
+      "comment": "",
+      "relations": [
+        {
+          "name": "workspace",
+          "comment": "",
+          "parentDefinitionName": "erp/sales_order",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/workspace",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "intake_form_submission",
+          "comment": "",
+          "parentDefinitionName": "erp/sales_order",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/intake_form_submission",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "quote",
+          "comment": "",
+          "parentDefinitionName": "erp/sales_order",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/quote",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "read",
+          "comment": "",
+          "parentDefinitionName": "erp/sales_order"
+        },
+        {
+          "name": "update",
+          "comment": "",
+          "parentDefinitionName": "erp/sales_order"
+        },
+        {
+          "name": "portal_access",
+          "comment": "",
+          "parentDefinitionName": "erp/sales_order"
+        }
+      ]
+    },
+    {
+      "name": "erp/service_account",
+      "comment": "",
+      "relations": [],
+      "permissions": []
+    },
+    {
+      "name": "erp/user",
+      "comment": "",
+      "relations": [],
+      "permissions": []
+    },
+    {
+      "name": "erp/workspace",
+      "comment": "",
+      "relations": [
+        {
+          "name": "platform",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/platform",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "domain",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/domain",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "admin",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "member",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "all_resources_reader",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "quotes_reader",
+          "comment": "// quotes permissions",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "quotes_manager",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "rfqs_reader",
+          "comment": "// rfqs permissions",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "rfqs_manager",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "sales_order_reader",
+          "comment": "// sales order permissions",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "sales_order_manager",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "purchase_order_reader",
+          "comment": "// purchase order permissions",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "purchase_order_manager",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "price_books_manager",
+          "comment": "// price book relations & permissions",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "price_books_reader",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "intake_forms_manager",
+          "comment": "// intake forms permissions",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "intake_forms_reader",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "intake_form_submissions_manager",
+          "comment": "// intake form submission permissions",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "intake_form_submissions_reader",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "buyer_intake_form_submissions_manager",
+          "comment": "// buyer intake form submission permissions",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "buyer_intake_form_submissions_reader",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "invoice_reader",
+          "comment": "// invoice permissions",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "invoice_manager",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "project_reader",
+          "comment": "// project permissions",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "project_manager",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "contact_reader",
+          "comment": "// contact permissions",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "contact_manager",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "charge_reader",
+          "comment": "// charge permissions",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "charge_manager",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "file_reader",
+          "comment": "// file permissions",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "file_manager",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "erp/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "is_admin",
+          "comment": "// workspace-level permissions",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_join",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "read",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "manage",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "add_user",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "remove_user",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "update_user_roles",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_manage_reference_number_templates",
+          "comment": "// reference number permissions",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_read_reference_number_templates",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_manage_quotes",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_read_quotes",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_manage_rfqs",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_read_rfqs",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_manage_sales_orders",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_read_sales_orders",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_manage_purchase_orders",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_read_purchase_orders",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_manage_price_books",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_manage_prices",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "create_price_book",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "read_price_books",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "read_prices",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_manage_intake_forms",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "create_intake_form",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "read_intake_forms",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_manage_intake_form_submissions",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "create_intake_form_submission",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "read_intake_form_submissions",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_manage_buyer_intake_form_submissions",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_read_buyer_intake_form_submissions",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_manage_invoices",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_read_invoices",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_manage_projects",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_read_projects",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_manage_contacts",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_read_contacts",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_manage_charges",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_read_charges",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_manage_files",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        },
+        {
+          "name": "can_read_files",
+          "comment": "",
+          "parentDefinitionName": "erp/workspace"
+        }
+      ]
+    }
+  ],
+  "caveats": []
+}

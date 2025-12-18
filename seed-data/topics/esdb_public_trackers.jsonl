@@ -1,0 +1,12 @@
+{"key":"6000","value":{"tracker_id":"6000","device_serial":"TRK-CAT320-001","company_id":"1854","vendor_id":"100","created":"2023-01-15T10:00:00Z","updated":"2024-01-10T14:30:00Z","tracker_type_id":"1"}}
+{"key":"6001","value":{"tracker_id":"6001","device_serial":"TRK-CAT336-001","company_id":"1854","vendor_id":"100","created":"2023-02-20T09:00:00Z","updated":"2024-01-10T14:30:00Z","tracker_type_id":"1"}}
+{"key":"6002","value":{"tracker_id":"6002","device_serial":"TRK-KOM210-001","company_id":"1854","vendor_id":"100","created":"2023-03-10T11:00:00Z","updated":"2024-01-10T14:30:00Z","tracker_type_id":"1"}}
+{"key":"6003","value":{"tracker_id":"6003","device_serial":"TRK-BOB650-001","company_id":"1854","vendor_id":"100","created":"2023-04-05T08:30:00Z","updated":"2024-01-10T14:30:00Z","tracker_type_id":"1"}}
+{"key":"6004","value":{"tracker_id":"6004","device_serial":"TRK-BOB770-001","company_id":"1854","vendor_id":"100","created":"2023-04-12T09:15:00Z","updated":"2024-01-10T14:30:00Z","tracker_type_id":"1"}}
+{"key":"6005","value":{"tracker_id":"6005","device_serial":"TRK-F550-001","company_id":"1854","vendor_id":"100","created":"2023-05-01T10:00:00Z","updated":"2024-01-10T14:30:00Z","tracker_type_id":"2"}}
+{"key":"6006","value":{"tracker_id":"6006","device_serial":"TRK-F650-001","company_id":"1854","vendor_id":"100","created":"2023-05-15T11:00:00Z","updated":"2024-01-10T14:30:00Z","tracker_type_id":"2"}}
+{"key":"6007","value":{"tracker_id":"6007","device_serial":"TRK-TOY25-001","company_id":"1854","vendor_id":"100","created":"2023-06-01T09:00:00Z","updated":"2024-01-10T14:30:00Z","tracker_type_id":"1"}}
+{"key":"6008","value":{"tracker_id":"6008","device_serial":"TRK-GEN44-001","company_id":"1854","vendor_id":"100","created":"2023-08-10T10:30:00Z","updated":"2024-01-10T14:30:00Z","tracker_type_id":"1"}}
+{"key":"6009","value":{"tracker_id":"6009","device_serial":"TRK-GEN71-001","company_id":"1854","vendor_id":"100","created":"2023-08-20T11:00:00Z","updated":"2024-01-10T14:30:00Z","tracker_type_id":"1"}}
+{"key":"6010","value":{"tracker_id":"6010","device_serial":"TRK-COMP185-001","company_id":"1854","vendor_id":"100","created":"2023-09-05T09:30:00Z","updated":"2024-01-10T14:30:00Z","tracker_type_id":"1"}}
+{"key":"6011","value":{"tracker_id":"6011","device_serial":"TRK-GEN-Z60-001","company_id":"1854","vendor_id":"100","created":"2023-10-01T10:00:00Z","updated":"2024-01-10T14:30:00Z","tracker_type_id":"1"}}

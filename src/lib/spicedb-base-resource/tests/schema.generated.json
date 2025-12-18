@@ -1,0 +1,181 @@
+{
+  "definitions": [
+    {
+      "name": "test/document",
+      "comment": "",
+      "relations": [
+        {
+          "name": "org",
+          "comment": "",
+          "parentDefinitionName": "test/document",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "test/org",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "owner",
+          "comment": "",
+          "parentDefinitionName": "test/document",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "test/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            },
+            {
+              "subjectDefinitionName": "test/org",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "optionalRelationName",
+                "optionalRelationName": "owner"
+              }
+            }
+          ]
+        },
+        {
+          "name": "reader",
+          "comment": "",
+          "parentDefinitionName": "test/document",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "test/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            },
+            {
+              "subjectDefinitionName": "test/org",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "optionalRelationName",
+                "optionalRelationName": "member"
+              }
+            }
+          ]
+        },
+        {
+          "name": "writer",
+          "comment": "",
+          "parentDefinitionName": "test/document",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "test/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            },
+            {
+              "subjectDefinitionName": "test/org",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "optionalRelationName",
+                "optionalRelationName": "admin"
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "read",
+          "comment": "",
+          "parentDefinitionName": "test/document"
+        },
+        {
+          "name": "write",
+          "comment": "",
+          "parentDefinitionName": "test/document"
+        }
+      ]
+    },
+    {
+      "name": "test/org",
+      "comment": "",
+      "relations": [
+        {
+          "name": "owner",
+          "comment": "",
+          "parentDefinitionName": "test/org",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "test/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "admin",
+          "comment": "",
+          "parentDefinitionName": "test/org",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "test/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "member",
+          "comment": "",
+          "parentDefinitionName": "test/org",
+          "subjectTypes": [
+            {
+              "subjectDefinitionName": "test/user",
+              "optionalCaveatName": "",
+              "typeref": {
+                "oneofKind": "isTerminalSubject",
+                "isTerminalSubject": false
+              }
+            }
+          ]
+        }
+      ],
+      "permissions": [
+        {
+          "name": "read",
+          "comment": "",
+          "parentDefinitionName": "test/org"
+        },
+        {
+          "name": "write",
+          "comment": "",
+          "parentDefinitionName": "test/org"
+        },
+        {
+          "name": "billing_access",
+          "comment": "",
+          "parentDefinitionName": "test/org"
+        }
+      ]
+    },
+    {
+      "name": "test/user",
+      "comment": "",
+      "relations": [],
+      "permissions": []
+    }
+  ],
+  "caveats": []
+}

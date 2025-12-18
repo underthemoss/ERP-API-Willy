@@ -1,0 +1,15 @@
+schema: ./src/graphql/schema/generated/schema.graphql
+documents: ./src/test/e2e/**/*.{ts,tsx,js,jsx}
+generates:
+  ./src/test/e2e/generated/graphql.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typescript-apollo-client-helpers
+      - typescript-graphql-request
+  ./src/plugins/mcp/generated/graphql.ts:
+    documents: ./src/plugins/mcp/tools/*.ts
+    plugins:
+      - typescript
+      - typescript-operations
+      - typescript-graphql-request

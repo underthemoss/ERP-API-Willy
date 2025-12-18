@@ -1,0 +1,75 @@
+name: Check for Breaking GraphQL Schema Changes
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  breaking-schema-check:
+    runs-on: ubuntu-latest
+    if: false  # Workflow disabled - remove this line to re-enable
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate GraphQL schema
+        run: npm run generate:schema
+
+      - name: Copy generated schema
+        run: cp src/graphql/schema/generated/schema.graphql current-branch-schema.graphql
+
+      - name: Fetch main branch
+        run: git fetch origin main:main
+
+      - name: Checkout main branch schema
+        run: |
+          git show main:src/graphql/schema/generated/schema.graphql > main-branch-schema.graphql
+
+      - name: Run graphql-inspector diff and save output
+        run: |
+          npx graphql-inspector diff main-branch-schema.graphql current-branch-schema.graphql > schema-diff.txt || true
+
+      - name: Prepare PR comment with prefix
+        run: |
+          echo "## :mag: Checking GraphQL schema changes for compatibility against main" > schema-diff-comment.txt
+          cat schema-diff.txt >> schema-diff-comment.txt
+
+      - name: Run LLM analysis on schema diff and schema
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          node scripts/analyze-schema-diff-with-llm.js schema-diff-comment.txt src/graphql/schema/generated/schema.graphql schema-llm-analysis.txt
+
+      - name: Comment schema diff on PR (sticky)
+        if: github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-file: schema-diff-comment.txt
+          body-includes: 'Checking GraphQL schema changes for compatibility against main'
+
+      - name: Comment LLM schema analysis on PR (sticky)
+        if: github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-file: schema-llm-analysis.txt
+          body-includes: 'Summary'
+
+      - name: Fail if breaking changes detected
+        run: |
+          npx graphql-inspector diff main-branch-schema.graphql current-branch-schema.graphql

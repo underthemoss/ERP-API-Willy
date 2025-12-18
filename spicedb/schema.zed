@@ -1,0 +1,242 @@
+definition erp/user {}
+
+definition erp/service_account {}
+
+definition erp/platform {
+	relation user_admin: erp/user
+	relation service_account_admin: erp/service_account
+
+	permission is_admin = user_admin + service_account_admin
+}
+
+definition erp/domain {
+	relation member: erp/user
+	permission is_member = member
+}
+
+definition erp/workspace {
+	relation platform: erp/platform
+	relation domain: erp/domain
+	relation admin: erp/user
+	relation member: erp/user
+	relation all_resources_reader: erp/user;
+
+  // workspace-level permissions
+	permission is_admin = admin + platform->is_admin
+	permission can_join = domain->is_member
+	permission read = is_admin + all_resources_reader + can_read_sales_orders + can_read_purchase_orders + read_prices + read_intake_forms + can_read_invoices + can_read_projects + can_read_contacts + can_read_charges
+	permission manage = is_admin
+	permission add_user = is_admin
+	permission remove_user = is_admin
+	permission update_user_roles = is_admin
+
+	// reference number permissions
+	permission can_manage_reference_number_templates = is_admin
+	permission can_read_reference_number_templates = read
+
+	// quotes permissions
+	relation quotes_reader: erp/user
+	relation quotes_manager: erp/user
+	permission can_manage_quotes = quotes_manager + is_admin
+	permission can_read_quotes = quotes_reader + can_manage_quotes
+
+	// rfqs permissions
+	relation rfqs_reader: erp/user
+	relation rfqs_manager: erp/user
+	permission can_manage_rfqs = rfqs_manager + is_admin
+	permission can_read_rfqs = rfqs_reader + can_manage_rfqs
+
+	// sales order permissions
+	relation sales_order_reader: erp/user
+	relation sales_order_manager: erp/user
+	permission can_manage_sales_orders = sales_order_manager + is_admin
+	permission can_read_sales_orders = sales_order_reader + can_manage_sales_orders
+
+	// purchase order permissions
+	relation purchase_order_reader: erp/user
+	relation purchase_order_manager: erp/user
+	permission can_manage_purchase_orders = purchase_order_manager + is_admin
+	permission can_read_purchase_orders = purchase_order_reader + can_manage_purchase_orders
+
+	// price book relations & permissions
+	relation price_books_manager: erp/user
+	relation price_books_reader: erp/user
+	permission can_manage_price_books = price_books_manager + is_admin
+	permission can_manage_prices = can_manage_price_books
+	permission create_price_book = can_manage_price_books
+	permission read_price_books = price_books_reader + can_manage_price_books
+	permission read_prices = read_price_books
+
+	// intake forms permissions
+	relation intake_forms_manager: erp/user
+	relation intake_forms_reader: erp/user
+	permission can_manage_intake_forms = intake_forms_manager + is_admin
+	permission create_intake_form = can_manage_intake_forms
+	permission read_intake_forms = intake_forms_reader + can_manage_intake_forms
+
+	// intake form submission permissions
+	relation intake_form_submissions_manager: erp/user
+	relation intake_form_submissions_reader: erp/user
+	permission can_manage_intake_form_submissions = intake_form_submissions_manager + is_admin
+	permission create_intake_form_submission = can_manage_intake_form_submissions
+	permission read_intake_form_submissions = intake_form_submissions_reader + can_manage_intake_form_submissions
+
+	// buyer intake form submission permissions
+	relation buyer_intake_form_submissions_manager: erp/user
+	relation buyer_intake_form_submissions_reader: erp/user
+	permission can_manage_buyer_intake_form_submissions = buyer_intake_form_submissions_manager + is_admin
+	permission can_read_buyer_intake_form_submissions = buyer_intake_form_submissions_reader + can_manage_buyer_intake_form_submissions
+
+	// invoice permissions
+	relation invoice_reader: erp/user
+	relation invoice_manager: erp/user
+	permission can_manage_invoices = invoice_manager + is_admin
+	permission can_read_invoices = invoice_reader + can_manage_invoices
+
+	// project permissions
+	relation project_reader: erp/user
+	relation project_manager: erp/user
+	permission can_manage_projects = project_manager + is_admin
+	permission can_read_projects = project_reader + can_manage_projects
+
+	// contact permissions
+	relation contact_reader: erp/user
+	relation contact_manager: erp/user
+	permission can_manage_contacts = contact_manager + is_admin
+	permission can_read_contacts = contact_reader + can_manage_contacts
+
+	// charge permissions
+	relation charge_reader: erp/user
+	relation charge_manager: erp/user
+	permission can_manage_charges = charge_manager + is_admin
+	permission can_read_charges = charge_reader + can_manage_charges
+
+	// file permissions
+	relation file_reader: erp/user
+	relation file_manager: erp/user
+	permission can_manage_files = file_manager + is_admin
+	permission can_read_files = file_reader + can_manage_files
+}
+
+definition erp/sales_order {
+	relation workspace: erp/workspace
+	relation intake_form_submission: erp/intake_form_submission
+	relation quote: erp/quote
+
+	permission read = workspace->can_read_sales_orders
+	permission update = workspace->can_manage_sales_orders
+	permission portal_access = read + intake_form_submission->submitter
+}
+
+definition erp/quote {
+	relation sellers_workspace: erp/workspace
+	relation buyers_workspace: erp/workspace
+	relation buyer: erp/user
+
+	permission read = sellers_workspace->can_read_quotes + buyers_workspace->can_read_quotes + buyer
+	permission update = sellers_workspace->can_manage_quotes
+	permission accept = buyer + buyers_workspace->can_manage_quotes + sellers_workspace->can_manage_quotes
+	permission reject = accept // same as accept for now
+}
+
+definition erp/rfq {
+	relation buyers_workspace: erp/workspace
+	relation invited_seller: erp/user
+
+	permission read = buyers_workspace->can_read_rfqs + invited_seller
+	permission update = buyers_workspace->can_manage_rfqs
+}
+
+definition erp/intake_form {
+	relation workspace: erp/workspace
+	relation invited_to_submit: erp/user | erp/user:*
+	permission read = invited_to_submit + workspace->read_intake_forms
+	permission update = workspace->can_manage_intake_forms
+
+	// submissions made to this form
+	permission create_submission = invited_to_submit + workspace->create_intake_form_submission
+	permission read_submissions = workspace->read_intake_form_submissions
+	permission update_submissions = workspace->can_manage_intake_form_submissions
+}
+
+definition erp/intake_form_submission {
+	relation submitter: erp/user
+	relation intake_form: erp/intake_form
+	relation buyers_workspace: erp/workspace
+
+	permission read = submitter + intake_form->read_submissions + buyers_workspace->can_read_buyer_intake_form_submissions
+	permission update = submitter + intake_form->update_submissions + buyers_workspace->can_manage_buyer_intake_form_submissions
+}
+
+definition erp/pricebook {
+	relation workspace: erp/workspace
+	relation intake_form: erp/intake_form
+	permission read = workspace->read_price_books + intake_form->read
+	permission update = workspace->can_manage_price_books
+}
+
+definition erp/purchase_order {
+	relation workspace: erp/workspace
+	relation quote: erp/quote
+	permission read = workspace->can_read_purchase_orders + workspace->can_manage_purchase_orders
+	permission update = workspace->can_manage_purchase_orders
+}
+
+definition erp/pricebook_price {
+	relation workspace: erp/workspace
+	relation pricebook: erp/pricebook
+	relation quote: erp/quote
+	permission read = pricebook->read + workspace->read_prices + quote->read
+	permission update = pricebook->update + workspace->can_manage_prices
+}
+
+definition erp/fulfilment {
+	relation workspace: erp/workspace
+	relation sales_order: erp/sales_order
+
+	// TODO: Consider adding more specific roles like fulfilment_agent or rental_coordinator
+	// instead of relying solely on can_manage_sales_orders permission
+	permission read = workspace->can_read_sales_orders + workspace->can_manage_sales_orders + sales_order->read
+	permission update = workspace->can_manage_sales_orders
+	permission manage_rental_period = workspace->can_manage_sales_orders + sales_order->portal_access
+	permission delete = workspace->can_manage_sales_orders
+}
+
+definition erp/invoice {
+	relation workspace: erp/workspace
+	permission read = workspace->can_read_invoices + workspace->can_manage_invoices
+	permission update = workspace->can_manage_invoices
+}
+
+definition erp/project {
+	relation workspace: erp/workspace
+	permission read = workspace->can_read_projects + workspace->can_manage_projects
+	permission update = workspace->can_manage_projects
+}
+
+definition erp/contact {
+	relation workspace: erp/workspace
+	permission read = workspace->can_read_contacts + workspace->can_manage_contacts
+	permission update = workspace->can_manage_contacts
+	permission delete = workspace->can_manage_contacts
+}
+
+definition erp/charge {
+	relation workspace: erp/workspace
+	permission read = workspace->can_read_charges + workspace->can_manage_charges
+	permission update = workspace->can_manage_charges
+	permission delete = workspace->can_manage_charges
+}
+
+definition erp/file {
+	relation workspace: erp/workspace
+	relation sales_order: erp/sales_order
+	relation purchase_order: erp/purchase_order
+	relation invoice: erp/invoice
+	relation pricebook: erp/pricebook
+	relation project: erp/project
+
+	permission read = workspace->can_read_files + workspace->can_manage_files + sales_order->read + purchase_order->read + invoice->read + pricebook->read + project->read
+	permission update = workspace->can_manage_files
+	permission delete = workspace->can_manage_files
+}

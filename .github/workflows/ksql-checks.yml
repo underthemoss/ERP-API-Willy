@@ -1,0 +1,77 @@
+name: KSQL Checks
+
+run-name: 'KSQL Checks – ${{ github.ref_name }} (#${{ github.run_number }})'
+
+on:
+  pull_request:
+    branches: [main, develop, fix/**, feature/**]
+
+jobs:
+  ksql-checks:
+    name: KSQL ${{ matrix.check.name }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      matrix:
+        check:
+          - name: Tests
+            command: npm run test:ksql
+          - name: Codegen
+            command: npm run ksql:codegen
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        id: cache-node-modules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registries: 696398453447
+
+      - name: Pre-pull Docker images
+        run: |
+          docker pull confluentinc/cp-ksqldb-server:8.0.2
+          docker pull 696398453447.dkr.ecr.us-west-2.amazonaws.com/es-erp-connect:v11
+
+      - name: Run ${{ matrix.check.name }}
+        run: ${{ matrix.check.command }}
+
+      - name: Check for uncommitted changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "❌ Error: Uncommitted changes detected after running ${{ matrix.check.name }}"
+            echo "Please run '${{ matrix.check.command }}' locally and commit the changes."
+            echo ""
+            echo "Changed files:"
+            git status --porcelain
+            echo ""
+            echo "Diff:"
+            git diff
+            exit 1
+          fi
+          echo "✅ No uncommitted changes detected"

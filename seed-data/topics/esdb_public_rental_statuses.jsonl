@@ -1,0 +1,5 @@
+{"key":"1","value":{"rental_status_id":"1","name":"Active"}}
+{"key":"2","value":{"rental_status_id":"2","name":"Reserved"}}
+{"key":"3","value":{"rental_status_id":"3","name":"Off-Rent"}}
+{"key":"4","value":{"rental_status_id":"4","name":"Returned"}}
+{"key":"5","value":{"rental_status_id":"5","name":"Cancelled"}}

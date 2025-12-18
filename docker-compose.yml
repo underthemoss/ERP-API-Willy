@@ -1,0 +1,348 @@
+services:
+  mongo:
+    container_name: es-erp-api-mongo
+    image: mongo:8.0
+    command: ['--replSet', 'rs0', '--bind_ip_all', '--port', '27017']
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodata:/data/db
+    networks:
+      - redpanda_network
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]}) }" | mongosh --port 27017 --quiet
+      interval: 5s
+      timeout: 30s
+      start_period: 0s
+      retries: 30
+    environment:
+      MONGO_INITDB_DATABASE: erp_local
+
+  redis:
+    container_name: es-erp-api-redis
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    ports:
+      - '6379:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  spicedb-postgres:
+    image: postgres:15-alpine
+    container_name: spicedb-postgres
+    environment:
+      POSTGRES_USER: spicedb
+      POSTGRES_PASSWORD: spicedb
+      POSTGRES_DB: spicedb
+    volumes:
+      - spicedb-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U spicedb']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  spicedb-migrate:
+    container_name: es-erp-api-spicedb-migrate
+    image: authzed/spicedb:latest
+    command: migrate head --datastore-engine postgres --datastore-conn-uri "postgres://spicedb:spicedb@spicedb-postgres:5432/spicedb?sslmode=disable"
+    depends_on:
+      spicedb-postgres:
+        condition: service_healthy
+    restart: 'on-failure'
+
+  spicedb:
+    container_name: es-erp-api-spicedb
+    image: authzed/spicedb:latest
+    command: serve --grpc-preshared-key ${SPICEDB_TOKEN} --datastore-engine postgres --datastore-conn-uri "postgres://spicedb:spicedb@spicedb-postgres:5432/spicedb?sslmode=disable"
+    ports:
+      - '50051:50051' # gRPC port
+      - '8443:8443' # HTTP/REST port
+      - '9090:9090' # Metrics port
+    environment:
+      SPICEDB_GRPC_PRESHARED_KEY: ${SPICEDB_TOKEN}
+      SPICEDB_HTTP_ENABLED: 'true'
+    depends_on:
+      spicedb-postgres:
+        condition: service_healthy
+      spicedb-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ['CMD', 'grpc_health_probe', '-addr=:50051']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  spicedb-schema:
+    container_name: es-erp-api-spicedb-schema
+    image: authzed/zed:latest
+    command: 'schema write --endpoint=spicedb:50051 --token=${SPICEDB_TOKEN} --insecure /schema/spicedb-schema.zed'
+    volumes:
+      - ./spicedb/schema.zed:/schema/spicedb-schema.zed:ro
+    depends_on:
+      spicedb:
+        condition: service_healthy
+
+  redpanda:
+    image: redpandadata/redpanda:latest
+    container_name: redpanda
+    command:
+      - redpanda
+      - start
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+      - --pandaproxy-addr internal://0.0.0.0:8082,external://0.0.0.0:18082
+      - --advertise-pandaproxy-addr internal://redpanda:8082,external://localhost:18082
+      - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18081
+      - --rpc-addr redpanda:33145
+      - --advertise-rpc-addr redpanda:33145
+      - --mode dev-container
+      - --smp 1
+      - --memory=2G
+      - --default-log-level=info
+    volumes:
+      - redpandadata:/var/lib/redpanda/data
+    networks:
+      - redpanda_network
+    ports:
+      - 18081:18081 # Schema Registry
+      - 8081:18081
+      - 18082:18082 # Proxy
+      - 19092:19092 # Kafka external
+      - 9092:19092 # Kafka external alt
+      - 19644:9644 # Admin
+
+  console:
+    container_name: redpanda-console
+    image: redpandadata/console:latest
+    networks:
+      - redpanda_network
+    entrypoint: /bin/sh
+    command: -c 'echo "$$CONSOLE_CONFIG_FILE" > /tmp/config.yml; /app/console'
+    environment:
+      CONFIG_FILEPATH: /tmp/config.yml
+      CONSOLE_CONFIG_FILE: |
+        kafka:
+          brokers: ["redpanda:9092"]
+        schemaRegistry:
+            enabled: true
+            urls: ["http://redpanda:8081"]
+        redpanda:
+          adminApi:
+            enabled: true
+            urls: ["http://redpanda:9644"]
+        kafkaConnect:
+          enabled: true
+          clusters:
+            - name: local
+              url: http://kafka-connect:8083
+    ports:
+      - 8080:8080
+    depends_on:
+      - redpanda
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'wget',
+          '--no-verbose',
+          '--tries=1',
+          '--spider',
+          'http://localhost:8080/api/cluster',
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 10s
+
+  opensearch:
+    image: opensearchproject/opensearch:2.11.0
+    container_name: opensearch
+    environment:
+      - discovery.type=single-node
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      - DISABLE_SECURITY_PLUGIN=true
+    ports:
+      - '9200:9200'
+      - '9600:9600'
+    networks:
+      - redpanda_network
+    volumes:
+      - opensearchdata:/usr/share/opensearch/data
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9200']
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 30s
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:2.11.0
+    container_name: opensearch-dashboards
+    ports:
+      - '5601:5601'
+    environment:
+      - OPENSEARCH_HOSTS=["http://opensearch:9200"]
+      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+    networks:
+      - redpanda_network
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:5601/api/status']
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  kafka-connect:
+    image: 696398453447.dkr.ecr.us-west-2.amazonaws.com/es-erp-connect:latest-arm64
+    container_name: kafka-connect
+    depends_on:
+      redpanda:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+    networks:
+      - redpanda_network
+    ports:
+      - '8083:8083'
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: redpanda:9092
+      CONNECT_REST_PORT: '8083'
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+      CONNECT_GROUP_ID: es-erp-connect-local
+      CONNECT_CONFIG_STORAGE_TOPIC: _connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: _connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: _connect-status
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: '1'
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: '1'
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: '1'
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: 'false'
+      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components
+      CONNECT_CONFIG_PROVIDERS: env
+      CONNECT_CONFIG_PROVIDERS_ENV_CLASS: org.apache.kafka.common.config.provider.EnvVarConfigProvider
+      MONGO_CONNECTION_STRING: mongodb://mongo:27017/es-erp?replicaSet=rs0&directConnection=true
+      OPENSEARCH_ENDPOINT: http://opensearch:9200
+      TOPIC_CREATION_DEFAULT_REPLICATION_FACTOR: '1'
+      KAFKA_HEAP_OPTS: -Xms512m -Xmx1024m
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8083/']
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 30s
+
+  ksqldb-server:
+    image: confluentinc/cp-ksqldb-server:8.0.2
+    container_name: es-erp-ksqldb-local
+    depends_on:
+      redpanda:
+        condition: service_started
+    networks:
+      - redpanda_network
+    ports:
+      - '8088:8088'
+    volumes:
+      - ksqldbdata:/tmp/kafka-streams/data
+    user: root
+    environment:
+      KSQL_LOG4J_ROOT_LOGLEVEL: 'warn'
+      # ksqlDB server settings
+      KSQL_LISTENERS: http://0.0.0.0:8088
+      KSQL_BOOTSTRAP_SERVERS: redpanda:9092
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: http://redpanda:8081
+      KSQL_KSQL_SERVER_COMMAND_RESPONSE_TIMEOUT_MS: "60000"
+      # JVM memory settings - increase heap for more tables/views
+      KAFKA_HEAP_OPTS: "-Xms1024m -Xmx2048m"
+      # Cluster settings (local single instance)
+      KSQL_KSQL_SERVICE_ID: es-erp-ksqldb-local
+      KSQL_KSQL_STREAMS_NUM_STANDBY_REPLICAS: "0"
+      KSQL_KSQL_HEARTBEAT_ENABLE: "true"
+      KSQL_KSQL_LAG_REPORTING_ENABLE: "true"
+      # Topic naming (matches production pattern)
+      KSQL_KSQL_OUTPUT_TOPIC_NAME_PREFIX: _es-erp-ksqldb.
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_NAME: _es-erp-ksqldb_ksql_processing_log
+      # Streams settings
+      KSQL_KSQL_STREAMS_NUM_STREAM_THREADS: "2"
+      KSQL_KSQL_STREAMS_STATE_DIR: /tmp/kafka-streams/data
+      # Kafka Connect integration
+      KSQL_KSQL_CONNECT_URL: http://kafka-connect:8083
+      # Replication (local single broker)
+      KSQL_KSQL_STREAMS_REPLICATION_FACTOR: "1"
+      KSQL_KSQL_INTERNAL_TOPIC_REPLICAS: "1"
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_REPLICATION_FACTOR: "1"
+      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+      # Security (local development - no auth)
+      KSQL_SECURITY_PROTOCOL: PLAINTEXT
+      KSQL_KSQL_UDF_ENABLE_SECURITY_MANAGER: "false"
+      KSQL_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8088/info']
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  ksqldb-cli:
+    image: confluentinc/cp-ksqldb-cli:8.0.2
+    container_name: es-erp-ksqldb-cli
+    depends_on:
+      - ksqldb-server
+    networks:
+      - redpanda_network
+    entrypoint: /bin/sh
+    tty: true
+    stdin_open: true
+
+  ksqldb-migrator:
+    image: node:20-alpine
+    container_name: ksqldb-migrator
+    depends_on:
+      ksqldb-server:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      kafka-connect:
+        condition: service_healthy
+    environment:
+      KSQLDB_ENDPOINT: http://ksqldb-server:8088
+      MONGO_CONNECTION_STRING: mongodb://mongo:27017/es-erp?replicaSet=rs0&directConnection=true
+    networks:
+      - redpanda_network
+    volumes:
+      - ./seed-data:/app/seed-data:ro
+      - ./ksql:/app/ksql:ro
+      - ./package.json:/app/package.json:ro
+      - ./package-lock.json:/app/package-lock.json:ro
+      - ./node_modules:/app/node_modules
+    working_dir: /app
+    command: sh -c "node ksql/scripts/migrate.js up && node seed-data/seed-kafka.js"
+    restart: 'no'
+
+networks:
+  redpanda_network:
+    driver: bridge
+
+volumes:
+  mongodata:
+  redisdata:
+  spicedb-postgres-data:
+  redpandadata:
+  connectdata:
+  ksqldbdata:
+  opensearchdata:

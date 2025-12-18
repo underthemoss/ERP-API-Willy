@@ -1,0 +1,59 @@
+name: Build & Push to ECR
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    env:
+      ECR_REGISTRY: 696398453447.dkr.ecr.us-west-2.amazonaws.com
+      ECR_REPOSITORY_STAGE: es-erp-api-stage
+      ECR_REPOSITORY_PROD: es-erp-api-prod
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Generate tag
+        id: generate_tag
+        run: |
+          # Generate timestamp in YYYYMMDD-HHMM format (UTC)
+          TIMESTAMP=$(date -u +"%Y%m%d-%H%M")
+          # Get short SHA (first 7 characters)
+          SHORT_SHA=${GITHUB_SHA::7}
+          # Create tag format: YYYYMMDD-HHMM-<shortSHA>
+          IMAGE_TAG="${TIMESTAMP}-${SHORT_SHA}"
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+          echo "Generated tag: ${IMAGE_TAG}"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::696398453447:role/github-es-erp-api-main7AD10839-GxH47CoBpffa
+          aws-region: us-west-2
+          audience: sts.amazonaws.com
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registries: 696398453447
+
+      - name: Build, tag, and push image to stage ECR
+        run: |
+          docker build -t $ECR_REPOSITORY_STAGE:$IMAGE_TAG .
+          docker tag $ECR_REPOSITORY_STAGE:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY_STAGE:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_STAGE:$IMAGE_TAG
+
+      - name: Build, tag, and push image to prod ECR
+        run: |
+          docker build -t $ECR_REPOSITORY_PROD:$IMAGE_TAG .
+          docker tag $ECR_REPOSITORY_PROD:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY_PROD:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_PROD:$IMAGE_TAG

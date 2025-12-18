@@ -1,0 +1,20 @@
+definition test/user {}
+
+definition test/document {
+  relation org: test/org
+  relation owner: test/user | test/org#owner
+  relation reader: test/user | test/org#member
+  relation writer: test/user | test/org#admin
+  permission read = owner + reader + writer + org->member
+  permission write = owner + writer + org->member
+}
+
+definition test/org {
+  relation owner: test/user
+  relation admin: test/user
+  relation member: test/user
+
+  permission read = owner + admin + member
+  permission write = owner + admin 
+  permission billing_access = owner
+}

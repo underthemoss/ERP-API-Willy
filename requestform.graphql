@@ -1,0 +1,497 @@
+# Request Form API Schema
+# This schema defines the GraphQL API for the public request form system
+# No authentication is required for these endpoints
+
+# ============================================
+# TYPES
+# ============================================
+
+"""
+Represents a request form configuration
+Contains all the metadata and settings for a specific form
+"""
+type RequestForm {
+  """
+  Unique identifier for the form
+  """
+  id: ID!
+
+  companyName: String!
+  companyContactEmail: String!
+  companyContactPhone: String!
+
+  """
+  Project ID this form is associated with
+  """
+  projectId: ID
+  projectCode: ID
+  projectName: String
+
+  """
+  Whether this form is currently accepting submissions
+  """
+  isActive: Boolean!
+
+  """
+  ISO 8601 timestamp of when the form was created
+  """
+  createdAt: DateTime!
+
+  """
+  ISO 8601 timestamp of when the form was last updated
+  """
+  updatedAt: DateTime!
+}
+
+"""
+Represents a submitted equipment request
+Contains all the information provided by the user through the form
+"""
+type EquipmentRequest {
+  """
+  Unique identifier for the request
+  """
+  id: ID!
+
+  """
+  ID of the form this request was submitted through
+  """
+  formId: ID!
+
+  """
+  Contact information of the requester
+  """
+  contactInfo: ContactInfo!
+
+  """
+  Details of the equipment request
+  """
+  requestDetails: RequestDetails!
+
+  """
+  Current status of the request
+  """
+  status: RequestStatus!
+
+  """
+  ISO 8601 timestamp of when the request was submitted
+  """
+  submittedAt: String!
+
+  """
+  Optional notes or comments from the processor
+  """
+  processorNotes: String
+}
+
+"""
+Contact information for the person making the request
+"""
+type ContactInfo {
+  """
+  Full name of the requester
+  """
+  fullName: String!
+
+  """
+  Email address for communication
+  """
+  email: String!
+
+  """
+  Contact phone number
+  """
+  phoneNumber: String!
+
+  """
+  Company or organization name
+  """
+  companyName: String!
+}
+
+"""
+Details about the equipment being requested
+"""
+type RequestDetails {
+  """
+  Type of equipment needed
+  """
+  equipmentType: String!
+
+  """
+  Quantity of equipment needed
+  """
+  quantity: Int!
+
+  """
+  Date when the equipment is needed
+  """
+  neededDate: String!
+
+  """
+  Duration for rental (in days)
+  """
+  rentalDuration: Int
+
+  """
+  Type of request (Rental, Purchase, etc.)
+  """
+  requestType: RequestType!
+
+  """
+  Additional notes or special requirements
+  """
+  additionalNotes: String
+}
+
+"""
+Enum for different types of equipment requests
+"""
+enum RequestType {
+  """
+  Equipment rental request
+  """
+  RENTAL
+
+  """
+  Equipment purchase request
+  """
+  PURCHASE
+
+  """
+  Equipment service request
+  """
+  SERVICE
+}
+
+"""
+Enum for request processing status
+"""
+enum RequestStatus {
+  """
+  Request has been submitted but not yet reviewed
+  """
+  PENDING
+
+  """
+  Request is being processed
+  """
+  IN_PROGRESS
+
+  """
+  Request has been approved
+  """
+  APPROVED
+
+  """
+  Request has been rejected
+  """
+  REJECTED
+
+  """
+  Request has been completed/fulfilled
+  """
+  COMPLETED
+}
+
+# ============================================
+# INPUTS
+# ============================================
+
+"""
+Input for creating a new request form
+"""
+input CreateRequestFormInput {
+  """
+  Project ID to associate this form with
+  """
+  projectId: ID!
+
+  """
+  Name for the form
+  """
+  name: String!
+
+  """
+  Optional description
+  """
+  description: String
+
+  """
+  Whether the form should be active immediately (default: true)
+  """
+  isActive: Boolean
+}
+
+"""
+Input for updating an existing request form
+"""
+input UpdateRequestFormInput {
+  """
+  Optional: Update the form name
+  """
+  name: String
+
+  """
+  Optional: Update the description
+  """
+  description: String
+
+  """
+  Optional: Update the active status
+  """
+  isActive: Boolean
+}
+
+"""
+Input for contact information when submitting a request
+"""
+input ContactInfoInput {
+  """
+  Full name of the requester
+  """
+  fullName: String!
+
+  """
+  Email address for communication
+  """
+  email: String!
+
+  """
+  Contact phone number
+  """
+  phoneNumber: String!
+
+  """
+  Company or organization name
+  """
+  companyName: String!
+}
+
+"""
+Input for request details when submitting a request
+"""
+input RequestDetailsInput {
+  """
+  Type of equipment needed
+  """
+  equipmentType: String!
+
+  """
+  Quantity of equipment needed
+  """
+  quantity: Int!
+
+  """
+  Date when the equipment is needed (ISO 8601 format)
+  """
+  neededDate: String!
+
+  """
+  Duration for rental in days (optional for non-rental requests)
+  """
+  rentalDuration: Int
+
+  """
+  Type of request
+  """
+  requestType: RequestType!
+
+  """
+  Additional notes or special requirements
+  """
+  additionalNotes: String
+}
+
+"""
+Input for submitting an equipment request through a form
+"""
+input SubmitEquipmentRequestInput {
+  """
+  ID of the form being submitted to
+  """
+  formId: ID!
+
+  """
+  Contact information of the requester
+  """
+  contactInfo: ContactInfoInput!
+
+  """
+  Details of the equipment request
+  """
+  requestDetails: RequestDetailsInput!
+}
+
+# ============================================
+# QUERIES
+# ============================================
+
+type Query {
+  """
+  Get a specific request form by ID
+  Returns null if the form doesn't exist or is not active
+
+  Example:
+  query GetRequestForm($id: ID!) {
+    requestForm(id: $id) {
+      id
+      name
+      description
+      isActive
+      project {
+        id
+        name
+        projectCode
+      }
+    }
+  }
+  """
+  requestForm(id: ID!): RequestForm
+
+  """
+  List all active request forms
+  Returns an empty array if no active forms exist
+
+  Example:
+  query ListRequestForms {
+    requestForms {
+      id
+      name
+      description
+      isActive
+      createdAt
+      project {
+        name
+      }
+    }
+  }
+  """
+  requestForms: [RequestForm!]!
+
+  """
+  Get a specific equipment request by ID
+  Typically used for viewing request status or details
+
+  Example:
+  query GetEquipmentRequest($id: ID!) {
+    equipmentRequest(id: $id) {
+      id
+      status
+      submittedAt
+      contactInfo {
+        fullName
+        email
+      }
+      requestDetails {
+        equipmentType
+        quantity
+        neededDate
+      }
+    }
+  }
+  """
+  equipmentRequest(id: ID!): EquipmentRequest
+}
+
+# ============================================
+# MUTATIONS
+# ============================================
+
+type Mutation {
+  """
+  Create a new request form
+  Requires admin permissions
+
+  Example:
+  mutation CreateRequestForm($input: CreateRequestFormInput!) {
+    createRequestForm(input: $input) {
+      id
+      name
+      isActive
+    }
+  }
+  """
+  createRequestForm(input: CreateRequestFormInput!): RequestForm!
+
+  """
+  Update an existing request form
+  Requires admin permissions
+
+  Example:
+  mutation UpdateRequestForm($id: ID!, $input: UpdateRequestFormInput!) {
+    updateRequestForm(id: $id, input: $input) {
+      id
+      name
+      description
+      isActive
+    }
+  }
+  """
+  updateRequestForm(id: ID!, input: UpdateRequestFormInput!): RequestForm!
+
+  """
+  Delete a request form
+  This is a soft delete - the form is marked as inactive
+  Requires admin permissions
+
+  Example:
+  mutation DeleteRequestForm($id: ID!) {
+    deleteRequestForm(id: $id)
+  }
+  """
+  deleteRequestForm(id: ID!): Boolean!
+
+  """
+  Submit an equipment request through a form
+  This is the main public-facing mutation
+  No authentication required
+
+  Returns the created equipment request with its ID and initial status
+
+  Example:
+  mutation SubmitRequest($input: SubmitEquipmentRequestInput!) {
+    submitEquipmentRequest(input: $input) {
+      id
+      status
+      submittedAt
+    }
+  }
+  """
+  submitEquipmentRequest(input: SubmitEquipmentRequestInput!): EquipmentRequest!
+}
+
+# ============================================
+# IMPLEMENTATION NOTES
+# ============================================
+
+# Mock Implementation Strategy:
+# -------------------------------
+# 1. For development, use Apollo Client's MockedProvider
+# 2. Create mock resolvers that return static or generated data
+# 3. Store form submissions in localStorage for testing
+# 4. Use setTimeout to simulate network delays
+
+# Security Considerations:
+# -------------------------------
+# - No authentication required for public endpoints
+# - Rate limiting should be implemented on submitEquipmentRequest
+# - Input validation for all user-provided data
+# - Sanitize HTML in text fields to prevent XSS
+# - CAPTCHA integration recommended for form submission
+
+# Database Schema (when implementing):
+# -------------------------------
+# Tables needed:
+# - request_forms (id, project_id, name, description, is_active, created_at, updated_at)
+# - equipment_requests (id, form_id, contact_info, request_details, status, submitted_at, processor_notes)
+# - projects (existing table, referenced by request_forms)
+
+# Future Enhancements:
+# -------------------------------
+# - File attachments for equipment requests
+# - Email notifications on submission
+# - Request tracking with unique reference numbers
+# - Custom fields per form configuration
+# - Multi-step approval workflows
+# - Integration with inventory management system

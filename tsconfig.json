@@ -1,0 +1,13 @@
+{
+  "extends": "@tsconfig/recommended",
+  "compilerOptions": {
+    "rootDir": "./src", // Where TypeScript source files live
+    "outDir": "./build", // Where to put compiled JS files
+    //"esModuleInterop": true,               // Enables default import syntax compatibility
+    "forceConsistentCasingInFileNames": true,
+    "strict": true, // Enables all strict type-checking options
+    "skipLibCheck": true // Speeds up compilation by skipping type checks on .d.ts files
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "build"]
+}
