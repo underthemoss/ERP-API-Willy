@@ -93,6 +93,7 @@ export interface NexusGenInputs {
     receiptNotes?: string | null; // String
     receivedAt?: NexusGenScalars['DateTime'] | null; // DateTime
     resourceMapId?: string | null; // String
+    resourceMapIds?: string[] | null; // [ID!]
   }
   BusinessContactInput: { // input type
     accountsPayableContactId?: string | null; // ID
@@ -145,6 +146,8 @@ export interface NexusGenInputs {
     pimProductId?: string | null; // String
     purchaseOrderId?: string | null; // String
     purchaseOrderLineItemId?: string | null; // String
+    resourceMapId?: string | null; // String
+    resourceMapIds?: string[] | null; // [ID!]
     status: NexusGenEnums['InventoryStatus']; // InventoryStatus!
     workspaceId?: string | null; // String
   }
@@ -913,6 +916,7 @@ export interface NexusGenEnums {
   RequestType: "PURCHASE" | "RENTAL"
   ReservationType: "FULFILMENT"
   ResetFrequency: "daily" | "monthly" | "never" | "yearly"
+  ResourceMapTagType: "BUSINESS_UNIT" | "LOCATION" | "ROLE"
   ResourceType: "erp/charge" | "erp/contact" | "erp/domain" | "erp/file" | "erp/fulfilment" | "erp/intake_form" | "erp/intake_form_submission" | "erp/invoice" | "erp/platform" | "erp/pricebook" | "erp/pricebook_price" | "erp/project" | "erp/purchase_order" | "erp/quote" | "erp/rfq" | "erp/sales_order" | "erp/service_account" | "erp/user" | "erp/workspace"
   ResourceTypes: RESOURCE_TYPES
   RevisionStatus: "DRAFT" | "SENT"
@@ -2648,6 +2652,8 @@ export interface NexusGenFieldTypes {
     receivedAt: NexusGenScalars['DateTime'] | null; // DateTime
     resourceMap: NexusGenRootTypes['ResourceMapResource'] | null; // ResourceMapResource
     resourceMapId: string | null; // String
+    resourceMapIds: string[] | null; // [String!]
+    resource_map_entries: NexusGenRootTypes['ResourceMapResource'][] | null; // [ResourceMapResource!]
     status: NexusGenEnums['InventoryStatus']; // InventoryStatus!
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
     updatedBy: string; // String!
@@ -3230,6 +3236,7 @@ export interface NexusGenFieldTypes {
     listRentalViews: NexusGenRootTypes['ListRentalViewsResult'] | null; // ListRentalViewsResult
     listResourceMapEntries: Array<NexusGenRootTypes['ResourceMapResource'] | null> | null; // [ResourceMapResource]
     listResourceMapEntriesByParentId: Array<NexusGenRootTypes['ResourceMapResource'] | null> | null; // [ResourceMapResource]
+    listResourceMapEntriesByTagType: Array<NexusGenRootTypes['ResourceMapResource'] | null> | null; // [ResourceMapResource]
     listSalesOrders: NexusGenRootTypes['SalesOrderListResult'] | null; // SalesOrderListResult
     listScopeOfWorkCodes: Array<NexusGenRootTypes['ScopeOfWorkCode'] | null> | null; // [ScopeOfWorkCode]
     listTopLevelProjects: Array<NexusGenRootTypes['Project'] | null> | null; // [Project]
@@ -3720,6 +3727,7 @@ export interface NexusGenFieldTypes {
     parent_id: string | null; // String
     path: string[] | null; // [String!]
     resource_id: string; // String!
+    tagType: NexusGenEnums['ResourceMapTagType'] | null; // ResourceMapTagType
     tenant_id: string; // String!
     type: string | null; // String
     value: string | null; // String
@@ -4864,6 +4872,8 @@ export interface NexusGenFieldTypeNames {
     receivedAt: 'DateTime'
     resourceMap: 'ResourceMapResource'
     resourceMapId: 'String'
+    resourceMapIds: 'String'
+    resource_map_entries: 'ResourceMapResource'
     status: 'InventoryStatus'
     updatedAt: 'DateTime'
     updatedBy: 'String'
@@ -5446,6 +5456,7 @@ export interface NexusGenFieldTypeNames {
     listRentalViews: 'ListRentalViewsResult'
     listResourceMapEntries: 'ResourceMapResource'
     listResourceMapEntriesByParentId: 'ResourceMapResource'
+    listResourceMapEntriesByTagType: 'ResourceMapResource'
     listSalesOrders: 'SalesOrderListResult'
     listScopeOfWorkCodes: 'ScopeOfWorkCode'
     listTopLevelProjects: 'Project'
@@ -5936,6 +5947,7 @@ export interface NexusGenFieldTypeNames {
     parent_id: 'String'
     path: 'String'
     resource_id: 'String'
+    tagType: 'ResourceMapTagType'
     tenant_id: 'String'
     type: 'String'
     value: 'String'
@@ -7395,6 +7407,9 @@ export interface NexusGenArgTypes {
     }
     listResourceMapEntriesByParentId: { // args
       parent_id: string; // String!
+    }
+    listResourceMapEntriesByTagType: { // args
+      types: NexusGenEnums['ResourceMapTagType'][]; // [ResourceMapTagType!]!
     }
     listSalesOrders: { // args
       limit: number | null; // Int

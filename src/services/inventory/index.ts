@@ -23,6 +23,11 @@ import {
   FulfilmentReservation,
 } from './inventory-reservation-model';
 import { ANON_USER_AUTH_PAYLOAD, UserAuthPayload } from '../../authentication';
+import { ResourceMapResourcesService } from '../resource_map';
+import {
+  RESOURCE_MAP_TAG_TYPE,
+  normalizeResourceMapTagType,
+} from '../resource_map/tag-types';
 
 // Re-export DTOs if needed
 export type {
@@ -45,15 +50,92 @@ export class InventoryService {
   private reservationModel: InventoryReservationModel;
   private systemUserId: string = 'system';
   private mongoClient: MongoClient;
+  private resourceMapResourcesService: ResourceMapResourcesService;
+  private envConfig: EnvConfig;
 
   constructor(config: {
     model: InventoryModel;
     reservationModel: InventoryReservationModel;
     mongoClient: MongoClient;
+    resourceMapResourcesService: ResourceMapResourcesService;
+    envConfig: EnvConfig;
   }) {
     this.model = config.model;
     this.reservationModel = config.reservationModel;
     this.mongoClient = config.mongoClient;
+    this.resourceMapResourcesService = config.resourceMapResourcesService;
+    this.envConfig = config.envConfig;
+  }
+
+  private buildResourceMapIds(input: {
+    resourceMapId?: string;
+    resourceMapIds?: string[];
+  }) {
+    const ids = new Set<string>();
+    if (input.resourceMapId) {
+      ids.add(input.resourceMapId);
+    }
+    for (const id of input.resourceMapIds || []) {
+      ids.add(id);
+    }
+    return Array.from(ids);
+  }
+
+  private async validateInventoryResourceMap(
+    input: {
+      resourceMapId?: string;
+      resourceMapIds?: string[];
+    },
+    user: UserAuthPayload,
+    opts: { requireLocation: boolean },
+  ): Promise<{ resourceMapIds?: string[]; resourceMapId?: string }> {
+    const resourceMapIds = this.buildResourceMapIds(input);
+
+    if (this.envConfig.IN_TEST_MODE) {
+      return {
+        resourceMapIds: resourceMapIds.length ? resourceMapIds : undefined,
+        resourceMapId: input.resourceMapId,
+      };
+    }
+
+    if (resourceMapIds.length === 0) {
+      if (opts.requireLocation) {
+        throw new Error('resourceMapId is required');
+      }
+      return {
+        resourceMapIds: undefined,
+        resourceMapId: undefined,
+      };
+    }
+
+    const { entries } = await this.resourceMapResourcesService.validateResourceMapIds(
+      {
+        ids: resourceMapIds,
+        allowedTypes: [
+          RESOURCE_MAP_TAG_TYPE.LOCATION,
+          RESOURCE_MAP_TAG_TYPE.BUSINESS_UNIT,
+        ],
+        requiredTypes: opts.requireLocation
+          ? [RESOURCE_MAP_TAG_TYPE.LOCATION]
+          : undefined,
+        user,
+      },
+    );
+
+    const locationEntry = entries.find(
+      (entry) =>
+        normalizeResourceMapTagType(entry.type) ===
+        RESOURCE_MAP_TAG_TYPE.LOCATION,
+    );
+
+    if (opts.requireLocation && !locationEntry) {
+      throw new Error('Inventory requires at least one location tag');
+    }
+
+    return {
+      resourceMapIds,
+      resourceMapId: locationEntry?._id ?? input.resourceMapId,
+    };
   }
 
   async listInventory(query: ListInventoryQuery, user: UserAuthPayload) {
@@ -79,8 +161,23 @@ export class InventoryService {
     user: UserAuthPayload,
     session?: ClientSession,
   ) {
+    const requireLocation = input.status === 'RECEIVED';
+    const resourceMap = await this.validateInventoryResourceMap(
+      {
+        resourceMapId: input.resourceMapId,
+        resourceMapIds: input.resourceMapIds,
+      },
+      user,
+      { requireLocation },
+    );
+
     return this.model.createInventory(
-      { ...input, companyId: user.companyId },
+      {
+        ...input,
+        companyId: user.companyId,
+        resourceMapId: resourceMap.resourceMapId,
+        resourceMapIds: resourceMap.resourceMapIds,
+      },
       user?.id,
       session,
     );
@@ -227,6 +324,15 @@ export class InventoryService {
       );
     }
 
+    const resourceMap = await this.validateInventoryResourceMap(
+      {
+        resourceMapId: input.resourceMapId,
+        resourceMapIds: input.resourceMapIds,
+      },
+      user,
+      { requireLocation: true },
+    );
+
     const session = this.mongoClient.startSession();
 
     try {
@@ -237,7 +343,11 @@ export class InventoryService {
           const updatedInventory = await this.model.markInventoryReceived(
             id,
             user.companyId,
-            input,
+            {
+              ...input,
+              resourceMapId: resourceMap.resourceMapId,
+              resourceMapIds: resourceMap.resourceMapIds,
+            },
             user?.id,
             session,
           );
@@ -403,8 +513,9 @@ export class InventoryService {
 
 export const createInventoryService = async (config: {
   mongoClient: MongoClient;
-  envConfig?: EnvConfig;
+  envConfig: EnvConfig;
   kafkaClient?: KafkaJS.Kafka;
+  resourceMapResourcesService: ResourceMapResourcesService;
 }) => {
   const model = createInventoryModel({ mongoClient: config.mongoClient });
   const reservationModel = createInventoryReservationModel({
@@ -414,6 +525,8 @@ export const createInventoryService = async (config: {
     model,
     reservationModel,
     mongoClient: config.mongoClient,
+    resourceMapResourcesService: config.resourceMapResourcesService,
+    envConfig: config.envConfig,
   });
 
   return inventoryService;

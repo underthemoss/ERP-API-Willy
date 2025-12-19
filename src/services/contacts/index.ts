@@ -16,6 +16,8 @@ import {
   ERP_CONTACT_SUBJECT_PERMISSIONS,
   ERP_WORKSPACE_SUBJECT_PERMISSIONS,
 } from '../../lib/authz/spicedb-generated-types';
+import { ResourceMapResourcesService } from '../resource_map';
+import { RESOURCE_MAP_TAG_TYPE } from '../resource_map/tag-types';
 
 // re-export DTOs
 export type { BusinessContact, PersonContact, Contact } from './model';
@@ -23,9 +25,71 @@ export type { BusinessContact, PersonContact, Contact } from './model';
 export class ContactsService {
   private model: ContactsModel;
   private authZ: AuthZ;
-  constructor(config: { model: ContactsModel; authZ: AuthZ }) {
+  private resourceMapResourcesService: ResourceMapResourcesService;
+  private envConfig: EnvConfig;
+  constructor(config: {
+    model: ContactsModel;
+    authZ: AuthZ;
+    resourceMapResourcesService: ResourceMapResourcesService;
+    envConfig: EnvConfig;
+  }) {
     this.model = config.model;
     this.authZ = config.authZ;
+    this.resourceMapResourcesService = config.resourceMapResourcesService;
+    this.envConfig = config.envConfig;
+  }
+
+  private async validatePersonResourceMapIds(
+    resourceMapIds: string[] | undefined,
+    user: UserAuthPayload,
+  ) {
+    if (this.envConfig.IN_TEST_MODE) {
+      return;
+    }
+
+    if (!resourceMapIds || resourceMapIds.length === 0) {
+      throw new Error('resourceMapIds is required for person contacts');
+    }
+
+    const { tagTypes } = await this.resourceMapResourcesService.validateResourceMapIds(
+      {
+        ids: resourceMapIds,
+        allowedTypes: [
+          RESOURCE_MAP_TAG_TYPE.LOCATION,
+          RESOURCE_MAP_TAG_TYPE.BUSINESS_UNIT,
+          RESOURCE_MAP_TAG_TYPE.ROLE,
+        ],
+        user,
+      },
+    );
+
+    const hasNonRoleTag = tagTypes.some(
+      (tagType) => tagType !== RESOURCE_MAP_TAG_TYPE.ROLE,
+    );
+    if (!hasNonRoleTag) {
+      throw new Error(
+        'Person contacts must include at least one location or business unit tag',
+      );
+    }
+  }
+
+  private async validateBusinessResourceMapIds(
+    resourceMapIds: string[] | undefined,
+    user: UserAuthPayload,
+  ) {
+    if (this.envConfig.IN_TEST_MODE || !resourceMapIds?.length) {
+      return;
+    }
+
+    await this.resourceMapResourcesService.validateResourceMapIds({
+      ids: resourceMapIds,
+      allowedTypes: [
+        RESOURCE_MAP_TAG_TYPE.LOCATION,
+        RESOURCE_MAP_TAG_TYPE.BUSINESS_UNIT,
+      ],
+      user,
+      allowEmpty: true,
+    });
   }
 
   async createBusinessContact(
@@ -48,6 +112,10 @@ export class ContactsService {
       throw new Error(
         'You do not have permission to create contacts in this workspace',
       );
+    }
+
+    if (input.resourceMapIds) {
+      await this.validateBusinessResourceMapIds(input.resourceMapIds, user);
     }
 
     // validation
@@ -99,6 +167,8 @@ export class ContactsService {
       );
     }
 
+    await this.validatePersonResourceMapIds(input.resourceMapIds, user);
+
     // validation
     // business logic
     const contact = await this.model.createPersonContact({
@@ -147,6 +217,10 @@ export class ContactsService {
       throw new Error('You do not have permission to update this contact');
     }
 
+    if (input.resourceMapIds) {
+      await this.validateBusinessResourceMapIds(input.resourceMapIds, user);
+    }
+
     // validation
     // business logic
     return this.model.updateBusinessContact(id, input);
@@ -171,6 +245,10 @@ export class ContactsService {
 
     if (!canUpdate) {
       throw new Error('You do not have permission to update this contact');
+    }
+
+    if (input.resourceMapIds) {
+      await this.validatePersonResourceMapIds(input.resourceMapIds, user);
     }
 
     // validation
@@ -198,6 +276,10 @@ export class ContactsService {
       throw new Error('You do not have permission to update this contact');
     }
 
+    if (patch.resourceMapIds) {
+      await this.validateBusinessResourceMapIds(patch.resourceMapIds, user);
+    }
+
     return this.model.patchBusinessContact(id, patch);
   }
 
@@ -219,6 +301,10 @@ export class ContactsService {
 
     if (!canUpdate) {
       throw new Error('You do not have permission to update this contact');
+    }
+
+    if (patch.resourceMapIds) {
+      await this.validatePersonResourceMapIds(patch.resourceMapIds, user);
     }
 
     return this.model.patchPersonContact(id, patch);
@@ -382,11 +468,14 @@ export const createContactsService = async (config: {
   envConfig: EnvConfig;
   mongoClient: MongoClient;
   authZ: AuthZ;
+  resourceMapResourcesService: ResourceMapResourcesService;
 }) => {
   const model = createContactsModel(config);
   const contactsService = new ContactsService({
     model,
     authZ: config.authZ,
+    resourceMapResourcesService: config.resourceMapResourcesService,
+    envConfig: config.envConfig,
   });
 
   return contactsService;

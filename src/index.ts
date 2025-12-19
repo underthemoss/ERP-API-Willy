@@ -128,13 +128,18 @@ async function startMainMode() {
 
   // Wave 2: Initialize independent services in parallel
   logger.info('Initializing independent services...');
+  const resourceMapResourcesService = await createResourceMapResourcesService({
+    envConfig,
+    mongoClient,
+    kafkaClient,
+  });
+
   const [
     usersService,
     assetsService,
     companiesService,
     pimProductsService,
     pimCategoriesService,
-    resourceMapResourcesService,
     fileService,
     assetSchedulesService,
     brandfetchService,
@@ -157,16 +162,21 @@ async function startMainMode() {
       openSearchService,
     }),
     createPimCategoriesService({ envConfig, mongoClient, kafkaClient }),
-    createResourceMapResourcesService({ envConfig, mongoClient, kafkaClient }),
     createFileService({ mongoClient, envConfig, authZ }),
     createAssetSchedulesService({ mongoClient }),
     createBrandfetchService({ envConfig, mongoClient }),
     Promise.resolve(createWorkflowConfigurationService({ mongoClient })),
-    createInventoryService({ mongoClient, envConfig, kafkaClient }),
+    createInventoryService({
+      mongoClient,
+      envConfig,
+      kafkaClient,
+      resourceMapResourcesService,
+    }),
     createContactsService({
       envConfig,
       mongoClient,
       authZ,
+      resourceMapResourcesService,
     }),
     createPriceEngineService({}),
     Promise.resolve(new DomainsService()),

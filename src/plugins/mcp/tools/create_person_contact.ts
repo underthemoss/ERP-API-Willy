@@ -62,7 +62,7 @@ export const createPersonContactTool = createMcpTool({
       .describe('URL to the profile picture'),
     resourceMapIds: z
       .array(z.string())
-      .optional()
+      .min(1)
       .describe('Array of resource map IDs to associate with this contact'),
   },
   handler: async (sdk, args) => {
@@ -89,7 +89,7 @@ export const createPersonContactTool = createMcpTool({
           ...(phone && { phone }),
           ...(notes && { notes }),
           ...(profilePicture && { profilePicture }),
-          ...(resourceMapIds && { resourceMapIds }),
+          resourceMapIds,
         },
       });
 

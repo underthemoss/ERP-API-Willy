@@ -81,6 +81,19 @@ export const Inventory = objectType({
         );
       },
     });
+    t.list.nonNull.string('resourceMapIds');
+    t.list.nonNull.field('resource_map_entries', {
+      type: 'ResourceMapResource',
+      async resolve(inventory, _args, ctx) {
+        const resourceMapIds = inventory.resourceMapIds || [];
+        if (!resourceMapIds.length) return [];
+        const entries =
+          await ctx.dataloaders.resourceMapResources.getResourceMapEntriesById.loadMany(
+            resourceMapIds,
+          );
+        return entries.filter(Boolean);
+      },
+    });
     t.field('conditionOnReceipt', { type: InventoryCondition });
     t.string('conditionNotes');
     t.field('expectedReturnDate', { type: 'DateTime' });
@@ -542,6 +555,8 @@ export const CreateInventoryInput = inputObjectType({
     t.string('pimCategoryPath');
     t.string('pimCategoryName');
     t.string('pimProductId');
+    t.string('resourceMapId');
+    t.list.nonNull.id('resourceMapIds');
     t.field('expectedReturnDate', { type: 'DateTime' });
     t.field('actualReturnDate', { type: 'DateTime' });
   },
@@ -562,6 +577,7 @@ export const BulkMarkInventoryReceivedInput = inputObjectType({
     t.string('receiptNotes');
     t.string('pimProductId');
     t.string('resourceMapId');
+    t.list.nonNull.id('resourceMapIds');
     t.field('conditionOnReceipt', { type: InventoryCondition });
     t.string('conditionNotes');
     t.string('assetId');
@@ -747,6 +763,8 @@ export const InventoryMutation = extendType({
             pimCategoryPath: input.pimCategoryPath ?? undefined,
             pimCategoryName: input.pimCategoryName ?? undefined,
             pimProductId: input.pimProductId ?? undefined,
+            resourceMapId: input.resourceMapId ?? undefined,
+            resourceMapIds: input.resourceMapIds ?? undefined,
             expectedReturnDate: input.expectedReturnDate ?? undefined,
             actualReturnDate: input.actualReturnDate ?? undefined,
           },
@@ -873,6 +891,7 @@ export const InventoryMutation = extendType({
           receiptNotes: input.receiptNotes ?? undefined,
           pimProductId: input.pimProductId ?? undefined,
           resourceMapId: input.resourceMapId ?? undefined,
+          resourceMapIds: input.resourceMapIds ?? undefined,
           conditionOnReceipt: input.conditionOnReceipt ?? undefined,
           conditionNotes: input.conditionNotes ?? undefined,
           assetId: input.assetId ?? undefined,

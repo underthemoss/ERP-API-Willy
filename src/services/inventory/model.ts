@@ -32,6 +32,7 @@ export type InventoryDoc = {
   receivedAt?: Date;
   receiptNotes?: string;
   resourceMapId?: string;
+  resourceMapIds?: string[];
   conditionOnReceipt?: InventoryCondition;
   conditionNotes?: string;
   expectedReturnDate?: Date;
@@ -56,6 +57,8 @@ export type CreateInventoryInput = {
   pimCategoryPath?: string;
   pimCategoryName?: string;
   pimProductId?: string;
+  resourceMapId?: string;
+  resourceMapIds?: string[];
   expectedReturnDate?: Date;
   actualReturnDate?: Date;
 };
@@ -69,6 +72,7 @@ export type MarkInventoryReceivedInput = {
   receiptNotes?: string;
   pimProductId?: string;
   resourceMapId?: string;
+  resourceMapIds?: string[];
   conditionOnReceipt?: InventoryCondition;
   conditionNotes?: string;
   expectedReturnDate?: Date;
@@ -234,6 +238,8 @@ export class InventoryModel {
         pimCategoryPath: input.pimCategoryPath,
         pimCategoryName: input.pimCategoryName,
         pimProductId: input.pimProductId,
+        resourceMapId: input.resourceMapId,
+        resourceMapIds: input.resourceMapIds,
         expectedReturnDate: input.expectedReturnDate?.toISOString(),
         actualReturnDate: input.actualReturnDate?.toISOString(),
       },
@@ -265,6 +271,7 @@ export class InventoryModel {
         receiptNotes: input?.receiptNotes,
         pimProductId: input?.pimProductId,
         resourceMapId: input?.resourceMapId,
+        resourceMapIds: input?.resourceMapIds,
         conditionOnReceipt: input?.conditionOnReceipt,
         conditionNotes: input?.conditionNotes,
         expectedReturnDate: input?.expectedReturnDate?.toISOString(),

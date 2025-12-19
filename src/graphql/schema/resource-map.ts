@@ -1,6 +1,12 @@
-import { objectType, queryField, list, nonNull } from 'nexus';
+import { objectType, queryField, list, nonNull, enumType, arg } from 'nexus';
 import { ResourceMapResourcesService } from '../../services/resource_map';
 import { GraphQLContext } from '../context';
+import { normalizeResourceMapTagType } from '../../services/resource_map/tag-types';
+
+export const ResourceMapTagTypeEnum = enumType({
+  name: 'ResourceMapTagType',
+  members: ['LOCATION', 'BUSINESS_UNIT', 'ROLE'],
+});
 
 export const ResourceMapResource = objectType({
   name: 'ResourceMapResource',
@@ -13,6 +19,12 @@ export const ResourceMapResource = objectType({
     t.list.nonNull.string('path');
     t.nonNull.string('tenant_id');
     t.string('type');
+    t.field('tagType', {
+      type: ResourceMapTagTypeEnum,
+      resolve: (root) => {
+        return normalizeResourceMapTagType((root as any).type);
+      },
+    });
     t.string('value');
     t.field('parent', {
       type: 'ResourceMapResource',
@@ -83,6 +95,27 @@ export const listResourceMapEntitiesByParentId = queryField(
       const service: ResourceMapResourcesService =
         ctx.services.resourceMapResourcesService;
       return service.getResourceMapEntriesByParentId(args.parent_id, ctx.user);
+    },
+  },
+);
+
+export const listResourceMapEntriesByTagType = queryField(
+  'listResourceMapEntriesByTagType',
+  {
+    type: list('ResourceMapResource'),
+    description: 'List resource map entries filtered by tag type',
+    args: {
+      types: nonNull(arg({ type: nonNull(list(nonNull(ResourceMapTagTypeEnum))) })),
+    },
+    resolve: async (_root, args, ctx: GraphQLContext) => {
+      const service: ResourceMapResourcesService =
+        ctx.services.resourceMapResourcesService;
+      const entries = await service.getResourceMapEntries(ctx.user);
+      const typeSet = new Set(args.types);
+      return entries.filter((entry) => {
+        const tagType = normalizeResourceMapTagType(entry.type);
+        return tagType && typeSet.has(tagType);
+      });
     },
   },
 );

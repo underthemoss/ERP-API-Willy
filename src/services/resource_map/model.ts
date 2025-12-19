@@ -45,6 +45,11 @@ export class ResourceMapResourcesModel {
     return this.collection.findOne({ _id: id });
   }
 
+  async findByIds(ids: string[]): Promise<ResourceMapResourceDoc[]> {
+    if (!ids.length) return [];
+    return this.collection.find({ _id: { $in: ids } }).toArray();
+  }
+
   async findByParentIdAndTenantId(
     parentId: string,
     tenantId: string,

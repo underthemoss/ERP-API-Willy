@@ -593,6 +593,7 @@ input BulkMarkInventoryReceivedInput {
   receiptNotes: String
   receivedAt: DateTime
   resourceMapId: String
+  resourceMapIds: [ID!]
 }
 
 type BulkMarkInventoryReceivedResult {
@@ -743,6 +744,8 @@ input CreateInventoryInput {
   pimProductId: String
   purchaseOrderId: String
   purchaseOrderLineItemId: String
+  resourceMapId: String
+  resourceMapIds: [ID!]
   status: InventoryStatus!
   workspaceId: String
 }
@@ -1301,6 +1304,8 @@ type Inventory {
   receivedAt: DateTime
   resourceMap: ResourceMapResource
   resourceMapId: String
+  resourceMapIds: [String!]
+  resource_map_entries: [ResourceMapResource!]
   status: InventoryStatus!
   updatedAt: DateTime!
   updatedBy: String!
@@ -2530,6 +2535,9 @@ type Query {
 
   """List resource map entities by parent_id (with tenant scoping)"""
   listResourceMapEntriesByParentId(parent_id: String!): [ResourceMapResource]
+
+  """List resource map entries filtered by tag type"""
+  listResourceMapEntriesByTagType(types: [ResourceMapTagType!]!): [ResourceMapResource]
   listSalesOrders(limit: Int = 20, offset: Int = 0, workspaceId: String!): SalesOrderListResult
 
   """
@@ -3180,9 +3188,16 @@ type ResourceMapResource {
   parent_id: String
   path: [String!]
   resource_id: String!
+  tagType: ResourceMapTagType
   tenant_id: String!
   type: String
   value: String
+}
+
+enum ResourceMapTagType {
+  BUSINESS_UNIT
+  LOCATION
+  ROLE
 }
 
 enum ResourceType {

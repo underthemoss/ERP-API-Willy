@@ -17,6 +17,8 @@ const createInventoryEventSchema = z.object({
   pimCategoryPath: z.string().optional(),
   pimCategoryName: z.string().optional(),
   pimProductId: z.string().optional(),
+  resourceMapId: z.string().optional(),
+  resourceMapIds: z.array(z.string()).optional(),
   expectedReturnDate: z.string().optional(), // ISO date string
   actualReturnDate: z.string().optional(), // ISO date string
 });
@@ -27,6 +29,7 @@ const inventoryReceivedEventSchema = z.object({
   receiptNotes: z.string().optional(),
   pimProductId: z.string().optional(),
   resourceMapId: z.string().optional(),
+  resourceMapIds: z.array(z.string()).optional(),
   conditionOnReceipt: z
     .enum(['NEW', 'USED', 'DAMAGED', 'REFURBISHED'])
     .optional(),
@@ -82,6 +85,8 @@ const baseInventoryReducer: InventoryReducer = (state, event) => {
       pimCategoryPath: event.payload.pimCategoryPath,
       pimCategoryName: event.payload.pimCategoryName,
       pimProductId: event.payload.pimProductId,
+      resourceMapId: event.payload.resourceMapId,
+      resourceMapIds: event.payload.resourceMapIds,
       expectedReturnDate: event.payload.expectedReturnDate
         ? new Date(event.payload.expectedReturnDate)
         : undefined,
@@ -111,6 +116,7 @@ const baseInventoryReducer: InventoryReducer = (state, event) => {
       receiptNotes: event.payload.receiptNotes ?? state.receiptNotes,
       pimProductId: event.payload.pimProductId ?? state.pimProductId,
       resourceMapId: event.payload.resourceMapId ?? state.resourceMapId,
+      resourceMapIds: event.payload.resourceMapIds ?? state.resourceMapIds,
       conditionOnReceipt:
         event.payload.conditionOnReceipt ?? state.conditionOnReceipt,
       conditionNotes: event.payload.conditionNotes ?? state.conditionNotes,

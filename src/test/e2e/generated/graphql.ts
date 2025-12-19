@@ -558,6 +558,7 @@ export type BulkMarkInventoryReceivedInput = {
   receiptNotes?: InputMaybe<Scalars['String']['input']>;
   receivedAt?: InputMaybe<Scalars['DateTime']['input']>;
   resourceMapId?: InputMaybe<Scalars['String']['input']>;
+  resourceMapIds?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
 export type BulkMarkInventoryReceivedResult = {
@@ -715,6 +716,8 @@ export type CreateInventoryInput = {
   pimProductId?: InputMaybe<Scalars['String']['input']>;
   purchaseOrderId?: InputMaybe<Scalars['String']['input']>;
   purchaseOrderLineItemId?: InputMaybe<Scalars['String']['input']>;
+  resourceMapId?: InputMaybe<Scalars['String']['input']>;
+  resourceMapIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   status: InventoryStatus;
   workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
@@ -1285,6 +1288,8 @@ export type Inventory = {
   receivedAt?: Maybe<Scalars['DateTime']['output']>;
   resourceMap?: Maybe<ResourceMapResource>;
   resourceMapId?: Maybe<Scalars['String']['output']>;
+  resourceMapIds?: Maybe<Array<Scalars['String']['output']>>;
+  resource_map_entries?: Maybe<Array<ResourceMapResource>>;
   status: InventoryStatus;
   updatedAt: Scalars['DateTime']['output'];
   updatedBy: Scalars['String']['output'];
@@ -3294,6 +3299,8 @@ export type Query = {
   listResourceMapEntries?: Maybe<Array<Maybe<ResourceMapResource>>>;
   /** List resource map entities by parent_id (with tenant scoping) */
   listResourceMapEntriesByParentId?: Maybe<Array<Maybe<ResourceMapResource>>>;
+  /** List resource map entries filtered by tag type */
+  listResourceMapEntriesByTagType?: Maybe<Array<Maybe<ResourceMapResource>>>;
   listSalesOrders?: Maybe<SalesOrderListResult>;
   /** Lists all possible scope_of_work codes and their descriptions, including recommended usage and stage meaning. */
   listScopeOfWorkCodes?: Maybe<Array<Maybe<ScopeOfWorkCode>>>;
@@ -3687,6 +3694,11 @@ export type QueryListRentalViewsArgs = {
 
 export type QueryListResourceMapEntriesByParentIdArgs = {
   parent_id: Scalars['String']['input'];
+};
+
+
+export type QueryListResourceMapEntriesByTagTypeArgs = {
+  types: Array<ResourceMapTagType>;
 };
 
 
@@ -4415,10 +4427,17 @@ export type ResourceMapResource = {
   parent_id?: Maybe<Scalars['String']['output']>;
   path?: Maybe<Array<Scalars['String']['output']>>;
   resource_id: Scalars['String']['output'];
+  tagType?: Maybe<ResourceMapTagType>;
   tenant_id: Scalars['String']['output'];
   type?: Maybe<Scalars['String']['output']>;
   value?: Maybe<Scalars['String']['output']>;
 };
+
+export enum ResourceMapTagType {
+  BusinessUnit = 'BUSINESS_UNIT',
+  Location = 'LOCATION',
+  Role = 'ROLE'
+}
 
 export enum ResourceType {
   ErpCharge = 'ERP_CHARGE',
@@ -8579,7 +8598,7 @@ export type IntakeFormWorkspaceFieldPolicy = {
 	logoUrl?: FieldPolicy<any> | FieldReadFunction<any>,
 	name?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type InventoryKeySpecifier = ('actualReturnDate' | 'asset' | 'assetId' | 'companyId' | 'conditionNotes' | 'conditionOnReceipt' | 'createdAt' | 'createdBy' | 'createdByUser' | 'expectedReturnDate' | 'fulfilment' | 'fulfilmentId' | 'id' | 'isThirdPartyRental' | 'pimCategory' | 'pimCategoryId' | 'pimCategoryName' | 'pimCategoryPath' | 'pimProduct' | 'pimProductId' | 'purchaseOrder' | 'purchaseOrderId' | 'purchaseOrderLineItem' | 'purchaseOrderLineItemId' | 'receiptNotes' | 'receivedAt' | 'resourceMap' | 'resourceMapId' | 'status' | 'updatedAt' | 'updatedBy' | 'updatedByUser' | 'workspaceId' | InventoryKeySpecifier)[];
+export type InventoryKeySpecifier = ('actualReturnDate' | 'asset' | 'assetId' | 'companyId' | 'conditionNotes' | 'conditionOnReceipt' | 'createdAt' | 'createdBy' | 'createdByUser' | 'expectedReturnDate' | 'fulfilment' | 'fulfilmentId' | 'id' | 'isThirdPartyRental' | 'pimCategory' | 'pimCategoryId' | 'pimCategoryName' | 'pimCategoryPath' | 'pimProduct' | 'pimProductId' | 'purchaseOrder' | 'purchaseOrderId' | 'purchaseOrderLineItem' | 'purchaseOrderLineItemId' | 'receiptNotes' | 'receivedAt' | 'resourceMap' | 'resourceMapId' | 'resourceMapIds' | 'resource_map_entries' | 'status' | 'updatedAt' | 'updatedBy' | 'updatedByUser' | 'workspaceId' | InventoryKeySpecifier)[];
 export type InventoryFieldPolicy = {
 	actualReturnDate?: FieldPolicy<any> | FieldReadFunction<any>,
 	asset?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -8609,6 +8628,8 @@ export type InventoryFieldPolicy = {
 	receivedAt?: FieldPolicy<any> | FieldReadFunction<any>,
 	resourceMap?: FieldPolicy<any> | FieldReadFunction<any>,
 	resourceMapId?: FieldPolicy<any> | FieldReadFunction<any>,
+	resourceMapIds?: FieldPolicy<any> | FieldReadFunction<any>,
+	resource_map_entries?: FieldPolicy<any> | FieldReadFunction<any>,
 	status?: FieldPolicy<any> | FieldReadFunction<any>,
 	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
 	updatedBy?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9161,7 +9182,7 @@ export type PurchaseOrderPricingFieldPolicy = {
 	sub_total_in_cents?: FieldPolicy<any> | FieldReadFunction<any>,
 	total_in_cents?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type QueryKeySpecifier = ('admin' | 'bulkCalculateSubTotal' | 'calculateSubTotal' | 'getBrandByDomain' | 'getBrandById' | 'getBrandsByIds' | 'getBulkSearchDocumentsById' | 'getContactById' | 'getCurrentSequenceNumber' | 'getCurrentUser' | 'getDefaultTemplates' | 'getFulfilmentById' | 'getIntakeFormById' | 'getIntakeFormSubmissionById' | 'getIntakeFormSubmissionByPurchaseOrderId' | 'getIntakeFormSubmissionBySalesOrderId' | 'getIntakeFormSubmissionLineItem' | 'getInventoryReservationById' | 'getNoteById' | 'getPimCategoryById' | 'getPimProductById' | 'getPriceBookById' | 'getPriceById' | 'getProjectById' | 'getPurchaseOrderById' | 'getPurchaseOrderLineItemById' | 'getReferenceNumberTemplate' | 'getResourceMapEntry' | 'getSalesOrderById' | 'getSalesOrderLineItemById' | 'getSearchDocumentByDocumentId' | 'getSearchDocumentById' | 'getSearchUserState' | 'getSignedUploadUrl' | 'getUsersById' | 'getWorkflowConfigurationById' | 'getWorkspaceById' | 'helloWorld' | 'inventoryById' | 'invoiceById' | 'listAssetSchedules' | 'listAssets' | 'listCharges' | 'listContacts' | 'listFilesByEntityId' | 'listFulfilments' | 'listIntakeFormSubmissionLineItems' | 'listIntakeFormSubmissions' | 'listIntakeFormSubmissionsAsBuyer' | 'listIntakeForms' | 'listIntakeFormsForUser' | 'listInventory' | 'listInventoryGroupedByPimCategoryId' | 'listInventoryReservations' | 'listInvoices' | 'listJoinableWorkspaces' | 'listMyOrphanedSubmissions' | 'listNotesByEntityId' | 'listPimCategories' | 'listPimProducts' | 'listPriceBookCategories' | 'listPriceBooks' | 'listPriceNames' | 'listPrices' | 'listProjectContactRelationCodes' | 'listProjectStatusCodes' | 'listProjects' | 'listProjectsByParentProjectId' | 'listPurchaseOrders' | 'listQuotes' | 'listRFQs' | 'listReferenceNumberTemplates' | 'listRentalFulfilments' | 'listRentalViews' | 'listResourceMapEntries' | 'listResourceMapEntriesByParentId' | 'listSalesOrders' | 'listScopeOfWorkCodes' | 'listTopLevelProjects' | 'listTransactions' | 'listUserResourcePermissions' | 'listWorkflowConfigurations' | 'listWorkspaceMembers' | 'listWorkspaces' | 'llm' | 'quoteById' | 'quoteRevisionById' | 'rfqById' | 'searchBrands' | 'searchDocuments' | 'usersSearch' | 'validEnterpriseDomain' | QueryKeySpecifier)[];
+export type QueryKeySpecifier = ('admin' | 'bulkCalculateSubTotal' | 'calculateSubTotal' | 'getBrandByDomain' | 'getBrandById' | 'getBrandsByIds' | 'getBulkSearchDocumentsById' | 'getContactById' | 'getCurrentSequenceNumber' | 'getCurrentUser' | 'getDefaultTemplates' | 'getFulfilmentById' | 'getIntakeFormById' | 'getIntakeFormSubmissionById' | 'getIntakeFormSubmissionByPurchaseOrderId' | 'getIntakeFormSubmissionBySalesOrderId' | 'getIntakeFormSubmissionLineItem' | 'getInventoryReservationById' | 'getNoteById' | 'getPimCategoryById' | 'getPimProductById' | 'getPriceBookById' | 'getPriceById' | 'getProjectById' | 'getPurchaseOrderById' | 'getPurchaseOrderLineItemById' | 'getReferenceNumberTemplate' | 'getResourceMapEntry' | 'getSalesOrderById' | 'getSalesOrderLineItemById' | 'getSearchDocumentByDocumentId' | 'getSearchDocumentById' | 'getSearchUserState' | 'getSignedUploadUrl' | 'getUsersById' | 'getWorkflowConfigurationById' | 'getWorkspaceById' | 'helloWorld' | 'inventoryById' | 'invoiceById' | 'listAssetSchedules' | 'listAssets' | 'listCharges' | 'listContacts' | 'listFilesByEntityId' | 'listFulfilments' | 'listIntakeFormSubmissionLineItems' | 'listIntakeFormSubmissions' | 'listIntakeFormSubmissionsAsBuyer' | 'listIntakeForms' | 'listIntakeFormsForUser' | 'listInventory' | 'listInventoryGroupedByPimCategoryId' | 'listInventoryReservations' | 'listInvoices' | 'listJoinableWorkspaces' | 'listMyOrphanedSubmissions' | 'listNotesByEntityId' | 'listPimCategories' | 'listPimProducts' | 'listPriceBookCategories' | 'listPriceBooks' | 'listPriceNames' | 'listPrices' | 'listProjectContactRelationCodes' | 'listProjectStatusCodes' | 'listProjects' | 'listProjectsByParentProjectId' | 'listPurchaseOrders' | 'listQuotes' | 'listRFQs' | 'listReferenceNumberTemplates' | 'listRentalFulfilments' | 'listRentalViews' | 'listResourceMapEntries' | 'listResourceMapEntriesByParentId' | 'listResourceMapEntriesByTagType' | 'listSalesOrders' | 'listScopeOfWorkCodes' | 'listTopLevelProjects' | 'listTransactions' | 'listUserResourcePermissions' | 'listWorkflowConfigurations' | 'listWorkspaceMembers' | 'listWorkspaces' | 'llm' | 'quoteById' | 'quoteRevisionById' | 'rfqById' | 'searchBrands' | 'searchDocuments' | 'usersSearch' | 'validEnterpriseDomain' | QueryKeySpecifier)[];
 export type QueryFieldPolicy = {
 	admin?: FieldPolicy<any> | FieldReadFunction<any>,
 	bulkCalculateSubTotal?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9239,6 +9260,7 @@ export type QueryFieldPolicy = {
 	listRentalViews?: FieldPolicy<any> | FieldReadFunction<any>,
 	listResourceMapEntries?: FieldPolicy<any> | FieldReadFunction<any>,
 	listResourceMapEntriesByParentId?: FieldPolicy<any> | FieldReadFunction<any>,
+	listResourceMapEntriesByTagType?: FieldPolicy<any> | FieldReadFunction<any>,
 	listSalesOrders?: FieldPolicy<any> | FieldReadFunction<any>,
 	listScopeOfWorkCodes?: FieldPolicy<any> | FieldReadFunction<any>,
 	listTopLevelProjects?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9752,7 +9774,7 @@ export type RentalViewStatusFieldPolicy = {
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
 	name?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type ResourceMapResourceKeySpecifier = ('children' | 'hierarchy_id' | 'hierarchy_name' | 'id' | 'parent' | 'parent_id' | 'path' | 'resource_id' | 'tenant_id' | 'type' | 'value' | ResourceMapResourceKeySpecifier)[];
+export type ResourceMapResourceKeySpecifier = ('children' | 'hierarchy_id' | 'hierarchy_name' | 'id' | 'parent' | 'parent_id' | 'path' | 'resource_id' | 'tagType' | 'tenant_id' | 'type' | 'value' | ResourceMapResourceKeySpecifier)[];
 export type ResourceMapResourceFieldPolicy = {
 	children?: FieldPolicy<any> | FieldReadFunction<any>,
 	hierarchy_id?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9762,6 +9784,7 @@ export type ResourceMapResourceFieldPolicy = {
 	parent_id?: FieldPolicy<any> | FieldReadFunction<any>,
 	path?: FieldPolicy<any> | FieldReadFunction<any>,
 	resource_id?: FieldPolicy<any> | FieldReadFunction<any>,
+	tagType?: FieldPolicy<any> | FieldReadFunction<any>,
 	tenant_id?: FieldPolicy<any> | FieldReadFunction<any>,
 	type?: FieldPolicy<any> | FieldReadFunction<any>,
 	value?: FieldPolicy<any> | FieldReadFunction<any>
