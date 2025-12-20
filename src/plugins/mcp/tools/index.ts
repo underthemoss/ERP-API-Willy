@@ -31,6 +31,9 @@ import { createSalePriceTool } from './create_sale_price';
 import { searchPricesTool } from './search_prices';
 import { updatePriceTool } from './update_price';
 import { deletePriceTool } from './delete_price';
+import { createResourceMapTagTool } from './create_resource_map_tag';
+import { updateResourceMapTagTool } from './update_resource_map_tag';
+import { deleteResourceMapTagTool } from './delete_resource_map_tag';
 import type { McpTool } from './types';
 
 export { createMcpTool, type McpTool } from './types';
@@ -62,4 +65,7 @@ export const mcpTools: McpTool[] = [
   searchPricesTool,
   updatePriceTool,
   deletePriceTool,
+  createResourceMapTagTool,
+  updateResourceMapTagTool,
+  deleteResourceMapTagTool,
 ] as McpTool[];

@@ -1,5 +1,6 @@
 import { createTestEnvironment } from './test-environment';
 import { gql } from 'graphql-request';
+import { ResourceMapTagType } from './generated/graphql';
 
 const { createClient, getApiUrl, mintTestJwtToken } = createTestEnvironment();
 
@@ -52,6 +53,14 @@ gql`
       name
       priceType
       priceBookId
+    }
+  }
+
+  mutation CreateResourceMapTagForMCP($input: CreateResourceMapTagInput!) {
+    createResourceMapTag(input: $input) {
+      id
+      value
+      tagType
     }
   }
 `;
@@ -415,6 +424,17 @@ describe('MCP Server', () => {
         },
       });
 
+      const { createResourceMapTag } = await sdk.CreateResourceMapTagForMCP({
+        input: {
+          value: `MCP Location ${Date.now()}`,
+          type: ResourceMapTagType.Location,
+        },
+      });
+
+      if (!createResourceMapTag?.id) {
+        throw new Error('Failed to create resource map tag for MCP test');
+      }
+
       const token = await mintTestJwtToken({
         es_user_id: user.id,
         uid: user.id,
@@ -434,6 +454,7 @@ describe('MCP Server', () => {
           email: personEmail,
           phone: '555-5678',
           role: 'Manager',
+          resourceMapIds: [createResourceMapTag.id],
         },
       });
 

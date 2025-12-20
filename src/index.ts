@@ -323,6 +323,7 @@ async function startMainMode() {
 
       const allowedOrigins = [
         'http://localhost:3000',
+        'http://localhost:3001',
         'http://localhost:5000',
         'https://staging-erp.estrack.com',
         'https://erp.estrack.com',

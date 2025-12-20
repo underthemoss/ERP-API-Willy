@@ -879,6 +879,15 @@ input CreateRentalSalesOrderLineItemInput {
   so_quantity: Int
 }
 
+input CreateResourceMapTagInput {
+  hierarchyId: String
+  hierarchyName: String
+  location: ResourceMapLocationInput
+  parentId: String
+  type: ResourceMapTagType!
+  value: String!
+}
+
 input CreateSaleFulfilmentInput {
   assignedToId: String
 
@@ -1812,6 +1821,7 @@ type Mutation {
   createRentalPrice(input: CreateRentalPriceInput!): RentalPrice
   createRentalPurchaseOrderLineItem(input: CreateRentalPurchaseOrderLineItemInput): RentalPurchaseOrderLineItem
   createRentalSalesOrderLineItem(input: CreateRentalSalesOrderLineItemInput): RentalSalesOrderLineItem
+  createResourceMapTag(input: CreateResourceMapTagInput!): ResourceMapResource
   createSaleFulfilment(input: CreateSaleFulfilmentInput!): SaleFulfilment
   createSalePrice(input: CreateSalePriceInput!): SalePrice
   createSalePurchaseOrderLineItem(input: CreateSalePurchaseOrderLineItemInput): SalePurchaseOrderLineItem
@@ -1836,6 +1846,7 @@ type Mutation {
   deletePriceById(id: ID!): Boolean
   deleteProject(id: String!): Project
   deleteReferenceNumberTemplate(id: String!): Boolean
+  deleteResourceMapTag(cascade: Boolean, id: ID!): ResourceMapResource
   deleteWorkflowConfigurationById(id: ID!): Boolean
   exportPrices(priceBookId: ID!): File
   generateReferenceNumber(input: GenerateReferenceNumberInput!): GenerateReferenceNumberResult
@@ -1936,6 +1947,7 @@ type Mutation {
   updateRentalPrice(input: UpdateRentalPriceInput!): RentalPrice
   updateRentalPurchaseOrderLineItem(input: UpdateRentalPurchaseOrderLineItemInput): RentalPurchaseOrderLineItem
   updateRentalSalesOrderLineItem(input: UpdateRentalSalesOrderLineItemInput): RentalSalesOrderLineItem
+  updateResourceMapTag(id: ID!, input: UpdateResourceMapTagInput!): ResourceMapResource
   updateSalePrice(input: UpdateSalePriceInput!): SalePrice
   updateSalePurchaseOrderLineItem(input: UpdateSalePurchaseOrderLineItemInput): SalePurchaseOrderLineItem
   updateSaleSalesOrderLineItem(input: UpdateSaleSalesOrderLineItemInput): SaleSalesOrderLineItem
@@ -2538,6 +2550,9 @@ type Query {
 
   """List resource map entries filtered by tag type"""
   listResourceMapEntriesByTagType(types: [ResourceMapTagType!]!): [ResourceMapResource]
+
+  """List location tags with optional bounds/near filters for map views"""
+  listResourceMapLocationTags(filter: ResourceMapLocationFilterInput): [ResourceMapResource]
   listSalesOrders(limit: Int = 20, offset: Int = 0, workspaceId: String!): SalesOrderListResult
 
   """
@@ -3179,11 +3194,115 @@ enum ResetFrequency {
   yearly
 }
 
+type ResourceMapAddress {
+  city: String
+  country: String
+  line1: String
+  line2: String
+  placeId: String
+  postalCode: String
+  state: String
+}
+
+input ResourceMapAddressInput {
+  city: String
+  country: String
+  line1: String
+  line2: String
+  placeId: String
+  postalCode: String
+  state: String
+}
+
+input ResourceMapBoundsInput {
+  maxLat: Float!
+  maxLng: Float!
+  minLat: Float!
+  minLng: Float!
+}
+
+type ResourceMapGeofence {
+  center: ResourceMapLatLng
+  polygon: [ResourceMapLatLng!]
+  radiusMeters: Float
+  type: ResourceMapGeofenceType!
+}
+
+input ResourceMapGeofenceInput {
+  center: ResourceMapLatLngInput
+  polygon: [ResourceMapLatLngInput!]
+  radiusMeters: Float
+  type: ResourceMapGeofenceType!
+}
+
+enum ResourceMapGeofenceType {
+  CIRCLE
+  POLYGON
+}
+
+type ResourceMapLatLng {
+  accuracyMeters: Float
+  lat: Float!
+  lng: Float!
+}
+
+input ResourceMapLatLngInput {
+  accuracyMeters: Float
+  lat: Float!
+  lng: Float!
+}
+
+type ResourceMapLocation {
+  address: ResourceMapAddress
+  geofence: ResourceMapGeofence
+  kind: ResourceMapLocationType!
+  latLng: ResourceMapLatLng
+  plusCode: ResourceMapPlusCode
+}
+
+input ResourceMapLocationFilterInput {
+  bounds: ResourceMapBoundsInput
+  hierarchyId: String
+  near: ResourceMapNearInput
+}
+
+input ResourceMapLocationInput {
+  address: ResourceMapAddressInput
+  geofence: ResourceMapGeofenceInput
+  kind: ResourceMapLocationType!
+  latLng: ResourceMapLatLngInput
+  plusCode: ResourceMapPlusCodeInput
+}
+
+enum ResourceMapLocationType {
+  ADDRESS
+  GEOFENCE
+  LAT_LNG
+  PLUS_CODE
+}
+
+input ResourceMapNearInput {
+  lat: Float!
+  lng: Float!
+  radiusMeters: Float!
+}
+
+type ResourceMapPlusCode {
+  code: String!
+  localArea: String
+}
+
+input ResourceMapPlusCodeInput {
+  code: String!
+  localArea: String
+}
+
 type ResourceMapResource {
   children: [ResourceMapResource]
   hierarchy_id: String
   hierarchy_name: String
   id: String!
+  location: ResourceMapLocation
   parent: ResourceMapResource
   parent_id: String
   path: [String!]
@@ -3938,6 +4057,14 @@ input UpdateRentalSalesOrderLineItemInput {
   price_id: String
   so_pim_id: String
   so_quantity: Int
+}
+
+input UpdateResourceMapTagInput {
+  hierarchyId: String
+  hierarchyName: String
+  location: ResourceMapLocationInput
+  parentId: String
+  value: String
 }
 
 input UpdateSalePriceInput {

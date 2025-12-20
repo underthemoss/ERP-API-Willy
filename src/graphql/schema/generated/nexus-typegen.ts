@@ -260,6 +260,14 @@ export interface NexusGenInputs {
     so_pim_id?: string | null; // String
     so_quantity?: number | null; // Int
   }
+  CreateResourceMapTagInput: { // input type
+    hierarchyId?: string | null; // String
+    hierarchyName?: string | null; // String
+    location?: NexusGenInputs['ResourceMapLocationInput'] | null; // ResourceMapLocationInput
+    parentId?: string | null; // String
+    type: NexusGenEnums['ResourceMapTagType']; // ResourceMapTagType!
+    value: string; // String!
+  }
   CreateSaleFulfilmentInput: { // input type
     assignedToId?: string | null; // String
     pimDetails?: NexusGenInputs['FulfilmentPimInput'] | null; // FulfilmentPimInput
@@ -628,6 +636,53 @@ export interface NexusGenInputs {
     startDateFrom?: string | null; // String
     startDateTo?: string | null; // String
   }
+  ResourceMapAddressInput: { // input type
+    city?: string | null; // String
+    country?: string | null; // String
+    line1?: string | null; // String
+    line2?: string | null; // String
+    placeId?: string | null; // String
+    postalCode?: string | null; // String
+    state?: string | null; // String
+  }
+  ResourceMapBoundsInput: { // input type
+    maxLat: number; // Float!
+    maxLng: number; // Float!
+    minLat: number; // Float!
+    minLng: number; // Float!
+  }
+  ResourceMapGeofenceInput: { // input type
+    center?: NexusGenInputs['ResourceMapLatLngInput'] | null; // ResourceMapLatLngInput
+    polygon?: NexusGenInputs['ResourceMapLatLngInput'][] | null; // [ResourceMapLatLngInput!]
+    radiusMeters?: number | null; // Float
+    type: NexusGenEnums['ResourceMapGeofenceType']; // ResourceMapGeofenceType!
+  }
+  ResourceMapLatLngInput: { // input type
+    accuracyMeters?: number | null; // Float
+    lat: number; // Float!
+    lng: number; // Float!
+  }
+  ResourceMapLocationFilterInput: { // input type
+    bounds?: NexusGenInputs['ResourceMapBoundsInput'] | null; // ResourceMapBoundsInput
+    hierarchyId?: string | null; // String
+    near?: NexusGenInputs['ResourceMapNearInput'] | null; // ResourceMapNearInput
+  }
+  ResourceMapLocationInput: { // input type
+    address?: NexusGenInputs['ResourceMapAddressInput'] | null; // ResourceMapAddressInput
+    geofence?: NexusGenInputs['ResourceMapGeofenceInput'] | null; // ResourceMapGeofenceInput
+    kind: NexusGenEnums['ResourceMapLocationType']; // ResourceMapLocationType!
+    latLng?: NexusGenInputs['ResourceMapLatLngInput'] | null; // ResourceMapLatLngInput
+    plusCode?: NexusGenInputs['ResourceMapPlusCodeInput'] | null; // ResourceMapPlusCodeInput
+  }
+  ResourceMapNearInput: { // input type
+    lat: number; // Float!
+    lng: number; // Float!
+    radiusMeters: number; // Float!
+  }
+  ResourceMapPlusCodeInput: { // input type
+    code: string; // String!
+    localArea?: string | null; // String
+  }
   SalesOrderInput: { // input type
     buyer_id: string; // String!
     intake_form_submission_id?: string | null; // String
@@ -795,6 +850,13 @@ export interface NexusGenInputs {
     so_pim_id?: string | null; // String
     so_quantity?: number | null; // Int
   }
+  UpdateResourceMapTagInput: { // input type
+    hierarchyId?: string | null; // String
+    hierarchyName?: string | null; // String
+    location?: NexusGenInputs['ResourceMapLocationInput'] | null; // ResourceMapLocationInput
+    parentId?: string | null; // String
+    value?: string | null; // String
+  }
   UpdateSalePriceInput: { // input type
     discounts?: NexusGenScalars['JSON'] | null; // JSON
     id: string; // ID!
@@ -916,6 +978,8 @@ export interface NexusGenEnums {
   RequestType: "PURCHASE" | "RENTAL"
   ReservationType: "FULFILMENT"
   ResetFrequency: "daily" | "monthly" | "never" | "yearly"
+  ResourceMapGeofenceType: "CIRCLE" | "POLYGON"
+  ResourceMapLocationType: "ADDRESS" | "GEOFENCE" | "LAT_LNG" | "PLUS_CODE"
   ResourceMapTagType: "BUSINESS_UNIT" | "LOCATION" | "ROLE"
   ResourceType: "erp/charge" | "erp/contact" | "erp/domain" | "erp/file" | "erp/fulfilment" | "erp/intake_form" | "erp/intake_form_submission" | "erp/invoice" | "erp/platform" | "erp/pricebook" | "erp/pricebook_price" | "erp/project" | "erp/purchase_order" | "erp/quote" | "erp/rfq" | "erp/sales_order" | "erp/service_account" | "erp/user" | "erp/workspace"
   ResourceTypes: RESOURCE_TYPES
@@ -1751,6 +1815,37 @@ export interface NexusGenObjects {
   RentalViewStatus: { // root type
     id?: string | null; // String
     name?: string | null; // String
+  }
+  ResourceMapAddress: { // root type
+    city?: string | null; // String
+    country?: string | null; // String
+    line1?: string | null; // String
+    line2?: string | null; // String
+    placeId?: string | null; // String
+    postalCode?: string | null; // String
+    state?: string | null; // String
+  }
+  ResourceMapGeofence: { // root type
+    center?: NexusGenRootTypes['ResourceMapLatLng'] | null; // ResourceMapLatLng
+    polygon?: NexusGenRootTypes['ResourceMapLatLng'][] | null; // [ResourceMapLatLng!]
+    radiusMeters?: number | null; // Float
+    type: NexusGenEnums['ResourceMapGeofenceType']; // ResourceMapGeofenceType!
+  }
+  ResourceMapLatLng: { // root type
+    accuracyMeters?: number | null; // Float
+    lat: number; // Float!
+    lng: number; // Float!
+  }
+  ResourceMapLocation: { // root type
+    address?: NexusGenRootTypes['ResourceMapAddress'] | null; // ResourceMapAddress
+    geofence?: NexusGenRootTypes['ResourceMapGeofence'] | null; // ResourceMapGeofence
+    kind: NexusGenEnums['ResourceMapLocationType']; // ResourceMapLocationType!
+    latLng?: NexusGenRootTypes['ResourceMapLatLng'] | null; // ResourceMapLatLng
+    plusCode?: NexusGenRootTypes['ResourceMapPlusCode'] | null; // ResourceMapPlusCode
+  }
+  ResourceMapPlusCode: { // root type
+    code: string; // String!
+    localArea?: string | null; // String
   }
   ResourceMapResource: { // root type
     hierarchy_id?: string | null; // String
@@ -2865,6 +2960,7 @@ export interface NexusGenFieldTypes {
     createRentalPrice: NexusGenRootTypes['RentalPrice'] | null; // RentalPrice
     createRentalPurchaseOrderLineItem: NexusGenRootTypes['RentalPurchaseOrderLineItem'] | null; // RentalPurchaseOrderLineItem
     createRentalSalesOrderLineItem: NexusGenRootTypes['RentalSalesOrderLineItem'] | null; // RentalSalesOrderLineItem
+    createResourceMapTag: NexusGenRootTypes['ResourceMapResource'] | null; // ResourceMapResource
     createSaleFulfilment: NexusGenRootTypes['SaleFulfilment'] | null; // SaleFulfilment
     createSalePrice: NexusGenRootTypes['SalePrice'] | null; // SalePrice
     createSalePurchaseOrderLineItem: NexusGenRootTypes['SalePurchaseOrderLineItem'] | null; // SalePurchaseOrderLineItem
@@ -2885,6 +2981,7 @@ export interface NexusGenFieldTypes {
     deletePriceById: boolean | null; // Boolean
     deleteProject: NexusGenRootTypes['Project'] | null; // Project
     deleteReferenceNumberTemplate: boolean | null; // Boolean
+    deleteResourceMapTag: NexusGenRootTypes['ResourceMapResource'] | null; // ResourceMapResource
     deleteWorkflowConfigurationById: boolean | null; // Boolean
     exportPrices: NexusGenRootTypes['File'] | null; // File
     generateReferenceNumber: NexusGenRootTypes['GenerateReferenceNumberResult'] | null; // GenerateReferenceNumberResult
@@ -2965,6 +3062,7 @@ export interface NexusGenFieldTypes {
     updateRentalPrice: NexusGenRootTypes['RentalPrice'] | null; // RentalPrice
     updateRentalPurchaseOrderLineItem: NexusGenRootTypes['RentalPurchaseOrderLineItem'] | null; // RentalPurchaseOrderLineItem
     updateRentalSalesOrderLineItem: NexusGenRootTypes['RentalSalesOrderLineItem'] | null; // RentalSalesOrderLineItem
+    updateResourceMapTag: NexusGenRootTypes['ResourceMapResource'] | null; // ResourceMapResource
     updateSalePrice: NexusGenRootTypes['SalePrice'] | null; // SalePrice
     updateSalePurchaseOrderLineItem: NexusGenRootTypes['SalePurchaseOrderLineItem'] | null; // SalePurchaseOrderLineItem
     updateSaleSalesOrderLineItem: NexusGenRootTypes['SaleSalesOrderLineItem'] | null; // SaleSalesOrderLineItem
@@ -3237,6 +3335,7 @@ export interface NexusGenFieldTypes {
     listResourceMapEntries: Array<NexusGenRootTypes['ResourceMapResource'] | null> | null; // [ResourceMapResource]
     listResourceMapEntriesByParentId: Array<NexusGenRootTypes['ResourceMapResource'] | null> | null; // [ResourceMapResource]
     listResourceMapEntriesByTagType: Array<NexusGenRootTypes['ResourceMapResource'] | null> | null; // [ResourceMapResource]
+    listResourceMapLocationTags: Array<NexusGenRootTypes['ResourceMapResource'] | null> | null; // [ResourceMapResource]
     listSalesOrders: NexusGenRootTypes['SalesOrderListResult'] | null; // SalesOrderListResult
     listScopeOfWorkCodes: Array<NexusGenRootTypes['ScopeOfWorkCode'] | null> | null; // [ScopeOfWorkCode]
     listTopLevelProjects: Array<NexusGenRootTypes['Project'] | null> | null; // [Project]
@@ -3718,11 +3817,43 @@ export interface NexusGenFieldTypes {
     id: string | null; // String
     name: string | null; // String
   }
+  ResourceMapAddress: { // field return type
+    city: string | null; // String
+    country: string | null; // String
+    line1: string | null; // String
+    line2: string | null; // String
+    placeId: string | null; // String
+    postalCode: string | null; // String
+    state: string | null; // String
+  }
+  ResourceMapGeofence: { // field return type
+    center: NexusGenRootTypes['ResourceMapLatLng'] | null; // ResourceMapLatLng
+    polygon: NexusGenRootTypes['ResourceMapLatLng'][] | null; // [ResourceMapLatLng!]
+    radiusMeters: number | null; // Float
+    type: NexusGenEnums['ResourceMapGeofenceType']; // ResourceMapGeofenceType!
+  }
+  ResourceMapLatLng: { // field return type
+    accuracyMeters: number | null; // Float
+    lat: number; // Float!
+    lng: number; // Float!
+  }
+  ResourceMapLocation: { // field return type
+    address: NexusGenRootTypes['ResourceMapAddress'] | null; // ResourceMapAddress
+    geofence: NexusGenRootTypes['ResourceMapGeofence'] | null; // ResourceMapGeofence
+    kind: NexusGenEnums['ResourceMapLocationType']; // ResourceMapLocationType!
+    latLng: NexusGenRootTypes['ResourceMapLatLng'] | null; // ResourceMapLatLng
+    plusCode: NexusGenRootTypes['ResourceMapPlusCode'] | null; // ResourceMapPlusCode
+  }
+  ResourceMapPlusCode: { // field return type
+    code: string; // String!
+    localArea: string | null; // String
+  }
   ResourceMapResource: { // field return type
     children: Array<NexusGenRootTypes['ResourceMapResource'] | null> | null; // [ResourceMapResource]
     hierarchy_id: string | null; // String
     hierarchy_name: string | null; // String
     id: string; // String!
+    location: NexusGenRootTypes['ResourceMapLocation'] | null; // ResourceMapLocation
     parent: NexusGenRootTypes['ResourceMapResource'] | null; // ResourceMapResource
     parent_id: string | null; // String
     path: string[] | null; // [String!]
@@ -5085,6 +5216,7 @@ export interface NexusGenFieldTypeNames {
     createRentalPrice: 'RentalPrice'
     createRentalPurchaseOrderLineItem: 'RentalPurchaseOrderLineItem'
     createRentalSalesOrderLineItem: 'RentalSalesOrderLineItem'
+    createResourceMapTag: 'ResourceMapResource'
     createSaleFulfilment: 'SaleFulfilment'
     createSalePrice: 'SalePrice'
     createSalePurchaseOrderLineItem: 'SalePurchaseOrderLineItem'
@@ -5105,6 +5237,7 @@ export interface NexusGenFieldTypeNames {
     deletePriceById: 'Boolean'
     deleteProject: 'Project'
     deleteReferenceNumberTemplate: 'Boolean'
+    deleteResourceMapTag: 'ResourceMapResource'
     deleteWorkflowConfigurationById: 'Boolean'
     exportPrices: 'File'
     generateReferenceNumber: 'GenerateReferenceNumberResult'
@@ -5185,6 +5318,7 @@ export interface NexusGenFieldTypeNames {
     updateRentalPrice: 'RentalPrice'
     updateRentalPurchaseOrderLineItem: 'RentalPurchaseOrderLineItem'
     updateRentalSalesOrderLineItem: 'RentalSalesOrderLineItem'
+    updateResourceMapTag: 'ResourceMapResource'
     updateSalePrice: 'SalePrice'
     updateSalePurchaseOrderLineItem: 'SalePurchaseOrderLineItem'
     updateSaleSalesOrderLineItem: 'SaleSalesOrderLineItem'
@@ -5457,6 +5591,7 @@ export interface NexusGenFieldTypeNames {
     listResourceMapEntries: 'ResourceMapResource'
     listResourceMapEntriesByParentId: 'ResourceMapResource'
     listResourceMapEntriesByTagType: 'ResourceMapResource'
+    listResourceMapLocationTags: 'ResourceMapResource'
     listSalesOrders: 'SalesOrderListResult'
     listScopeOfWorkCodes: 'ScopeOfWorkCode'
     listTopLevelProjects: 'Project'
@@ -5938,11 +6073,43 @@ export interface NexusGenFieldTypeNames {
     id: 'String'
     name: 'String'
   }
+  ResourceMapAddress: { // field return type name
+    city: 'String'
+    country: 'String'
+    line1: 'String'
+    line2: 'String'
+    placeId: 'String'
+    postalCode: 'String'
+    state: 'String'
+  }
+  ResourceMapGeofence: { // field return type name
+    center: 'ResourceMapLatLng'
+    polygon: 'ResourceMapLatLng'
+    radiusMeters: 'Float'
+    type: 'ResourceMapGeofenceType'
+  }
+  ResourceMapLatLng: { // field return type name
+    accuracyMeters: 'Float'
+    lat: 'Float'
+    lng: 'Float'
+  }
+  ResourceMapLocation: { // field return type name
+    address: 'ResourceMapAddress'
+    geofence: 'ResourceMapGeofence'
+    kind: 'ResourceMapLocationType'
+    latLng: 'ResourceMapLatLng'
+    plusCode: 'ResourceMapPlusCode'
+  }
+  ResourceMapPlusCode: { // field return type name
+    code: 'String'
+    localArea: 'String'
+  }
   ResourceMapResource: { // field return type name
     children: 'ResourceMapResource'
     hierarchy_id: 'String'
     hierarchy_name: 'String'
     id: 'String'
+    location: 'ResourceMapLocation'
     parent: 'ResourceMapResource'
     parent_id: 'String'
     path: 'String'
@@ -6766,6 +6933,9 @@ export interface NexusGenArgTypes {
     createRentalSalesOrderLineItem: { // args
       input?: NexusGenInputs['CreateRentalSalesOrderLineItemInput'] | null; // CreateRentalSalesOrderLineItemInput
     }
+    createResourceMapTag: { // args
+      input: NexusGenInputs['CreateResourceMapTagInput']; // CreateResourceMapTagInput!
+    }
     createSaleFulfilment: { // args
       input: NexusGenInputs['CreateSaleFulfilmentInput']; // CreateSaleFulfilmentInput!
     }
@@ -6832,6 +7002,10 @@ export interface NexusGenArgTypes {
     }
     deleteReferenceNumberTemplate: { // args
       id: string; // String!
+    }
+    deleteResourceMapTag: { // args
+      cascade?: boolean | null; // Boolean
+      id: string; // ID!
     }
     deleteWorkflowConfigurationById: { // args
       id: string; // ID!
@@ -7109,6 +7283,10 @@ export interface NexusGenArgTypes {
     }
     updateRentalSalesOrderLineItem: { // args
       input?: NexusGenInputs['UpdateRentalSalesOrderLineItemInput'] | null; // UpdateRentalSalesOrderLineItemInput
+    }
+    updateResourceMapTag: { // args
+      id: string; // ID!
+      input: NexusGenInputs['UpdateResourceMapTagInput']; // UpdateResourceMapTagInput!
     }
     updateSalePrice: { // args
       input: NexusGenInputs['UpdateSalePriceInput']; // UpdateSalePriceInput!
@@ -7410,6 +7588,9 @@ export interface NexusGenArgTypes {
     }
     listResourceMapEntriesByTagType: { // args
       types: NexusGenEnums['ResourceMapTagType'][]; // [ResourceMapTagType!]!
+    }
+    listResourceMapLocationTags: { // args
+      filter?: NexusGenInputs['ResourceMapLocationFilterInput'] | null; // ResourceMapLocationFilterInput
     }
     listSalesOrders: { // args
       limit: number | null; // Int

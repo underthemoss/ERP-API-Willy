@@ -21,6 +21,16 @@ Tag Types
 - BUSINESS_UNIT
 - ROLE (person contacts only)
 
+Location Metadata (LOCATION tags)
+---------------------------------
+- Optional, map-friendly metadata attached to LOCATION tags only.
+- Supported location kinds:
+  - ADDRESS (structured address with optional lat/lng)
+  - LAT_LNG (point)
+  - PLUS_CODE (Google Plus Codes with optional lat/lng)
+  - GEOFENCE (CIRCLE or POLYGON)
+- BUSINESS_UNIT and ROLE tags must not include location metadata.
+
 Rules and Validation
 --------------------
 - Inventory:
@@ -38,3 +48,16 @@ Notes
   catalog's parent/path fields, but compliance rules are not enforced yet.
 - Inventory supports a primary `resourceMapId` and an optional `resourceMapIds`
   list for additional tags.
+
+CRUD and Map Queries
+--------------------
+Mutations:
+- createResourceMapTag
+- updateResourceMapTag
+- deleteResourceMapTag (supports `cascade` to delete descendants)
+
+Queries:
+- listResourceMapEntries
+- listResourceMapEntriesByParentId
+- listResourceMapEntriesByTagType
+- listResourceMapLocationTags (optional bounds/near filters for map views)

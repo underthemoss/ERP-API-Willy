@@ -850,6 +850,15 @@ export type CreateRentalSalesOrderLineItemInput = {
   so_quantity?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type CreateResourceMapTagInput = {
+  hierarchyId?: InputMaybe<Scalars['String']['input']>;
+  hierarchyName?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<ResourceMapLocationInput>;
+  parentId?: InputMaybe<Scalars['String']['input']>;
+  type: ResourceMapTagType;
+  value: Scalars['String']['input'];
+};
+
 export type CreateSaleFulfilmentInput = {
   assignedToId?: InputMaybe<Scalars['String']['input']>;
   /** If salesOrderLineItemId is not provided, these fields are required */
@@ -1816,6 +1825,7 @@ export type Mutation = {
   createRentalPrice?: Maybe<RentalPrice>;
   createRentalPurchaseOrderLineItem?: Maybe<RentalPurchaseOrderLineItem>;
   createRentalSalesOrderLineItem?: Maybe<RentalSalesOrderLineItem>;
+  createResourceMapTag?: Maybe<ResourceMapResource>;
   createSaleFulfilment?: Maybe<SaleFulfilment>;
   createSalePrice?: Maybe<SalePrice>;
   createSalePurchaseOrderLineItem?: Maybe<SalePurchaseOrderLineItem>;
@@ -1838,6 +1848,7 @@ export type Mutation = {
   deletePriceById?: Maybe<Scalars['Boolean']['output']>;
   deleteProject?: Maybe<Project>;
   deleteReferenceNumberTemplate?: Maybe<Scalars['Boolean']['output']>;
+  deleteResourceMapTag?: Maybe<ResourceMapResource>;
   deleteWorkflowConfigurationById?: Maybe<Scalars['Boolean']['output']>;
   exportPrices?: Maybe<File>;
   generateReferenceNumber?: Maybe<GenerateReferenceNumberResult>;
@@ -1929,6 +1940,7 @@ export type Mutation = {
   updateRentalPrice?: Maybe<RentalPrice>;
   updateRentalPurchaseOrderLineItem?: Maybe<RentalPurchaseOrderLineItem>;
   updateRentalSalesOrderLineItem?: Maybe<RentalSalesOrderLineItem>;
+  updateResourceMapTag?: Maybe<ResourceMapResource>;
   updateSalePrice?: Maybe<SalePrice>;
   updateSalePurchaseOrderLineItem?: Maybe<SalePurchaseOrderLineItem>;
   updateSaleSalesOrderLineItem?: Maybe<SaleSalesOrderLineItem>;
@@ -2138,6 +2150,11 @@ export type MutationCreateRentalSalesOrderLineItemArgs = {
 };
 
 
+export type MutationCreateResourceMapTagArgs = {
+  input: CreateResourceMapTagInput;
+};
+
+
 export type MutationCreateSaleFulfilmentArgs = {
   input: CreateSaleFulfilmentInput;
 };
@@ -2242,6 +2259,12 @@ export type MutationDeleteProjectArgs = {
 
 export type MutationDeleteReferenceNumberTemplateArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type MutationDeleteResourceMapTagArgs = {
+  cascade?: InputMaybe<Scalars['Boolean']['input']>;
+  id: Scalars['ID']['input'];
 };
 
 
@@ -2673,6 +2696,12 @@ export type MutationUpdateRentalPurchaseOrderLineItemArgs = {
 
 export type MutationUpdateRentalSalesOrderLineItemArgs = {
   input?: InputMaybe<UpdateRentalSalesOrderLineItemInput>;
+};
+
+
+export type MutationUpdateResourceMapTagArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateResourceMapTagInput;
 };
 
 
@@ -3301,6 +3330,8 @@ export type Query = {
   listResourceMapEntriesByParentId?: Maybe<Array<Maybe<ResourceMapResource>>>;
   /** List resource map entries filtered by tag type */
   listResourceMapEntriesByTagType?: Maybe<Array<Maybe<ResourceMapResource>>>;
+  /** List location tags with optional bounds/near filters for map views */
+  listResourceMapLocationTags?: Maybe<Array<Maybe<ResourceMapResource>>>;
   listSalesOrders?: Maybe<SalesOrderListResult>;
   /** Lists all possible scope_of_work codes and their descriptions, including recommended usage and stage meaning. */
   listScopeOfWorkCodes?: Maybe<Array<Maybe<ScopeOfWorkCode>>>;
@@ -3699,6 +3730,11 @@ export type QueryListResourceMapEntriesByParentIdArgs = {
 
 export type QueryListResourceMapEntriesByTagTypeArgs = {
   types: Array<ResourceMapTagType>;
+};
+
+
+export type QueryListResourceMapLocationTagsArgs = {
+  filter?: InputMaybe<ResourceMapLocationFilterInput>;
 };
 
 
@@ -4417,12 +4453,121 @@ export enum ResetFrequency {
   Yearly = 'yearly'
 }
 
+export type ResourceMapAddress = {
+  __typename?: 'ResourceMapAddress';
+  city?: Maybe<Scalars['String']['output']>;
+  country?: Maybe<Scalars['String']['output']>;
+  line1?: Maybe<Scalars['String']['output']>;
+  line2?: Maybe<Scalars['String']['output']>;
+  placeId?: Maybe<Scalars['String']['output']>;
+  postalCode?: Maybe<Scalars['String']['output']>;
+  state?: Maybe<Scalars['String']['output']>;
+};
+
+export type ResourceMapAddressInput = {
+  city?: InputMaybe<Scalars['String']['input']>;
+  country?: InputMaybe<Scalars['String']['input']>;
+  line1?: InputMaybe<Scalars['String']['input']>;
+  line2?: InputMaybe<Scalars['String']['input']>;
+  placeId?: InputMaybe<Scalars['String']['input']>;
+  postalCode?: InputMaybe<Scalars['String']['input']>;
+  state?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ResourceMapBoundsInput = {
+  maxLat: Scalars['Float']['input'];
+  maxLng: Scalars['Float']['input'];
+  minLat: Scalars['Float']['input'];
+  minLng: Scalars['Float']['input'];
+};
+
+export type ResourceMapGeofence = {
+  __typename?: 'ResourceMapGeofence';
+  center?: Maybe<ResourceMapLatLng>;
+  polygon?: Maybe<Array<ResourceMapLatLng>>;
+  radiusMeters?: Maybe<Scalars['Float']['output']>;
+  type: ResourceMapGeofenceType;
+};
+
+export type ResourceMapGeofenceInput = {
+  center?: InputMaybe<ResourceMapLatLngInput>;
+  polygon?: InputMaybe<Array<ResourceMapLatLngInput>>;
+  radiusMeters?: InputMaybe<Scalars['Float']['input']>;
+  type: ResourceMapGeofenceType;
+};
+
+export enum ResourceMapGeofenceType {
+  Circle = 'CIRCLE',
+  Polygon = 'POLYGON'
+}
+
+export type ResourceMapLatLng = {
+  __typename?: 'ResourceMapLatLng';
+  accuracyMeters?: Maybe<Scalars['Float']['output']>;
+  lat: Scalars['Float']['output'];
+  lng: Scalars['Float']['output'];
+};
+
+export type ResourceMapLatLngInput = {
+  accuracyMeters?: InputMaybe<Scalars['Float']['input']>;
+  lat: Scalars['Float']['input'];
+  lng: Scalars['Float']['input'];
+};
+
+export type ResourceMapLocation = {
+  __typename?: 'ResourceMapLocation';
+  address?: Maybe<ResourceMapAddress>;
+  geofence?: Maybe<ResourceMapGeofence>;
+  kind: ResourceMapLocationType;
+  latLng?: Maybe<ResourceMapLatLng>;
+  plusCode?: Maybe<ResourceMapPlusCode>;
+};
+
+export type ResourceMapLocationFilterInput = {
+  bounds?: InputMaybe<ResourceMapBoundsInput>;
+  hierarchyId?: InputMaybe<Scalars['String']['input']>;
+  near?: InputMaybe<ResourceMapNearInput>;
+};
+
+export type ResourceMapLocationInput = {
+  address?: InputMaybe<ResourceMapAddressInput>;
+  geofence?: InputMaybe<ResourceMapGeofenceInput>;
+  kind: ResourceMapLocationType;
+  latLng?: InputMaybe<ResourceMapLatLngInput>;
+  plusCode?: InputMaybe<ResourceMapPlusCodeInput>;
+};
+
+export enum ResourceMapLocationType {
+  Address = 'ADDRESS',
+  Geofence = 'GEOFENCE',
+  LatLng = 'LAT_LNG',
+  PlusCode = 'PLUS_CODE'
+}
+
+export type ResourceMapNearInput = {
+  lat: Scalars['Float']['input'];
+  lng: Scalars['Float']['input'];
+  radiusMeters: Scalars['Float']['input'];
+};
+
+export type ResourceMapPlusCode = {
+  __typename?: 'ResourceMapPlusCode';
+  code: Scalars['String']['output'];
+  localArea?: Maybe<Scalars['String']['output']>;
+};
+
+export type ResourceMapPlusCodeInput = {
+  code: Scalars['String']['input'];
+  localArea?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type ResourceMapResource = {
   __typename?: 'ResourceMapResource';
   children?: Maybe<Array<Maybe<ResourceMapResource>>>;
   hierarchy_id?: Maybe<Scalars['String']['output']>;
   hierarchy_name?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
+  location?: Maybe<ResourceMapLocation>;
   parent?: Maybe<ResourceMapResource>;
   parent_id?: Maybe<Scalars['String']['output']>;
   path?: Maybe<Array<Scalars['String']['output']>>;
@@ -5205,6 +5350,14 @@ export type UpdateRentalSalesOrderLineItemInput = {
   price_id?: InputMaybe<Scalars['String']['input']>;
   so_pim_id?: InputMaybe<Scalars['String']['input']>;
   so_quantity?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type UpdateResourceMapTagInput = {
+  hierarchyId?: InputMaybe<Scalars['String']['input']>;
+  hierarchyName?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<ResourceMapLocationInput>;
+  parentId?: InputMaybe<Scalars['String']['input']>;
+  value?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateSalePriceInput = {
@@ -6503,6 +6656,13 @@ export type CreateRentalPriceForMcpMutationVariables = Exact<{
 
 
 export type CreateRentalPriceForMcpMutation = { __typename?: 'Mutation', createRentalPrice?: { __typename?: 'RentalPrice', id: string, name?: string | null, priceType: PriceType, priceBookId?: string | null } | null };
+
+export type CreateResourceMapTagForMcpMutationVariables = Exact<{
+  input: CreateResourceMapTagInput;
+}>;
+
+
+export type CreateResourceMapTagForMcpMutation = { __typename?: 'Mutation', createResourceMapTag?: { __typename?: 'ResourceMapResource', id: string, value?: string | null, tagType?: ResourceMapTagType | null } | null };
 
 export type GetNoteByIdQueryVariables = Exact<{
   id: Scalars['String']['input'];
@@ -8834,7 +8994,7 @@ export type LlmFieldPolicy = {
 	exampleTicket?: FieldPolicy<any> | FieldReadFunction<any>,
 	suggestTaxObligations?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type MutationKeySpecifier = ('acceptQuote' | 'addFileToEntity' | 'addInvoiceCharges' | 'addSearchRecent' | 'addTaxLineItem' | 'admin' | 'adoptOrphanedSubmissions' | 'archiveWorkspace' | 'assignInventoryToRentalFulfilment' | 'bulkMarkInventoryReceived' | 'cancelInvoice' | 'clearInvoiceTaxes' | 'clearSearchRecents' | 'createAssetSchedule' | 'createBusinessContact' | 'createCharge' | 'createFulfilmentReservation' | 'createIntakeForm' | 'createIntakeFormSubmission' | 'createIntakeFormSubmissionLineItem' | 'createInventory' | 'createInvoice' | 'createNote' | 'createPdfFromPageAndAttachToEntityId' | 'createPersonContact' | 'createPriceBook' | 'createProject' | 'createPurchaseOrder' | 'createQuote' | 'createQuoteFromIntakeFormSubmission' | 'createQuoteRevision' | 'createRFQ' | 'createReferenceNumberTemplate' | 'createRentalFulfilment' | 'createRentalPrice' | 'createRentalPurchaseOrderLineItem' | 'createRentalSalesOrderLineItem' | 'createSaleFulfilment' | 'createSalePrice' | 'createSalePurchaseOrderLineItem' | 'createSaleSalesOrderLineItem' | 'createSalesOrder' | 'createServiceFulfilment' | 'createTransaction' | 'createWorkflowConfiguration' | 'createWorkspace' | 'deleteContactById' | 'deleteFulfilment' | 'deleteIntakeForm' | 'deleteIntakeFormSubmissionLineItem' | 'deleteInventory' | 'deleteInvoice' | 'deleteNote' | 'deletePriceBookById' | 'deletePriceById' | 'deleteProject' | 'deleteReferenceNumberTemplate' | 'deleteWorkflowConfigurationById' | 'exportPrices' | 'generateReferenceNumber' | 'getSignedReadUrl' | 'importPrices' | 'inviteUserToWorkspace' | 'joinWorkspace' | 'markInvoiceAsPaid' | 'markInvoiceAsSent' | 'refreshBrand' | 'rejectQuote' | 'removeFileFromEntity' | 'removeSearchRecent' | 'removeTaxLineItem' | 'removeUserFromWorkspace' | 'renameFile' | 'resetSequenceNumber' | 'runNightlyRentalChargesJob' | 'runNightlyRentalChargesJobAsync' | 'sendQuote' | 'setExpectedRentalEndDate' | 'setFulfilmentPurchaseOrderLineItemId' | 'setIntakeFormActive' | 'setInvoiceTax' | 'setRentalEndDate' | 'setRentalStartDate' | 'softDeletePurchaseOrder' | 'softDeletePurchaseOrderLineItem' | 'softDeleteSalesOrder' | 'softDeleteSalesOrderLineItem' | 'submitIntakeFormSubmission' | 'submitPurchaseOrder' | 'submitSalesOrder' | 'syncCurrentUser' | 'toggleSearchFavorite' | 'touchAllContacts' | 'unarchiveWorkspace' | 'unassignInventoryFromRentalFulfilment' | 'updateBusinessAddress' | 'updateBusinessBrandId' | 'updateBusinessContact' | 'updateBusinessName' | 'updateBusinessPhone' | 'updateBusinessTaxId' | 'updateBusinessWebsite' | 'updateFulfilmentAssignee' | 'updateFulfilmentColumn' | 'updateIntakeForm' | 'updateIntakeFormSubmission' | 'updateIntakeFormSubmissionLineItem' | 'updateInventoryActualReturnDate' | 'updateInventoryExpectedReturnDate' | 'updateInventorySerialisedId' | 'updateNote' | 'updatePersonBusiness' | 'updatePersonContact' | 'updatePersonEmail' | 'updatePersonName' | 'updatePersonPhone' | 'updatePersonResourceMap' | 'updatePersonRole' | 'updatePriceBook' | 'updateProject' | 'updateProjectCode' | 'updateProjectContacts' | 'updateProjectDescription' | 'updateProjectName' | 'updateProjectParentProject' | 'updateProjectScopeOfWork' | 'updateProjectStatus' | 'updatePurchaseOrder' | 'updatePurchaseOrderLineItem' | 'updateQuote' | 'updateQuoteRevision' | 'updateQuoteStatus' | 'updateRFQ' | 'updateReferenceNumberTemplate' | 'updateRentalPrice' | 'updateRentalPurchaseOrderLineItem' | 'updateRentalSalesOrderLineItem' | 'updateSalePrice' | 'updateSalePurchaseOrderLineItem' | 'updateSaleSalesOrderLineItem' | 'updateSalesOrder' | 'updateSalesOrderLineItem' | 'updateTaxLineItem' | 'updateWorkflowConfiguration' | 'updateWorkspaceAccessType' | 'updateWorkspaceSettings' | 'updateWorkspaceUserRoles' | 'upsertPimCategory' | 'upsertUser' | MutationKeySpecifier)[];
+export type MutationKeySpecifier = ('acceptQuote' | 'addFileToEntity' | 'addInvoiceCharges' | 'addSearchRecent' | 'addTaxLineItem' | 'admin' | 'adoptOrphanedSubmissions' | 'archiveWorkspace' | 'assignInventoryToRentalFulfilment' | 'bulkMarkInventoryReceived' | 'cancelInvoice' | 'clearInvoiceTaxes' | 'clearSearchRecents' | 'createAssetSchedule' | 'createBusinessContact' | 'createCharge' | 'createFulfilmentReservation' | 'createIntakeForm' | 'createIntakeFormSubmission' | 'createIntakeFormSubmissionLineItem' | 'createInventory' | 'createInvoice' | 'createNote' | 'createPdfFromPageAndAttachToEntityId' | 'createPersonContact' | 'createPriceBook' | 'createProject' | 'createPurchaseOrder' | 'createQuote' | 'createQuoteFromIntakeFormSubmission' | 'createQuoteRevision' | 'createRFQ' | 'createReferenceNumberTemplate' | 'createRentalFulfilment' | 'createRentalPrice' | 'createRentalPurchaseOrderLineItem' | 'createRentalSalesOrderLineItem' | 'createResourceMapTag' | 'createSaleFulfilment' | 'createSalePrice' | 'createSalePurchaseOrderLineItem' | 'createSaleSalesOrderLineItem' | 'createSalesOrder' | 'createServiceFulfilment' | 'createTransaction' | 'createWorkflowConfiguration' | 'createWorkspace' | 'deleteContactById' | 'deleteFulfilment' | 'deleteIntakeForm' | 'deleteIntakeFormSubmissionLineItem' | 'deleteInventory' | 'deleteInvoice' | 'deleteNote' | 'deletePriceBookById' | 'deletePriceById' | 'deleteProject' | 'deleteReferenceNumberTemplate' | 'deleteResourceMapTag' | 'deleteWorkflowConfigurationById' | 'exportPrices' | 'generateReferenceNumber' | 'getSignedReadUrl' | 'importPrices' | 'inviteUserToWorkspace' | 'joinWorkspace' | 'markInvoiceAsPaid' | 'markInvoiceAsSent' | 'refreshBrand' | 'rejectQuote' | 'removeFileFromEntity' | 'removeSearchRecent' | 'removeTaxLineItem' | 'removeUserFromWorkspace' | 'renameFile' | 'resetSequenceNumber' | 'runNightlyRentalChargesJob' | 'runNightlyRentalChargesJobAsync' | 'sendQuote' | 'setExpectedRentalEndDate' | 'setFulfilmentPurchaseOrderLineItemId' | 'setIntakeFormActive' | 'setInvoiceTax' | 'setRentalEndDate' | 'setRentalStartDate' | 'softDeletePurchaseOrder' | 'softDeletePurchaseOrderLineItem' | 'softDeleteSalesOrder' | 'softDeleteSalesOrderLineItem' | 'submitIntakeFormSubmission' | 'submitPurchaseOrder' | 'submitSalesOrder' | 'syncCurrentUser' | 'toggleSearchFavorite' | 'touchAllContacts' | 'unarchiveWorkspace' | 'unassignInventoryFromRentalFulfilment' | 'updateBusinessAddress' | 'updateBusinessBrandId' | 'updateBusinessContact' | 'updateBusinessName' | 'updateBusinessPhone' | 'updateBusinessTaxId' | 'updateBusinessWebsite' | 'updateFulfilmentAssignee' | 'updateFulfilmentColumn' | 'updateIntakeForm' | 'updateIntakeFormSubmission' | 'updateIntakeFormSubmissionLineItem' | 'updateInventoryActualReturnDate' | 'updateInventoryExpectedReturnDate' | 'updateInventorySerialisedId' | 'updateNote' | 'updatePersonBusiness' | 'updatePersonContact' | 'updatePersonEmail' | 'updatePersonName' | 'updatePersonPhone' | 'updatePersonResourceMap' | 'updatePersonRole' | 'updatePriceBook' | 'updateProject' | 'updateProjectCode' | 'updateProjectContacts' | 'updateProjectDescription' | 'updateProjectName' | 'updateProjectParentProject' | 'updateProjectScopeOfWork' | 'updateProjectStatus' | 'updatePurchaseOrder' | 'updatePurchaseOrderLineItem' | 'updateQuote' | 'updateQuoteRevision' | 'updateQuoteStatus' | 'updateRFQ' | 'updateReferenceNumberTemplate' | 'updateRentalPrice' | 'updateRentalPurchaseOrderLineItem' | 'updateRentalSalesOrderLineItem' | 'updateResourceMapTag' | 'updateSalePrice' | 'updateSalePurchaseOrderLineItem' | 'updateSaleSalesOrderLineItem' | 'updateSalesOrder' | 'updateSalesOrderLineItem' | 'updateTaxLineItem' | 'updateWorkflowConfiguration' | 'updateWorkspaceAccessType' | 'updateWorkspaceSettings' | 'updateWorkspaceUserRoles' | 'upsertPimCategory' | 'upsertUser' | MutationKeySpecifier)[];
 export type MutationFieldPolicy = {
 	acceptQuote?: FieldPolicy<any> | FieldReadFunction<any>,
 	addFileToEntity?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -8873,6 +9033,7 @@ export type MutationFieldPolicy = {
 	createRentalPrice?: FieldPolicy<any> | FieldReadFunction<any>,
 	createRentalPurchaseOrderLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	createRentalSalesOrderLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
+	createResourceMapTag?: FieldPolicy<any> | FieldReadFunction<any>,
 	createSaleFulfilment?: FieldPolicy<any> | FieldReadFunction<any>,
 	createSalePrice?: FieldPolicy<any> | FieldReadFunction<any>,
 	createSalePurchaseOrderLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -8893,6 +9054,7 @@ export type MutationFieldPolicy = {
 	deletePriceById?: FieldPolicy<any> | FieldReadFunction<any>,
 	deleteProject?: FieldPolicy<any> | FieldReadFunction<any>,
 	deleteReferenceNumberTemplate?: FieldPolicy<any> | FieldReadFunction<any>,
+	deleteResourceMapTag?: FieldPolicy<any> | FieldReadFunction<any>,
 	deleteWorkflowConfigurationById?: FieldPolicy<any> | FieldReadFunction<any>,
 	exportPrices?: FieldPolicy<any> | FieldReadFunction<any>,
 	generateReferenceNumber?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -8973,6 +9135,7 @@ export type MutationFieldPolicy = {
 	updateRentalPrice?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateRentalPurchaseOrderLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateRentalSalesOrderLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
+	updateResourceMapTag?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateSalePrice?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateSalePurchaseOrderLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateSaleSalesOrderLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9182,7 +9345,7 @@ export type PurchaseOrderPricingFieldPolicy = {
 	sub_total_in_cents?: FieldPolicy<any> | FieldReadFunction<any>,
 	total_in_cents?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type QueryKeySpecifier = ('admin' | 'bulkCalculateSubTotal' | 'calculateSubTotal' | 'getBrandByDomain' | 'getBrandById' | 'getBrandsByIds' | 'getBulkSearchDocumentsById' | 'getContactById' | 'getCurrentSequenceNumber' | 'getCurrentUser' | 'getDefaultTemplates' | 'getFulfilmentById' | 'getIntakeFormById' | 'getIntakeFormSubmissionById' | 'getIntakeFormSubmissionByPurchaseOrderId' | 'getIntakeFormSubmissionBySalesOrderId' | 'getIntakeFormSubmissionLineItem' | 'getInventoryReservationById' | 'getNoteById' | 'getPimCategoryById' | 'getPimProductById' | 'getPriceBookById' | 'getPriceById' | 'getProjectById' | 'getPurchaseOrderById' | 'getPurchaseOrderLineItemById' | 'getReferenceNumberTemplate' | 'getResourceMapEntry' | 'getSalesOrderById' | 'getSalesOrderLineItemById' | 'getSearchDocumentByDocumentId' | 'getSearchDocumentById' | 'getSearchUserState' | 'getSignedUploadUrl' | 'getUsersById' | 'getWorkflowConfigurationById' | 'getWorkspaceById' | 'helloWorld' | 'inventoryById' | 'invoiceById' | 'listAssetSchedules' | 'listAssets' | 'listCharges' | 'listContacts' | 'listFilesByEntityId' | 'listFulfilments' | 'listIntakeFormSubmissionLineItems' | 'listIntakeFormSubmissions' | 'listIntakeFormSubmissionsAsBuyer' | 'listIntakeForms' | 'listIntakeFormsForUser' | 'listInventory' | 'listInventoryGroupedByPimCategoryId' | 'listInventoryReservations' | 'listInvoices' | 'listJoinableWorkspaces' | 'listMyOrphanedSubmissions' | 'listNotesByEntityId' | 'listPimCategories' | 'listPimProducts' | 'listPriceBookCategories' | 'listPriceBooks' | 'listPriceNames' | 'listPrices' | 'listProjectContactRelationCodes' | 'listProjectStatusCodes' | 'listProjects' | 'listProjectsByParentProjectId' | 'listPurchaseOrders' | 'listQuotes' | 'listRFQs' | 'listReferenceNumberTemplates' | 'listRentalFulfilments' | 'listRentalViews' | 'listResourceMapEntries' | 'listResourceMapEntriesByParentId' | 'listResourceMapEntriesByTagType' | 'listSalesOrders' | 'listScopeOfWorkCodes' | 'listTopLevelProjects' | 'listTransactions' | 'listUserResourcePermissions' | 'listWorkflowConfigurations' | 'listWorkspaceMembers' | 'listWorkspaces' | 'llm' | 'quoteById' | 'quoteRevisionById' | 'rfqById' | 'searchBrands' | 'searchDocuments' | 'usersSearch' | 'validEnterpriseDomain' | QueryKeySpecifier)[];
+export type QueryKeySpecifier = ('admin' | 'bulkCalculateSubTotal' | 'calculateSubTotal' | 'getBrandByDomain' | 'getBrandById' | 'getBrandsByIds' | 'getBulkSearchDocumentsById' | 'getContactById' | 'getCurrentSequenceNumber' | 'getCurrentUser' | 'getDefaultTemplates' | 'getFulfilmentById' | 'getIntakeFormById' | 'getIntakeFormSubmissionById' | 'getIntakeFormSubmissionByPurchaseOrderId' | 'getIntakeFormSubmissionBySalesOrderId' | 'getIntakeFormSubmissionLineItem' | 'getInventoryReservationById' | 'getNoteById' | 'getPimCategoryById' | 'getPimProductById' | 'getPriceBookById' | 'getPriceById' | 'getProjectById' | 'getPurchaseOrderById' | 'getPurchaseOrderLineItemById' | 'getReferenceNumberTemplate' | 'getResourceMapEntry' | 'getSalesOrderById' | 'getSalesOrderLineItemById' | 'getSearchDocumentByDocumentId' | 'getSearchDocumentById' | 'getSearchUserState' | 'getSignedUploadUrl' | 'getUsersById' | 'getWorkflowConfigurationById' | 'getWorkspaceById' | 'helloWorld' | 'inventoryById' | 'invoiceById' | 'listAssetSchedules' | 'listAssets' | 'listCharges' | 'listContacts' | 'listFilesByEntityId' | 'listFulfilments' | 'listIntakeFormSubmissionLineItems' | 'listIntakeFormSubmissions' | 'listIntakeFormSubmissionsAsBuyer' | 'listIntakeForms' | 'listIntakeFormsForUser' | 'listInventory' | 'listInventoryGroupedByPimCategoryId' | 'listInventoryReservations' | 'listInvoices' | 'listJoinableWorkspaces' | 'listMyOrphanedSubmissions' | 'listNotesByEntityId' | 'listPimCategories' | 'listPimProducts' | 'listPriceBookCategories' | 'listPriceBooks' | 'listPriceNames' | 'listPrices' | 'listProjectContactRelationCodes' | 'listProjectStatusCodes' | 'listProjects' | 'listProjectsByParentProjectId' | 'listPurchaseOrders' | 'listQuotes' | 'listRFQs' | 'listReferenceNumberTemplates' | 'listRentalFulfilments' | 'listRentalViews' | 'listResourceMapEntries' | 'listResourceMapEntriesByParentId' | 'listResourceMapEntriesByTagType' | 'listResourceMapLocationTags' | 'listSalesOrders' | 'listScopeOfWorkCodes' | 'listTopLevelProjects' | 'listTransactions' | 'listUserResourcePermissions' | 'listWorkflowConfigurations' | 'listWorkspaceMembers' | 'listWorkspaces' | 'llm' | 'quoteById' | 'quoteRevisionById' | 'rfqById' | 'searchBrands' | 'searchDocuments' | 'usersSearch' | 'validEnterpriseDomain' | QueryKeySpecifier)[];
 export type QueryFieldPolicy = {
 	admin?: FieldPolicy<any> | FieldReadFunction<any>,
 	bulkCalculateSubTotal?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9261,6 +9424,7 @@ export type QueryFieldPolicy = {
 	listResourceMapEntries?: FieldPolicy<any> | FieldReadFunction<any>,
 	listResourceMapEntriesByParentId?: FieldPolicy<any> | FieldReadFunction<any>,
 	listResourceMapEntriesByTagType?: FieldPolicy<any> | FieldReadFunction<any>,
+	listResourceMapLocationTags?: FieldPolicy<any> | FieldReadFunction<any>,
 	listSalesOrders?: FieldPolicy<any> | FieldReadFunction<any>,
 	listScopeOfWorkCodes?: FieldPolicy<any> | FieldReadFunction<any>,
 	listTopLevelProjects?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9774,12 +9938,49 @@ export type RentalViewStatusFieldPolicy = {
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
 	name?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type ResourceMapResourceKeySpecifier = ('children' | 'hierarchy_id' | 'hierarchy_name' | 'id' | 'parent' | 'parent_id' | 'path' | 'resource_id' | 'tagType' | 'tenant_id' | 'type' | 'value' | ResourceMapResourceKeySpecifier)[];
+export type ResourceMapAddressKeySpecifier = ('city' | 'country' | 'line1' | 'line2' | 'placeId' | 'postalCode' | 'state' | ResourceMapAddressKeySpecifier)[];
+export type ResourceMapAddressFieldPolicy = {
+	city?: FieldPolicy<any> | FieldReadFunction<any>,
+	country?: FieldPolicy<any> | FieldReadFunction<any>,
+	line1?: FieldPolicy<any> | FieldReadFunction<any>,
+	line2?: FieldPolicy<any> | FieldReadFunction<any>,
+	placeId?: FieldPolicy<any> | FieldReadFunction<any>,
+	postalCode?: FieldPolicy<any> | FieldReadFunction<any>,
+	state?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ResourceMapGeofenceKeySpecifier = ('center' | 'polygon' | 'radiusMeters' | 'type' | ResourceMapGeofenceKeySpecifier)[];
+export type ResourceMapGeofenceFieldPolicy = {
+	center?: FieldPolicy<any> | FieldReadFunction<any>,
+	polygon?: FieldPolicy<any> | FieldReadFunction<any>,
+	radiusMeters?: FieldPolicy<any> | FieldReadFunction<any>,
+	type?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ResourceMapLatLngKeySpecifier = ('accuracyMeters' | 'lat' | 'lng' | ResourceMapLatLngKeySpecifier)[];
+export type ResourceMapLatLngFieldPolicy = {
+	accuracyMeters?: FieldPolicy<any> | FieldReadFunction<any>,
+	lat?: FieldPolicy<any> | FieldReadFunction<any>,
+	lng?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ResourceMapLocationKeySpecifier = ('address' | 'geofence' | 'kind' | 'latLng' | 'plusCode' | ResourceMapLocationKeySpecifier)[];
+export type ResourceMapLocationFieldPolicy = {
+	address?: FieldPolicy<any> | FieldReadFunction<any>,
+	geofence?: FieldPolicy<any> | FieldReadFunction<any>,
+	kind?: FieldPolicy<any> | FieldReadFunction<any>,
+	latLng?: FieldPolicy<any> | FieldReadFunction<any>,
+	plusCode?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ResourceMapPlusCodeKeySpecifier = ('code' | 'localArea' | ResourceMapPlusCodeKeySpecifier)[];
+export type ResourceMapPlusCodeFieldPolicy = {
+	code?: FieldPolicy<any> | FieldReadFunction<any>,
+	localArea?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ResourceMapResourceKeySpecifier = ('children' | 'hierarchy_id' | 'hierarchy_name' | 'id' | 'location' | 'parent' | 'parent_id' | 'path' | 'resource_id' | 'tagType' | 'tenant_id' | 'type' | 'value' | ResourceMapResourceKeySpecifier)[];
 export type ResourceMapResourceFieldPolicy = {
 	children?: FieldPolicy<any> | FieldReadFunction<any>,
 	hierarchy_id?: FieldPolicy<any> | FieldReadFunction<any>,
 	hierarchy_name?: FieldPolicy<any> | FieldReadFunction<any>,
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	location?: FieldPolicy<any> | FieldReadFunction<any>,
 	parent?: FieldPolicy<any> | FieldReadFunction<any>,
 	parent_id?: FieldPolicy<any> | FieldReadFunction<any>,
 	path?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -10940,6 +11141,26 @@ export type StrictTypedTypePolicies = {
 	RentalViewStatus?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | RentalViewStatusKeySpecifier | (() => undefined | RentalViewStatusKeySpecifier),
 		fields?: RentalViewStatusFieldPolicy,
+	},
+	ResourceMapAddress?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ResourceMapAddressKeySpecifier | (() => undefined | ResourceMapAddressKeySpecifier),
+		fields?: ResourceMapAddressFieldPolicy,
+	},
+	ResourceMapGeofence?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ResourceMapGeofenceKeySpecifier | (() => undefined | ResourceMapGeofenceKeySpecifier),
+		fields?: ResourceMapGeofenceFieldPolicy,
+	},
+	ResourceMapLatLng?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ResourceMapLatLngKeySpecifier | (() => undefined | ResourceMapLatLngKeySpecifier),
+		fields?: ResourceMapLatLngFieldPolicy,
+	},
+	ResourceMapLocation?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ResourceMapLocationKeySpecifier | (() => undefined | ResourceMapLocationKeySpecifier),
+		fields?: ResourceMapLocationFieldPolicy,
+	},
+	ResourceMapPlusCode?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ResourceMapPlusCodeKeySpecifier | (() => undefined | ResourceMapPlusCodeKeySpecifier),
+		fields?: ResourceMapPlusCodeFieldPolicy,
 	},
 	ResourceMapResource?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | ResourceMapResourceKeySpecifier | (() => undefined | ResourceMapResourceKeySpecifier),
@@ -13299,6 +13520,15 @@ export const CreateRentalPriceForMcpDocument = gql`
     name
     priceType
     priceBookId
+  }
+}
+    `;
+export const CreateResourceMapTagForMcpDocument = gql`
+    mutation CreateResourceMapTagForMCP($input: CreateResourceMapTagInput!) {
+  createResourceMapTag(input: $input) {
+    id
+    value
+    tagType
   }
 }
     `;
@@ -16823,6 +17053,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     CreateRentalPriceForMCP(variables: CreateRentalPriceForMcpMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CreateRentalPriceForMcpMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreateRentalPriceForMcpMutation>(CreateRentalPriceForMcpDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'CreateRentalPriceForMCP', 'mutation');
+    },
+    CreateResourceMapTagForMCP(variables: CreateResourceMapTagForMcpMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CreateResourceMapTagForMcpMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateResourceMapTagForMcpMutation>(CreateResourceMapTagForMcpDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'CreateResourceMapTagForMCP', 'mutation');
     },
     GetNoteById(variables: GetNoteByIdQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<GetNoteByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GetNoteByIdQuery>(GetNoteByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'GetNoteById', 'query');
