@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { gql } from 'graphql-request';
 import { createMcpTool } from './types';
+import { PersonContactType } from '../generated/graphql';
 
 /**
  * GraphQL operation for create_person_contact tool.
@@ -13,7 +14,7 @@ gql`
       name
       phone
       email
-      role
+      personType
       businessId
       notes
       profilePicture
@@ -22,6 +23,34 @@ gql`
       createdAt
       updatedAt
       resourceMapIds
+      resource_map_entries {
+        id
+        value
+        tagType
+        parent_id
+        hierarchy_id
+        hierarchy_name
+        path
+        location {
+          kind
+          latLng {
+            lat
+            lng
+            accuracyMeters
+          }
+          address {
+            line1
+            city
+            state
+            postalCode
+            country
+          }
+          plusCode {
+            code
+            localArea
+          }
+        }
+      }
       business {
         id
         name
@@ -48,9 +77,10 @@ export const createPersonContactTool = createMcpTool({
       .describe('The workspace ID to create the contact in'),
     name: z.string().describe("The contact's full name"),
     email: z.string().describe("The contact's email address"),
-    role: z
-      .string()
-      .describe("The contact's job title or role at their company"),
+    personType: z
+      .enum(['EMPLOYEE'])
+      .optional()
+      .describe('Set to EMPLOYEE for internal people; omit for external.'),
     businessId: z
       .string()
       .describe('The ID of the business contact this person works for'),
@@ -62,7 +92,7 @@ export const createPersonContactTool = createMcpTool({
       .describe('URL to the profile picture'),
     resourceMapIds: z
       .array(z.string())
-      .min(1)
+      .optional()
       .describe('Array of resource map IDs to associate with this contact'),
   },
   handler: async (sdk, args) => {
@@ -71,25 +101,28 @@ export const createPersonContactTool = createMcpTool({
         workspaceId,
         name,
         email,
-        role,
+        personType,
         businessId,
         phone,
         notes,
         profilePicture,
         resourceMapIds,
       } = args;
+      const personTypeEnum = personType
+        ? PersonContactType.Employee
+        : undefined;
 
       const result = await sdk.McpCreatePersonContact({
         input: {
           workspaceId,
           name,
           email,
-          role,
+          ...(personTypeEnum && { personType: personTypeEnum }),
           businessId,
           ...(phone && { phone }),
           ...(notes && { notes }),
           ...(profilePicture && { profilePicture }),
-          resourceMapIds,
+          ...(resourceMapIds !== undefined && { resourceMapIds }),
         },
       });
 

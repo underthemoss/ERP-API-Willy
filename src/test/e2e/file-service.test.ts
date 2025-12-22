@@ -737,10 +737,11 @@ describe('File Service GraphQL API', () => {
         userName: 'User One',
       });
 
+      const user2Email = `user2-${uuidv4()}@example.com`;
       const { sdk: sdkUser2, user: user2 } = await createClient({
         userId: 'user-2',
         userName: 'User Two',
-        userEmail: 'user2@example.com',
+        userEmail: user2Email,
       });
 
       // User 1 creates workspace and project
@@ -749,7 +750,7 @@ describe('File Service GraphQL API', () => {
       // Invite User 2 to the workspace with Admin role to allow file updates
       await utilsUser1.inviteUserToWorkspace(
         workspace.id,
-        'user2@example.com',
+        user2Email,
         [WorkspaceUserRole.Admin],
         user2.id,
       );

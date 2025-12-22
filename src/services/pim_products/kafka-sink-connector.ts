@@ -1,4 +1,4 @@
-import { KafkaJS } from '@confluentinc/kafka-javascript';
+import type { KafkaJS } from '@confluentinc/kafka-javascript';
 import { type EnvConfig } from '../../config';
 import { type PimProductsModel } from './model';
 import {

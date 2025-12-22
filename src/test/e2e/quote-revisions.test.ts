@@ -189,7 +189,6 @@ gql`
       id
       name
       email
-      role
       businessId
       contactType
     }
@@ -330,7 +329,6 @@ async function setupQuotingTestData(sdk: any, utils: any) {
       workspaceId,
       name: 'Test Buyer Contact Rep',
       email: `buyer-${Date.now()}@example.com`,
-      role: 'Buyer',
       businessId: businessContactId,
     },
   });
@@ -726,7 +724,6 @@ describe('updateQuote e2e', () => {
           workspaceId: workspace1.id,
           name: 'Buyer Contact 1 Rep',
           email: `buyer1-${Date.now()}@example.com`,
-          role: 'Buyer',
           businessId: businessContact1.id,
         },
       });
@@ -737,7 +734,6 @@ describe('updateQuote e2e', () => {
           workspaceId: workspace1.id,
           name: 'Buyer Contact 2 Rep',
           email: `buyer2-${Date.now()}@example.com`,
-          role: 'Buyer',
           businessId: businessContact2.id,
         },
       });

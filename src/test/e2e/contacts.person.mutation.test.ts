@@ -8,7 +8,6 @@ gql`
       id
       name
       email
-      role
       phone
       businessId
       resourceMapIds
@@ -33,12 +32,6 @@ gql`
       email
     }
   }
-  mutation UpdatePersonRole_PersonMutation($id: ID!, $role: String!) {
-    updatePersonRole(id: $id, role: $role) {
-      id
-      role
-    }
-  }
   mutation UpdatePersonBusiness_PersonMutation($id: ID!, $businessId: ID!) {
     updatePersonBusiness(id: $id, businessId: $businessId) {
       id
@@ -61,7 +54,6 @@ gql`
         id
         name
         email
-        role
         phone
         businessId
         resourceMapIds
@@ -117,7 +109,6 @@ describe('PersonContact field patch mutations e2e', () => {
       workspaceId,
       name: 'Patch Person',
       email: 'patch@person.com',
-      role: 'Engineer',
       phone: '333-333-3333',
       businessId,
       resourceMapIds: [],
@@ -163,17 +154,6 @@ describe('PersonContact field patch mutations e2e', () => {
     }
     expect(updatePersonEmail.email).toBe('updated@person.com');
 
-    // updatePersonRole
-    const { updatePersonRole } = await sdk.UpdatePersonRole_PersonMutation({
-      id: personId,
-      role: 'Manager',
-    });
-    expect(updatePersonRole).toBeDefined();
-    if (!updatePersonRole) {
-      throw new Error('updatePersonRole is null or undefined');
-    }
-    expect(updatePersonRole.role).toBe('Manager');
-
     // updatePersonBusiness
     const { updatePersonBusiness } =
       await sdk.UpdatePersonBusiness_PersonMutation({
@@ -209,7 +189,6 @@ describe('PersonContact field patch mutations e2e', () => {
       expect(getContactById.name).toBe('Updated Person');
       expect(getContactById.phone).toBe('444-444-4444');
       expect(getContactById.email).toBe('updated@person.com');
-      expect(getContactById.role).toBe('Manager');
       expect(getContactById.businessId).toBe(businessId);
       expect(getContactById.resourceMapIds).toEqual(['res-1', 'res-2']);
     } else {

@@ -1,4 +1,4 @@
-import { KafkaJS } from '@confluentinc/kafka-javascript';
+import type { KafkaJS } from '@confluentinc/kafka-javascript';
 import { type EnvConfig } from '../../config';
 import { type T3UsersModel, type T3UserUpsertInput } from './model';
 import { getKafkaConsumerGroupId } from '../../lib/kafka-util';

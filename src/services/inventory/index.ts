@@ -1,5 +1,5 @@
 import { type MongoClient, ClientSession } from 'mongodb';
-import { KafkaJS } from '@confluentinc/kafka-javascript';
+import type { KafkaJS } from '@confluentinc/kafka-javascript';
 import { type EnvConfig } from '../../config';
 import {
   createInventoryModel,

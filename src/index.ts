@@ -1,7 +1,6 @@
 import Fastify from 'fastify';
 import fastifyCookie from '@fastify/cookie';
 import { MongoClient, ServerApiVersion } from 'mongodb';
-import { KafkaJS } from '@confluentinc/kafka-javascript';
 import { gqlPlugin } from './graphql';
 import { getEnvConfig } from './config';
 import cors from '@fastify/cors';
@@ -82,23 +81,38 @@ async function startMainMode() {
         ENABLE_REDIS_AUTO_PIPELINING: true,
       }),
     ),
-    Promise.resolve(
-      new KafkaJS.Kafka({
-        kafkaJS: {
-          brokers: [envConfig.KAFKA_API_URL],
-          ...(envConfig.KAFKA_API_URL.includes('localhost')
-            ? {}
-            : {
-                ssl: true,
-                sasl: {
-                  mechanism: 'plain',
-                  username: envConfig.KAFKA_API_KEY,
-                  password: envConfig.KAFKA_API_SECRET,
-                },
-              }),
-        },
-      }),
-    ),
+    (async () => {
+      if (envConfig.DISABLE_KAFKA) {
+        logger.warn('DISABLE_KAFKA=true; skipping Kafka client init');
+        return null;
+      }
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { KafkaJS } = require('@confluentinc/kafka-javascript');
+        return new KafkaJS.Kafka({
+          kafkaJS: {
+            brokers: [envConfig.KAFKA_API_URL],
+            ...(envConfig.KAFKA_API_URL.includes('localhost')
+              ? {}
+              : {
+                  ssl: true,
+                  sasl: {
+                    mechanism: 'plain',
+                    username: envConfig.KAFKA_API_KEY,
+                    password: envConfig.KAFKA_API_SECRET,
+                  },
+                }),
+          },
+        });
+      } catch (error) {
+        logger.warn(
+          { error },
+          'Kafka client init failed; forcing DISABLE_KAFKA=true for this run',
+        );
+        (envConfig as any).DISABLE_KAFKA = true;
+        return null;
+      }
+    })(),
   ]);
 
   const authZ = createAuthZ({
@@ -131,7 +145,7 @@ async function startMainMode() {
   const resourceMapResourcesService = await createResourceMapResourcesService({
     envConfig,
     mongoClient,
-    kafkaClient,
+    kafkaClient: kafkaClient as any,
   });
 
   const [
@@ -153,15 +167,23 @@ async function startMainMode() {
     viewService,
   ] = await Promise.all([
     createUsersService({ envConfig, mongoClient }),
-    createAssetsService({ envConfig, mongoClient, kafkaClient }),
-    createCompaniesService({ envConfig, mongoClient, kafkaClient }),
+    createAssetsService({ envConfig, mongoClient, kafkaClient: kafkaClient as any }),
+    createCompaniesService({
+      envConfig,
+      mongoClient,
+      kafkaClient: kafkaClient as any,
+    }),
     createPimProductsService({
       envConfig,
       mongoClient,
-      kafkaClient,
+      kafkaClient: kafkaClient as any,
       openSearchService,
     }),
-    createPimCategoriesService({ envConfig, mongoClient, kafkaClient }),
+    createPimCategoriesService({
+      envConfig,
+      mongoClient,
+      kafkaClient: kafkaClient as any,
+    }),
     createFileService({ mongoClient, envConfig, authZ }),
     createAssetSchedulesService({ mongoClient }),
     createBrandfetchService({ envConfig, mongoClient }),
@@ -169,7 +191,7 @@ async function startMainMode() {
     createInventoryService({
       mongoClient,
       envConfig,
-      kafkaClient,
+      kafkaClient: kafkaClient as any,
       resourceMapResourcesService,
     }),
     createContactsService({
@@ -186,7 +208,11 @@ async function startMainMode() {
   ]);
 
   // T3UsersService doesn't return a value but needs to be awaited
-  await createT3UsersService({ envConfig, mongoClient, kafkaClient });
+  await createT3UsersService({
+    envConfig,
+    mongoClient,
+    kafkaClient: kafkaClient as any,
+  });
 
   logger.info(
     `Independent services ready in ${Math.round((Date.now() - startTime) / 1000)}s`,

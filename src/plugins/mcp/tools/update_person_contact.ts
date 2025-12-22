@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { gql } from 'graphql-request';
 import { createMcpTool } from './types';
+import { PersonContactType } from '../generated/graphql';
 
 /**
  * GraphQL operation for update_person_contact tool.
@@ -13,7 +14,7 @@ gql`
       name
       phone
       email
-      role
+      personType
       businessId
       notes
       profilePicture
@@ -22,6 +23,34 @@ gql`
       createdAt
       updatedAt
       resourceMapIds
+      resource_map_entries {
+        id
+        value
+        tagType
+        parent_id
+        hierarchy_id
+        hierarchy_name
+        path
+        location {
+          kind
+          latLng {
+            lat
+            lng
+            accuracyMeters
+          }
+          address {
+            line1
+            city
+            state
+            postalCode
+            country
+          }
+          plusCode {
+            code
+            localArea
+          }
+        }
+      }
       business {
         id
         name
@@ -48,10 +77,10 @@ export const updatePersonContactTool = createMcpTool({
     name: z.string().optional().describe("The contact's full name"),
     phone: z.string().optional().describe("The contact's phone number"),
     email: z.string().optional().describe("The contact's email address"),
-    role: z
-      .string()
+    personType: z
+      .enum(['EMPLOYEE'])
       .optional()
-      .describe("The contact's job title or role at their company"),
+      .describe('Set to EMPLOYEE for internal people; omit for external.'),
     businessId: z
       .string()
       .optional()
@@ -68,11 +97,17 @@ export const updatePersonContactTool = createMcpTool({
   },
   handler: async (sdk, args) => {
     try {
-      const { id, ...inputFields } = args;
+      const { id, personType, ...inputFields } = args;
+      const personTypeEnum = personType
+        ? PersonContactType.Employee
+        : undefined;
 
       // Filter out undefined values to only send fields that were explicitly provided
       const input = Object.fromEntries(
-        Object.entries(inputFields).filter(([_, value]) => value !== undefined),
+        Object.entries({
+          ...inputFields,
+          ...(personTypeEnum && { personType: personTypeEnum }),
+        }).filter(([_, value]) => value !== undefined),
       );
 
       if (Object.keys(input).length === 0) {

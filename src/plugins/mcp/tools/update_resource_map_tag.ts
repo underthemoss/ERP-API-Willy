@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { gql } from 'graphql-request';
 import {
   ResourceMapGeofenceType,
+  ResourceMapInteriorSpaceType,
   ResourceMapLocationType,
 } from '../generated/graphql';
 import { createMcpTool } from './types';
@@ -34,12 +35,19 @@ const geofenceSchema = z.object({
   polygon: z.array(latLngSchema).optional(),
 });
 
+const interiorSchema = z.object({
+  floor: z.string().optional(),
+  spaceType: z.nativeEnum(ResourceMapInteriorSpaceType).optional(),
+  code: z.string().optional(),
+});
+
 const locationSchema = z.object({
   kind: z.nativeEnum(ResourceMapLocationType),
   address: addressSchema.optional(),
   latLng: latLngSchema.optional(),
   plusCode: plusCodeSchema.optional(),
   geofence: geofenceSchema.optional(),
+  interior: interiorSchema.optional(),
 });
 
 /**
@@ -89,6 +97,12 @@ gql`
             lng
             accuracyMeters
           }
+        }
+        interior {
+          floor
+          spaceType
+          code
+          qrPayload
         }
       }
     }

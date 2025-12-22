@@ -415,7 +415,6 @@ async function setupTestData(sdk: any, utils: any) {
       workspaceId,
       name: 'Test Buyer Contact Rep',
       email: `buyer-${Date.now()}@example.com`,
-      role: 'Buyer',
       businessId: businessContactId,
     },
   });

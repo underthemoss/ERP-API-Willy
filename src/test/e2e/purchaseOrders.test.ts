@@ -22,7 +22,6 @@ gql`
         id
         name
         email
-        role
         workspaceId
         businessId
         contactType

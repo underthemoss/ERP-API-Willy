@@ -38,7 +38,6 @@ gql`
       profilePicture
       phone
       email
-      role
       businessId
       business {
         id
@@ -75,7 +74,6 @@ gql`
       notes
       phone
       email
-      role
       businessId
       updatedAt
     }
@@ -119,7 +117,6 @@ gql`
             id
             name
             email
-            role
             businessId
           }
           page {
@@ -291,7 +288,6 @@ describe('Contacts CRUD e2e', () => {
       workspaceId,
       name: 'E2E Person',
       email: 'person@e2e.com',
-      role: 'Manager',
       businessId,
       notes: 'Person notes',
       phone: '555-555-5555',
@@ -320,7 +316,6 @@ describe('Contacts CRUD e2e', () => {
       notes: 'Updated person notes',
       phone: '111-222-3333',
       email: 'updated@e2e.com',
-      role: 'Director',
     };
     const { updatePersonContact } = await sdk.UpdatePersonContact({
       id: personId,
@@ -367,7 +362,7 @@ describe('Contacts CRUD e2e', () => {
 
   it('throws an error when creating a person contact with missing required fields', async () => {
     const { sdk } = testClient;
-    // Missing name, workspaceId, email, role, businessId
+    // Missing name, workspaceId, email, businessId
     const badInput = {
       notes: 'Missing required fields',
     };
@@ -400,7 +395,6 @@ describe('Contacts CRUD e2e', () => {
         workspaceId,
         name: 'Employee One',
         email: 'employee1@business.com',
-        role: 'Developer',
         businessId,
       };
 
@@ -415,7 +409,6 @@ describe('Contacts CRUD e2e', () => {
         workspaceId,
         name: 'Employee Two',
         email: 'employee2@business.com',
-        role: 'Manager',
         businessId,
       };
 

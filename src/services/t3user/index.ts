@@ -2,7 +2,7 @@ import { type MongoClient } from 'mongodb';
 import { T3UsersModel, createT3UsersModel, T3UserDoc } from './model';
 import { T3UsersSinkConnector } from './kafka-sink-connector';
 import { EnvConfig } from '../../config';
-import { KafkaJS } from '@confluentinc/kafka-javascript';
+import type { KafkaJS } from '@confluentinc/kafka-javascript';
 
 export { type T3UserDoc } from './model';
 

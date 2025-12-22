@@ -149,7 +149,10 @@ export class WorkspaceService {
   };
 
   // List workspaces that user can read (member or admin)
-  listWorkspaces = async (user: UserAuthPayload) => {
+  listWorkspaces = async (
+    user: UserAuthPayload,
+    page?: { size?: number | null; number?: number | null },
+  ) => {
     // auth - get workspaces user can read
     const canReadWorkspaces = await this.authZ.workspace.listResources({
       permission: ERP_WORKSPACE_PERMISSIONS.READ,
@@ -183,19 +186,36 @@ export class WorkspaceService {
       this.model.countWorkspacesByIds(authorizedWorkspaceIds, false),
     ]);
 
+    const pageSizeRaw = page?.size ?? items.length;
+    const pageNumberRaw = page?.number ?? 1;
+    const size =
+      typeof pageSizeRaw === 'number' && pageSizeRaw > 0
+        ? Math.floor(pageSizeRaw)
+        : items.length;
+    const number =
+      typeof pageNumberRaw === 'number' && pageNumberRaw > 0
+        ? Math.floor(pageNumberRaw)
+        : 1;
+    const start = (number - 1) * size;
+    const pagedItems =
+      size > 0 ? items.slice(start, start + size) : items.slice(0, 0);
+
     return {
-      items,
+      items: pagedItems,
       page: {
-        number: 1,
-        size: items.length,
+        number,
+        size: pagedItems.length,
         totalItems: count,
-        totalPages: Math.ceil(count / items.length) || 0,
+        totalPages: size > 0 ? Math.ceil(count / size) : 0,
       },
     };
   };
 
   // List workspaces that user can join (excludes workspaces they're already a member of)
-  listJoinableWorkspaces = async (user: UserAuthPayload) => {
+  listJoinableWorkspaces = async (
+    user: UserAuthPayload,
+    page?: { size?: number | null; number?: number | null },
+  ) => {
     // Get workspaces user can join (has CAN_JOIN permission)
     const canJoinWorkspaces = await this.authZ.workspace.listResources({
       permission: ERP_WORKSPACE_PERMISSIONS.CAN_JOIN,
@@ -241,13 +261,27 @@ export class WorkspaceService {
       this.model.countWorkspacesByIds(joinableWorkspaceIds),
     ]);
 
+    const pageSizeRaw = page?.size ?? items.length;
+    const pageNumberRaw = page?.number ?? 1;
+    const size =
+      typeof pageSizeRaw === 'number' && pageSizeRaw > 0
+        ? Math.floor(pageSizeRaw)
+        : items.length;
+    const number =
+      typeof pageNumberRaw === 'number' && pageNumberRaw > 0
+        ? Math.floor(pageNumberRaw)
+        : 1;
+    const start = (number - 1) * size;
+    const pagedItems =
+      size > 0 ? items.slice(start, start + size) : items.slice(0, 0);
+
     return {
-      items,
+      items: pagedItems,
       page: {
-        number: 1,
-        size: items.length,
+        number,
+        size: pagedItems.length,
         totalItems: count,
-        totalPages: Math.ceil(count / items.length) || 0,
+        totalPages: size > 0 ? Math.ceil(count / size) : 0,
       },
     };
   };
@@ -307,6 +341,7 @@ export class WorkspaceService {
       name?: string;
       description?: string;
       brandId?: string;
+      orgBusinessContactId?: string | null;
       logoUrl?: string;
       bannerImageUrl?: string;
     },

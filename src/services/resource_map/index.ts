@@ -9,7 +9,7 @@ import { UserAuthPayload } from '../../authentication';
 import { generateId } from '../../lib/id-generator';
 import { ResourceMapResourcesSinkConnector } from './kafka-sink-connector';
 import { EnvConfig } from '../../config';
-import { KafkaJS } from '@confluentinc/kafka-javascript';
+import type { KafkaJS } from '@confluentinc/kafka-javascript';
 import {
   RESOURCE_MAP_TAG_TYPE,
   ResourceMapTagType,
@@ -17,12 +17,16 @@ import {
 } from './tag-types';
 import {
   RESOURCE_MAP_GEOFENCE_TYPE,
+  RESOURCE_MAP_INTERIOR_SPACE_TYPE,
   RESOURCE_MAP_LOCATION_KIND,
   type ResourceMapGeofence,
+  type ResourceMapInteriorMetadata,
   type ResourceMapLatLng,
   type ResourceMapLocation,
   type ResourceMapLocationGeometry,
+  type ResourceMapPlusCode,
 } from './location-types';
+import { geocodeAddressWithMapbox } from './geocoding';
 
 export type ResourceMapTagValidationResult = {
   entries: ResourceMapResourceDoc[];
@@ -67,8 +71,10 @@ export type UpdateResourceMapTagInput = {
 
 export class ResourceMapResourcesService {
   private model: ResourceMapResourcesModel;
-  constructor(config: { model: ResourceMapResourcesModel }) {
+  private envConfig: EnvConfig;
+  constructor(config: { model: ResourceMapResourcesModel; envConfig: EnvConfig }) {
     this.model = config.model;
+    this.envConfig = config.envConfig;
   }
 
   upsertResource = async (
@@ -252,9 +258,16 @@ export class ResourceMapResourcesService {
       }
     }
 
-    const location = validateLocationForTag(tagType, input.location);
-    const locationGeo = buildLocationGeometry(location);
     const id = generateId('RM', tenantId);
+    const resolvedLocation = await resolveLocationForTag({
+      envConfig: this.envConfig,
+      model: this.model,
+      tagId: id,
+      tagType,
+      location: input.location,
+      parent,
+    });
+    const locationGeo = buildLocationGeometry(resolvedLocation);
     const parentPath = parent
       ? normalizePath(parent.path, parent._id)
       : null;
@@ -275,7 +288,7 @@ export class ResourceMapResourcesService {
       tenant_id: tenantId,
       type: tagType,
       value,
-      location: location || undefined,
+      location: resolvedLocation || undefined,
       location_geo: locationGeo || undefined,
     };
 
@@ -396,9 +409,33 @@ export class ResourceMapResourcesService {
         updates.location = null;
         updates.location_geo = null;
       } else {
-        const location = validateLocationForTag(tagType, input.location);
-        updates.location = location || undefined;
-        updates.location_geo = buildLocationGeometry(location) || undefined;
+        if (!input.location) {
+          throw new Error('location is required');
+        }
+        const locationHasInterior = Object.prototype.hasOwnProperty.call(
+          input.location,
+          'interior',
+        );
+        const locationInput =
+          !locationHasInterior && existing.location?.interior
+            ? { ...input.location, interior: existing.location.interior }
+            : input.location;
+        const parentForLocation = parentChanged
+          ? parent
+          : normalizedParentId
+            ? await this.model.findById(normalizedParentId)
+            : null;
+        const resolvedLocation = await resolveLocationForTag({
+          envConfig: this.envConfig,
+          model: this.model,
+          tagId: existing._id,
+          tagType,
+          location: locationInput,
+          parent: parentForLocation,
+        });
+        updates.location = resolvedLocation || undefined;
+        updates.location_geo =
+          buildLocationGeometry(resolvedLocation) || undefined;
       }
     }
 
@@ -771,15 +808,165 @@ const validateLocation = (location: ResourceMapLocation): ResourceMapLocation =>
   throw new Error('Invalid location kind');
 };
 
-const validateLocationForTag = (
-  tagType: ResourceMapTagType,
-  location?: ResourceMapLocation | null,
-) => {
+const resolveLocationForTag = async (opts: {
+  envConfig: EnvConfig;
+  model: ResourceMapResourcesModel;
+  tagId: string;
+  tagType: ResourceMapTagType;
+  location?: ResourceMapLocation | null;
+  parent?: ResourceMapResourceDoc | null;
+}) => {
+  const { envConfig, model, tagId, tagType, location, parent } = opts;
   if (!location) return null;
   if (tagType !== RESOURCE_MAP_TAG_TYPE.LOCATION) {
     throw new Error('Location metadata is only allowed for LOCATION tags');
   }
-  return validateLocation(location);
+
+  const locationWithPlusCode = await inheritPlusCode({
+    location,
+    parent,
+    model,
+  });
+  const validated = validateLocation(locationWithPlusCode);
+  const geocoded = await maybeGeocodeLocation(envConfig, validated);
+  const interior = normalizeInteriorMetadata(locationWithPlusCode.interior, tagId);
+
+  return applyInteriorMetadata(geocoded, interior);
+};
+
+const inheritPlusCode = async (opts: {
+  location: ResourceMapLocation;
+  parent?: ResourceMapResourceDoc | null;
+  model: ResourceMapResourcesModel;
+}) => {
+  const { location, parent, model } = opts;
+  if (location.kind !== RESOURCE_MAP_LOCATION_KIND.PLUS_CODE) {
+    return location;
+  }
+
+  const normalized = normalizePlusCode(location.plus_code);
+  if (normalized?.code) {
+    return { ...location, plus_code: normalized };
+  }
+
+  const inherited = await findNearestPlusCodeAncestor(parent, model);
+  if (!inherited) {
+    throw new Error('location.plus_code.code is required');
+  }
+
+  return {
+    ...location,
+    plus_code: inherited,
+  };
+};
+
+const findNearestPlusCodeAncestor = async (
+  parent: ResourceMapResourceDoc | null | undefined,
+  model: ResourceMapResourcesModel,
+): Promise<ResourceMapPlusCode | null> => {
+  let current = parent ?? null;
+  const visited = new Set<string>();
+
+  while (current && current._id && !visited.has(current._id)) {
+    visited.add(current._id);
+    const normalized = normalizePlusCode(current.location?.plus_code);
+    if (normalized?.code) {
+      return normalized;
+    }
+    const parentId = normalizeId(current.parent_id);
+    if (!parentId) {
+      break;
+    }
+    current = await model.findById(parentId);
+  }
+
+  return null;
+};
+
+const normalizePlusCode = (plusCode?: ResourceMapPlusCode | null) => {
+  if (!plusCode) return undefined;
+  const code = normalizeValue(plusCode.code);
+  if (!code) return undefined;
+  const localArea = normalizeValue(plusCode.local_area);
+  return {
+    code,
+    ...(localArea ? { local_area: localArea } : {}),
+  };
+};
+
+const normalizeInteriorMetadata = (
+  interior?: ResourceMapInteriorMetadata | null,
+  tagId?: string,
+): ResourceMapInteriorMetadata | undefined => {
+  const next: ResourceMapInteriorMetadata = {};
+
+  if (interior) {
+    const floor = normalizeValue(interior.floor);
+    if (floor) next.floor = floor;
+
+    if (interior.space_type) {
+      if (
+        !Object.values(RESOURCE_MAP_INTERIOR_SPACE_TYPE).includes(
+          interior.space_type,
+        )
+      ) {
+        throw new Error('Invalid interior space type');
+      }
+      next.space_type = interior.space_type;
+    }
+
+    const code = normalizeValue(interior.code);
+    if (code) next.code = code;
+
+    const qrPayload = normalizeValue(interior.qr_payload);
+    if (qrPayload) next.qr_payload = qrPayload;
+  }
+
+  if (tagId) {
+    next.qr_payload = tagId;
+  }
+
+  return Object.keys(next).length ? next : undefined;
+};
+
+const applyInteriorMetadata = (
+  location: ResourceMapLocation | null,
+  interior?: ResourceMapInteriorMetadata,
+) => {
+  if (!location) return null;
+  if (!interior) return location;
+  return {
+    ...location,
+    interior,
+  };
+};
+
+const maybeGeocodeLocation = async (
+  envConfig: EnvConfig,
+  location?: ResourceMapLocation | null,
+) => {
+  if (!location) return null;
+  if (location.kind !== RESOURCE_MAP_LOCATION_KIND.ADDRESS) {
+    return location;
+  }
+  if (location.lat_lng) {
+    return location;
+  }
+  if (!envConfig.MAPBOX_ACCESS_TOKEN) {
+    return location;
+  }
+
+  const latLng = await geocodeAddressWithMapbox(location.address, envConfig);
+  if (!latLng) {
+    throw new Error(
+      'Unable to geocode address. Provide lat/lng or a valid address.',
+    );
+  }
+
+  return {
+    ...location,
+    lat_lng: latLng,
+  };
 };
 
 const buildLocationGeometry = (
@@ -877,6 +1064,7 @@ export const createResourceMapResourcesService = async (config: {
   const model = createResourceMapResourcesModel(config);
   const rmResourcesService = new ResourceMapResourcesService({
     model,
+    envConfig: config.envConfig,
   });
   const rmResourcesSinkConnector = new ResourceMapResourcesSinkConnector({
     envConfig: config.envConfig,

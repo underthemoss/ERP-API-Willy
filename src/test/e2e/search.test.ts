@@ -940,7 +940,6 @@ describe.skip('Search Service e2e', () => {
             workspaceId,
             name: `Person With Email ${Date.now()}`,
             email: uniqueEmail,
-            role: 'Engineer',
             businessId: business!.id,
           },
         });
@@ -959,9 +958,9 @@ describe.skip('Search Service e2e', () => {
         );
       });
 
-      it('should search person contacts by role', async () => {
+      it('should search person contacts by name', async () => {
         const { sdk } = testClient;
-        const uniqueRole = `SpecialEngineer${Date.now()}`;
+        const uniqueName = `Person Name ${Date.now()}`;
 
         // Create a business first (person contacts need a businessId)
         const { createBusinessContact: business } =
@@ -975,18 +974,17 @@ describe.skip('Search Service e2e', () => {
         await sdk.CreatePersonContact({
           input: {
             workspaceId,
-            name: `Person With Role ${Date.now()}`,
+            name: uniqueName,
             email: `role${Date.now()}@test.com`,
-            role: uniqueRole,
             businessId: business!.id,
           },
         });
 
-        await waitForSearchIndexing(sdk, workspaceId, uniqueRole, 1, 10000);
+        await waitForSearchIndexing(sdk, workspaceId, uniqueName, 1, 10000);
 
         const { searchDocuments } = await sdk.SearchDocuments({
           workspaceId,
-          searchText: uniqueRole,
+          searchText: uniqueName,
           collections: [SearchableCollectionType.Contacts],
         });
 

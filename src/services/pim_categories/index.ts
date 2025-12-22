@@ -8,7 +8,7 @@ import {
 import { UserAuthPayload } from '../../authentication';
 import { PimCategoriesSinkConnector } from './kafka-sink-connector';
 import { EnvConfig } from '../../config';
-import { KafkaJS } from '@confluentinc/kafka-javascript';
+import type { KafkaJS } from '@confluentinc/kafka-javascript';
 
 // DTOs
 export type { PimCategoryDoc as PimCategory } from './model';

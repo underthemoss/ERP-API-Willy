@@ -3,7 +3,7 @@ import { AssetsModel, createAssetsModel, AssetUpsertInput } from './model';
 import { UserAuthPayload } from '../../authentication';
 import { AssetsSinkConnector } from './kafka-sink-connector';
 import { EnvConfig } from '../../config';
-import { KafkaJS } from '@confluentinc/kafka-javascript';
+import type { KafkaJS } from '@confluentinc/kafka-javascript';
 
 export class AssetsService {
   private model: AssetsModel;

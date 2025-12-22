@@ -175,7 +175,6 @@ gql`
         id
         name
         email
-        role
         workspaceId
         businessId
         contactType
@@ -318,7 +317,6 @@ describe('Reference Number Templates', () => {
       workspaceId: workspace.createWorkspace.id,
       name: 'Test Person Contact',
       email: 'person@test.com',
-      role: 'supplier',
       businessId: createBusinessContact.id,
     };
     const { createPersonContact } =
@@ -688,14 +686,12 @@ describe('Reference Number Templates', () => {
       workspaceId: workspace.createWorkspace.id,
       name: 'Person Contact 1',
       email: 'person1@test.com',
-      role: 'supplier',
       businessId: business1.id,
     };
     const person2Input = {
       workspaceId: workspace.createWorkspace.id,
       name: 'Person Contact 2',
       email: 'person2@test.com',
-      role: 'supplier',
       businessId: business2.id,
     };
 
@@ -815,7 +811,6 @@ describe('Reference Number Templates', () => {
       workspaceId: workspace.createWorkspace.id,
       name: 'Combined Filter Person',
       email: 'combined@test.com',
-      role: 'supplier',
       businessId: createBusinessContact.id,
     };
     const { createPersonContact } =
@@ -1108,7 +1103,6 @@ describe('Reference Number Generation', () => {
       workspaceId: workspace.createWorkspace.id,
       name: 'Special Supplier Contact',
       email: 'supplier@special.com',
-      role: 'supplier',
       businessId: createBusinessContact.id,
     };
     const { createPersonContact } =
@@ -1220,7 +1214,6 @@ describe('Reference Number Generation', () => {
     const contactInput = {
       name: 'Priority Supplier',
       email: 'supplier@priority.com',
-      role: 'supplier',
       businessId: createBusinessContact.id,
       workspaceId: workspace.createWorkspace.id,
     };

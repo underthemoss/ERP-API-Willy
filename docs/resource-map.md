@@ -31,6 +31,15 @@ Location Metadata (LOCATION tags)
   - GEOFENCE (CIRCLE or POLYGON)
 - BUSINESS_UNIT and ROLE tags must not include location metadata.
 
+Interior Metadata (LOCATION tags)
+---------------------------------
+- Optional metadata for indoor/warehouse organization.
+- Fields include:
+  - floor
+  - spaceType (e.g., RACK, BIN, AISLE)
+  - code (freeform identifier)
+  - qrPayload (auto-generated; currently uses the tag ID)
+
 Rules and Validation
 --------------------
 - Inventory:
@@ -48,6 +57,8 @@ Notes
   catalog's parent/path fields, but compliance rules are not enforced yet.
 - Inventory supports a primary `resourceMapId` and an optional `resourceMapIds`
   list for additional tags.
+- PLUS_CODE locations can inherit a plus code from the nearest ancestor when
+  one is not provided.
 
 CRUD and Map Queries
 --------------------

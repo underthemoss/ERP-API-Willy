@@ -34,6 +34,11 @@ import { deletePriceTool } from './delete_price';
 import { createResourceMapTagTool } from './create_resource_map_tag';
 import { updateResourceMapTagTool } from './update_resource_map_tag';
 import { deleteResourceMapTagTool } from './delete_resource_map_tag';
+import { listResourceMapEntriesTool } from './list_resource_map_entries';
+import { getResourceMapEntryTool } from './get_resource_map_entry';
+import { listResourceMapEntriesByParentIdTool } from './list_resource_map_entries_by_parent_id';
+import { listResourceMapEntriesByTagTypeTool } from './list_resource_map_entries_by_tag_type';
+import { listResourceMapLocationTagsTool } from './list_resource_map_location_tags';
 import type { McpTool } from './types';
 
 export { createMcpTool, type McpTool } from './types';
@@ -65,6 +70,11 @@ export const mcpTools: McpTool[] = [
   searchPricesTool,
   updatePriceTool,
   deletePriceTool,
+  listResourceMapEntriesTool,
+  getResourceMapEntryTool,
+  listResourceMapEntriesByParentIdTool,
+  listResourceMapEntriesByTagTypeTool,
+  listResourceMapLocationTagsTool,
   createResourceMapTagTool,
   updateResourceMapTagTool,
   deleteResourceMapTagTool,

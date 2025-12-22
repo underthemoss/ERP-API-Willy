@@ -1919,7 +1919,6 @@ export type Mutation = {
   updatePersonName?: Maybe<PersonContact>;
   updatePersonPhone?: Maybe<PersonContact>;
   updatePersonResourceMap?: Maybe<PersonContact>;
-  updatePersonRole?: Maybe<PersonContact>;
   updatePriceBook?: Maybe<PriceBook>;
   updateProject?: Maybe<Project>;
   updateProjectCode?: Maybe<Project>;
@@ -2590,12 +2589,6 @@ export type MutationUpdatePersonResourceMapArgs = {
 };
 
 
-export type MutationUpdatePersonRoleArgs = {
-  id: Scalars['ID']['input'];
-  role: Scalars['String']['input'];
-};
-
-
 export type MutationUpdatePriceBookArgs = {
   input: UpdatePriceBookInput;
 };
@@ -2753,6 +2746,7 @@ export type MutationUpdateWorkspaceSettingsArgs = {
   description?: InputMaybe<Scalars['String']['input']>;
   logoUrl?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+  orgBusinessContactId?: InputMaybe<Scalars['String']['input']>;
   workspaceId: Scalars['String']['input'];
 };
 
@@ -2925,11 +2919,11 @@ export type PersonContact = {
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   notes?: Maybe<Scalars['String']['output']>;
+  personType?: Maybe<PersonContactType>;
   phone?: Maybe<Scalars['String']['output']>;
   profilePicture?: Maybe<Scalars['String']['output']>;
   resourceMapIds?: Maybe<Array<Scalars['String']['output']>>;
   resource_map_entries: Array<ResourceMapResource>;
-  role?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
   workspaceId: Scalars['String']['output'];
 };
@@ -2939,12 +2933,16 @@ export type PersonContactInput = {
   email: Scalars['String']['input'];
   name: Scalars['String']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;
+  personType?: InputMaybe<PersonContactType>;
   phone?: InputMaybe<Scalars['String']['input']>;
   profilePicture?: InputMaybe<Scalars['String']['input']>;
   resourceMapIds?: InputMaybe<Array<Scalars['ID']['input']>>;
-  role: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
 };
+
+export enum PersonContactType {
+  Employee = 'EMPLOYEE'
+}
 
 export type PimCategory = {
   __typename?: 'PimCategory';
@@ -3635,6 +3633,11 @@ export type QueryListInvoicesArgs = {
 };
 
 
+export type QueryListJoinableWorkspacesArgs = {
+  page?: InputMaybe<PageInfoInput>;
+};
+
+
 export type QueryListNotesByEntityIdArgs = {
   parent_entity_id: Scalars['String']['input'];
 };
@@ -3768,6 +3771,11 @@ export type QueryListWorkflowConfigurationsArgs = {
 
 export type QueryListWorkspaceMembersArgs = {
   workspaceId: Scalars['String']['input'];
+};
+
+
+export type QueryListWorkspacesArgs = {
+  page?: InputMaybe<PageInfoInput>;
 };
 
 
@@ -4501,6 +4509,34 @@ export enum ResourceMapGeofenceType {
   Polygon = 'POLYGON'
 }
 
+export type ResourceMapInteriorMetadata = {
+  __typename?: 'ResourceMapInteriorMetadata';
+  code?: Maybe<Scalars['String']['output']>;
+  floor?: Maybe<Scalars['String']['output']>;
+  qrPayload?: Maybe<Scalars['String']['output']>;
+  spaceType?: Maybe<ResourceMapInteriorSpaceType>;
+};
+
+export type ResourceMapInteriorMetadataInput = {
+  code?: InputMaybe<Scalars['String']['input']>;
+  floor?: InputMaybe<Scalars['String']['input']>;
+  spaceType?: InputMaybe<ResourceMapInteriorSpaceType>;
+};
+
+export enum ResourceMapInteriorSpaceType {
+  Aisle = 'AISLE',
+  Bay = 'BAY',
+  Bin = 'BIN',
+  Building = 'BUILDING',
+  Floor = 'FLOOR',
+  Other = 'OTHER',
+  Rack = 'RACK',
+  Room = 'ROOM',
+  Row = 'ROW',
+  Shelf = 'SHELF',
+  Zone = 'ZONE'
+}
+
 export type ResourceMapLatLng = {
   __typename?: 'ResourceMapLatLng';
   accuracyMeters?: Maybe<Scalars['Float']['output']>;
@@ -4518,6 +4554,7 @@ export type ResourceMapLocation = {
   __typename?: 'ResourceMapLocation';
   address?: Maybe<ResourceMapAddress>;
   geofence?: Maybe<ResourceMapGeofence>;
+  interior?: Maybe<ResourceMapInteriorMetadata>;
   kind: ResourceMapLocationType;
   latLng?: Maybe<ResourceMapLatLng>;
   plusCode?: Maybe<ResourceMapPlusCode>;
@@ -4532,6 +4569,7 @@ export type ResourceMapLocationFilterInput = {
 export type ResourceMapLocationInput = {
   address?: InputMaybe<ResourceMapAddressInput>;
   geofence?: InputMaybe<ResourceMapGeofenceInput>;
+  interior?: InputMaybe<ResourceMapInteriorMetadataInput>;
   kind: ResourceMapLocationType;
   latLng?: InputMaybe<ResourceMapLatLngInput>;
   plusCode?: InputMaybe<ResourceMapPlusCodeInput>;
@@ -5235,10 +5273,10 @@ export type UpdatePersonContactInput = {
   email?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
+  personType?: InputMaybe<PersonContactType>;
   phone?: InputMaybe<Scalars['String']['input']>;
   profilePicture?: InputMaybe<Scalars['String']['input']>;
   resourceMapIds?: InputMaybe<Array<Scalars['ID']['input']>>;
-  role?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdatePriceBookInput = {
@@ -5627,6 +5665,8 @@ export type Workspace = {
   id: Scalars['ID']['output'];
   logoUrl?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  orgBusinessContact?: Maybe<BusinessContact>;
+  orgBusinessContactId?: Maybe<Scalars['ID']['output']>;
   ownerId?: Maybe<Scalars['String']['output']>;
   updatedAt?: Maybe<Scalars['String']['output']>;
   updatedBy?: Maybe<Scalars['String']['output']>;
@@ -5805,7 +5845,7 @@ export type CreatePersonContact_PersonMutationMutationVariables = Exact<{
 }>;
 
 
-export type CreatePersonContact_PersonMutationMutation = { __typename?: 'Mutation', createPersonContact?: { __typename?: 'PersonContact', id: string, name: string, email: string, role?: string | null, phone?: string | null, businessId: string, resourceMapIds?: Array<string> | null, workspaceId: string } | null };
+export type CreatePersonContact_PersonMutationMutation = { __typename?: 'Mutation', createPersonContact?: { __typename?: 'PersonContact', id: string, name: string, email: string, phone?: string | null, businessId: string, resourceMapIds?: Array<string> | null, workspaceId: string } | null };
 
 export type UpdatePersonName_PersonMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5831,14 +5871,6 @@ export type UpdatePersonEmail_PersonMutationMutationVariables = Exact<{
 
 export type UpdatePersonEmail_PersonMutationMutation = { __typename?: 'Mutation', updatePersonEmail?: { __typename?: 'PersonContact', id: string, email: string } | null };
 
-export type UpdatePersonRole_PersonMutationMutationVariables = Exact<{
-  id: Scalars['ID']['input'];
-  role: Scalars['String']['input'];
-}>;
-
-
-export type UpdatePersonRole_PersonMutationMutation = { __typename?: 'Mutation', updatePersonRole?: { __typename?: 'PersonContact', id: string, role?: string | null } | null };
-
 export type UpdatePersonBusiness_PersonMutationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
   businessId: Scalars['ID']['input'];
@@ -5860,7 +5892,7 @@ export type GetContactById_PersonMutationQueryVariables = Exact<{
 }>;
 
 
-export type GetContactById_PersonMutationQuery = { __typename?: 'Query', getContactById?: { __typename?: 'BusinessContact' } | { __typename: 'PersonContact', id: string, name: string, email: string, role?: string | null, phone?: string | null, businessId: string, resourceMapIds?: Array<string> | null } | null };
+export type GetContactById_PersonMutationQuery = { __typename?: 'Query', getContactById?: { __typename?: 'BusinessContact' } | { __typename: 'PersonContact', id: string, name: string, email: string, phone?: string | null, businessId: string, resourceMapIds?: Array<string> | null } | null };
 
 export type CreateBusinessContactMutationVariables = Exact<{
   input: BusinessContactInput;
@@ -5874,7 +5906,7 @@ export type CreatePersonContactMutationVariables = Exact<{
 }>;
 
 
-export type CreatePersonContactMutation = { __typename?: 'Mutation', createPersonContact?: { __typename?: 'PersonContact', id: string, name: string, workspaceId: string, contactType: ContactType, createdBy: string, createdAt: any, updatedAt: any, notes?: string | null, profilePicture?: string | null, phone?: string | null, email: string, role?: string | null, businessId: string, business?: { __typename?: 'BusinessContact', id: string, name: string } | null } | null };
+export type CreatePersonContactMutation = { __typename?: 'Mutation', createPersonContact?: { __typename?: 'PersonContact', id: string, name: string, workspaceId: string, contactType: ContactType, createdBy: string, createdAt: any, updatedAt: any, notes?: string | null, profilePicture?: string | null, phone?: string | null, email: string, businessId: string, business?: { __typename?: 'BusinessContact', id: string, name: string } | null } | null };
 
 export type UpdateBusinessContactMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5890,7 +5922,7 @@ export type UpdatePersonContactMutationVariables = Exact<{
 }>;
 
 
-export type UpdatePersonContactMutation = { __typename?: 'Mutation', updatePersonContact?: { __typename?: 'PersonContact', id: string, name: string, notes?: string | null, phone?: string | null, email: string, role?: string | null, businessId: string, updatedAt: any } | null };
+export type UpdatePersonContactMutation = { __typename?: 'Mutation', updatePersonContact?: { __typename?: 'PersonContact', id: string, name: string, notes?: string | null, phone?: string | null, email: string, businessId: string, updatedAt: any } | null };
 
 export type DeleteContactByIdMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5911,7 +5943,7 @@ export type GetBusinessContactWithEmployeesQueryVariables = Exact<{
 }>;
 
 
-export type GetBusinessContactWithEmployeesQuery = { __typename?: 'Query', getContactById?: { __typename: 'BusinessContact', id: string, name: string, contactType: ContactType, employees?: { __typename?: 'ListPersonContactsResult', items: Array<{ __typename?: 'PersonContact', id: string, name: string, email: string, role?: string | null, businessId: string }>, page: { __typename?: 'PaginationInfo', number: number, size: number, totalItems: number, totalPages: number } } | null } | { __typename: 'PersonContact', id: string, name: string, contactType: ContactType } | null };
+export type GetBusinessContactWithEmployeesQuery = { __typename?: 'Query', getContactById?: { __typename: 'BusinessContact', id: string, name: string, contactType: ContactType, employees?: { __typename?: 'ListPersonContactsResult', items: Array<{ __typename?: 'PersonContact', id: string, name: string, email: string, businessId: string }>, page: { __typename?: 'PaginationInfo', number: number, size: number, totalItems: number, totalPages: number } } | null } | { __typename: 'PersonContact', id: string, name: string, contactType: ContactType } | null };
 
 export type ListContactsQueryVariables = Exact<{
   filter: ListContactsFilter;
@@ -7020,7 +7052,7 @@ export type CreatePersonContact_PurchaseOrderMutationVariables = Exact<{
 }>;
 
 
-export type CreatePersonContact_PurchaseOrderMutation = { __typename?: 'Mutation', createPersonContact?: { __typename?: 'PersonContact', id: string, name: string, email: string, role?: string | null, workspaceId: string, businessId: string, contactType: ContactType } | null };
+export type CreatePersonContact_PurchaseOrderMutation = { __typename?: 'Mutation', createPersonContact?: { __typename?: 'PersonContact', id: string, name: string, email: string, workspaceId: string, businessId: string, contactType: ContactType } | null };
 
 export type CreatePurchaseOrderMutationVariables = Exact<{
   input?: InputMaybe<PurchaseOrderInput>;
@@ -7226,7 +7258,7 @@ export type CreatePersonContactForTestsMutationVariables = Exact<{
 }>;
 
 
-export type CreatePersonContactForTestsMutation = { __typename?: 'Mutation', createPersonContact?: { __typename?: 'PersonContact', id: string, name: string, email: string, role?: string | null, businessId: string, contactType: ContactType } | null };
+export type CreatePersonContactForTestsMutation = { __typename?: 'Mutation', createPersonContact?: { __typename?: 'PersonContact', id: string, name: string, email: string, businessId: string, contactType: ContactType } | null };
 
 export type CreateProjectForTestsMutationVariables = Exact<{
   input: ProjectInput;
@@ -7321,7 +7353,7 @@ export type CreatePersonContactForReferenceNumbersMutationVariables = Exact<{
 }>;
 
 
-export type CreatePersonContactForReferenceNumbersMutation = { __typename?: 'Mutation', createPersonContact?: { __typename?: 'PersonContact', id: string, name: string, email: string, role?: string | null, workspaceId: string, businessId: string, contactType: ContactType } | null };
+export type CreatePersonContactForReferenceNumbersMutation = { __typename?: 'Mutation', createPersonContact?: { __typename?: 'PersonContact', id: string, name: string, email: string, workspaceId: string, businessId: string, contactType: ContactType } | null };
 
 export type ListRentalViewsQueryVariables = Exact<{
   filter?: InputMaybe<RentalViewFilterInput>;
@@ -7428,7 +7460,7 @@ export type CreatePersonContactForRfqMutationVariables = Exact<{
 }>;
 
 
-export type CreatePersonContactForRfqMutation = { __typename?: 'Mutation', createPersonContact?: { __typename?: 'PersonContact', id: string, name: string, email: string, role?: string | null, businessId: string, contactType: ContactType } | null };
+export type CreatePersonContactForRfqMutation = { __typename?: 'Mutation', createPersonContact?: { __typename?: 'PersonContact', id: string, name: string, email: string, businessId: string, contactType: ContactType } | null };
 
 export type CreateQuoteForRfqTestMutationVariables = Exact<{
   input: CreateQuoteInput;
@@ -8994,7 +9026,7 @@ export type LlmFieldPolicy = {
 	exampleTicket?: FieldPolicy<any> | FieldReadFunction<any>,
 	suggestTaxObligations?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type MutationKeySpecifier = ('acceptQuote' | 'addFileToEntity' | 'addInvoiceCharges' | 'addSearchRecent' | 'addTaxLineItem' | 'admin' | 'adoptOrphanedSubmissions' | 'archiveWorkspace' | 'assignInventoryToRentalFulfilment' | 'bulkMarkInventoryReceived' | 'cancelInvoice' | 'clearInvoiceTaxes' | 'clearSearchRecents' | 'createAssetSchedule' | 'createBusinessContact' | 'createCharge' | 'createFulfilmentReservation' | 'createIntakeForm' | 'createIntakeFormSubmission' | 'createIntakeFormSubmissionLineItem' | 'createInventory' | 'createInvoice' | 'createNote' | 'createPdfFromPageAndAttachToEntityId' | 'createPersonContact' | 'createPriceBook' | 'createProject' | 'createPurchaseOrder' | 'createQuote' | 'createQuoteFromIntakeFormSubmission' | 'createQuoteRevision' | 'createRFQ' | 'createReferenceNumberTemplate' | 'createRentalFulfilment' | 'createRentalPrice' | 'createRentalPurchaseOrderLineItem' | 'createRentalSalesOrderLineItem' | 'createResourceMapTag' | 'createSaleFulfilment' | 'createSalePrice' | 'createSalePurchaseOrderLineItem' | 'createSaleSalesOrderLineItem' | 'createSalesOrder' | 'createServiceFulfilment' | 'createTransaction' | 'createWorkflowConfiguration' | 'createWorkspace' | 'deleteContactById' | 'deleteFulfilment' | 'deleteIntakeForm' | 'deleteIntakeFormSubmissionLineItem' | 'deleteInventory' | 'deleteInvoice' | 'deleteNote' | 'deletePriceBookById' | 'deletePriceById' | 'deleteProject' | 'deleteReferenceNumberTemplate' | 'deleteResourceMapTag' | 'deleteWorkflowConfigurationById' | 'exportPrices' | 'generateReferenceNumber' | 'getSignedReadUrl' | 'importPrices' | 'inviteUserToWorkspace' | 'joinWorkspace' | 'markInvoiceAsPaid' | 'markInvoiceAsSent' | 'refreshBrand' | 'rejectQuote' | 'removeFileFromEntity' | 'removeSearchRecent' | 'removeTaxLineItem' | 'removeUserFromWorkspace' | 'renameFile' | 'resetSequenceNumber' | 'runNightlyRentalChargesJob' | 'runNightlyRentalChargesJobAsync' | 'sendQuote' | 'setExpectedRentalEndDate' | 'setFulfilmentPurchaseOrderLineItemId' | 'setIntakeFormActive' | 'setInvoiceTax' | 'setRentalEndDate' | 'setRentalStartDate' | 'softDeletePurchaseOrder' | 'softDeletePurchaseOrderLineItem' | 'softDeleteSalesOrder' | 'softDeleteSalesOrderLineItem' | 'submitIntakeFormSubmission' | 'submitPurchaseOrder' | 'submitSalesOrder' | 'syncCurrentUser' | 'toggleSearchFavorite' | 'touchAllContacts' | 'unarchiveWorkspace' | 'unassignInventoryFromRentalFulfilment' | 'updateBusinessAddress' | 'updateBusinessBrandId' | 'updateBusinessContact' | 'updateBusinessName' | 'updateBusinessPhone' | 'updateBusinessTaxId' | 'updateBusinessWebsite' | 'updateFulfilmentAssignee' | 'updateFulfilmentColumn' | 'updateIntakeForm' | 'updateIntakeFormSubmission' | 'updateIntakeFormSubmissionLineItem' | 'updateInventoryActualReturnDate' | 'updateInventoryExpectedReturnDate' | 'updateInventorySerialisedId' | 'updateNote' | 'updatePersonBusiness' | 'updatePersonContact' | 'updatePersonEmail' | 'updatePersonName' | 'updatePersonPhone' | 'updatePersonResourceMap' | 'updatePersonRole' | 'updatePriceBook' | 'updateProject' | 'updateProjectCode' | 'updateProjectContacts' | 'updateProjectDescription' | 'updateProjectName' | 'updateProjectParentProject' | 'updateProjectScopeOfWork' | 'updateProjectStatus' | 'updatePurchaseOrder' | 'updatePurchaseOrderLineItem' | 'updateQuote' | 'updateQuoteRevision' | 'updateQuoteStatus' | 'updateRFQ' | 'updateReferenceNumberTemplate' | 'updateRentalPrice' | 'updateRentalPurchaseOrderLineItem' | 'updateRentalSalesOrderLineItem' | 'updateResourceMapTag' | 'updateSalePrice' | 'updateSalePurchaseOrderLineItem' | 'updateSaleSalesOrderLineItem' | 'updateSalesOrder' | 'updateSalesOrderLineItem' | 'updateTaxLineItem' | 'updateWorkflowConfiguration' | 'updateWorkspaceAccessType' | 'updateWorkspaceSettings' | 'updateWorkspaceUserRoles' | 'upsertPimCategory' | 'upsertUser' | MutationKeySpecifier)[];
+export type MutationKeySpecifier = ('acceptQuote' | 'addFileToEntity' | 'addInvoiceCharges' | 'addSearchRecent' | 'addTaxLineItem' | 'admin' | 'adoptOrphanedSubmissions' | 'archiveWorkspace' | 'assignInventoryToRentalFulfilment' | 'bulkMarkInventoryReceived' | 'cancelInvoice' | 'clearInvoiceTaxes' | 'clearSearchRecents' | 'createAssetSchedule' | 'createBusinessContact' | 'createCharge' | 'createFulfilmentReservation' | 'createIntakeForm' | 'createIntakeFormSubmission' | 'createIntakeFormSubmissionLineItem' | 'createInventory' | 'createInvoice' | 'createNote' | 'createPdfFromPageAndAttachToEntityId' | 'createPersonContact' | 'createPriceBook' | 'createProject' | 'createPurchaseOrder' | 'createQuote' | 'createQuoteFromIntakeFormSubmission' | 'createQuoteRevision' | 'createRFQ' | 'createReferenceNumberTemplate' | 'createRentalFulfilment' | 'createRentalPrice' | 'createRentalPurchaseOrderLineItem' | 'createRentalSalesOrderLineItem' | 'createResourceMapTag' | 'createSaleFulfilment' | 'createSalePrice' | 'createSalePurchaseOrderLineItem' | 'createSaleSalesOrderLineItem' | 'createSalesOrder' | 'createServiceFulfilment' | 'createTransaction' | 'createWorkflowConfiguration' | 'createWorkspace' | 'deleteContactById' | 'deleteFulfilment' | 'deleteIntakeForm' | 'deleteIntakeFormSubmissionLineItem' | 'deleteInventory' | 'deleteInvoice' | 'deleteNote' | 'deletePriceBookById' | 'deletePriceById' | 'deleteProject' | 'deleteReferenceNumberTemplate' | 'deleteResourceMapTag' | 'deleteWorkflowConfigurationById' | 'exportPrices' | 'generateReferenceNumber' | 'getSignedReadUrl' | 'importPrices' | 'inviteUserToWorkspace' | 'joinWorkspace' | 'markInvoiceAsPaid' | 'markInvoiceAsSent' | 'refreshBrand' | 'rejectQuote' | 'removeFileFromEntity' | 'removeSearchRecent' | 'removeTaxLineItem' | 'removeUserFromWorkspace' | 'renameFile' | 'resetSequenceNumber' | 'runNightlyRentalChargesJob' | 'runNightlyRentalChargesJobAsync' | 'sendQuote' | 'setExpectedRentalEndDate' | 'setFulfilmentPurchaseOrderLineItemId' | 'setIntakeFormActive' | 'setInvoiceTax' | 'setRentalEndDate' | 'setRentalStartDate' | 'softDeletePurchaseOrder' | 'softDeletePurchaseOrderLineItem' | 'softDeleteSalesOrder' | 'softDeleteSalesOrderLineItem' | 'submitIntakeFormSubmission' | 'submitPurchaseOrder' | 'submitSalesOrder' | 'syncCurrentUser' | 'toggleSearchFavorite' | 'touchAllContacts' | 'unarchiveWorkspace' | 'unassignInventoryFromRentalFulfilment' | 'updateBusinessAddress' | 'updateBusinessBrandId' | 'updateBusinessContact' | 'updateBusinessName' | 'updateBusinessPhone' | 'updateBusinessTaxId' | 'updateBusinessWebsite' | 'updateFulfilmentAssignee' | 'updateFulfilmentColumn' | 'updateIntakeForm' | 'updateIntakeFormSubmission' | 'updateIntakeFormSubmissionLineItem' | 'updateInventoryActualReturnDate' | 'updateInventoryExpectedReturnDate' | 'updateInventorySerialisedId' | 'updateNote' | 'updatePersonBusiness' | 'updatePersonContact' | 'updatePersonEmail' | 'updatePersonName' | 'updatePersonPhone' | 'updatePersonResourceMap' | 'updatePriceBook' | 'updateProject' | 'updateProjectCode' | 'updateProjectContacts' | 'updateProjectDescription' | 'updateProjectName' | 'updateProjectParentProject' | 'updateProjectScopeOfWork' | 'updateProjectStatus' | 'updatePurchaseOrder' | 'updatePurchaseOrderLineItem' | 'updateQuote' | 'updateQuoteRevision' | 'updateQuoteStatus' | 'updateRFQ' | 'updateReferenceNumberTemplate' | 'updateRentalPrice' | 'updateRentalPurchaseOrderLineItem' | 'updateRentalSalesOrderLineItem' | 'updateResourceMapTag' | 'updateSalePrice' | 'updateSalePurchaseOrderLineItem' | 'updateSaleSalesOrderLineItem' | 'updateSalesOrder' | 'updateSalesOrderLineItem' | 'updateTaxLineItem' | 'updateWorkflowConfiguration' | 'updateWorkspaceAccessType' | 'updateWorkspaceSettings' | 'updateWorkspaceUserRoles' | 'upsertPimCategory' | 'upsertUser' | MutationKeySpecifier)[];
 export type MutationFieldPolicy = {
 	acceptQuote?: FieldPolicy<any> | FieldReadFunction<any>,
 	addFileToEntity?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9115,7 +9147,6 @@ export type MutationFieldPolicy = {
 	updatePersonName?: FieldPolicy<any> | FieldReadFunction<any>,
 	updatePersonPhone?: FieldPolicy<any> | FieldReadFunction<any>,
 	updatePersonResourceMap?: FieldPolicy<any> | FieldReadFunction<any>,
-	updatePersonRole?: FieldPolicy<any> | FieldReadFunction<any>,
 	updatePriceBook?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateProject?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateProjectCode?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9171,7 +9202,7 @@ export type PaginationInfoFieldPolicy = {
 	totalItems?: FieldPolicy<any> | FieldReadFunction<any>,
 	totalPages?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type PersonContactKeySpecifier = ('business' | 'businessId' | 'contactType' | 'createdAt' | 'createdBy' | 'email' | 'id' | 'name' | 'notes' | 'phone' | 'profilePicture' | 'resourceMapIds' | 'resource_map_entries' | 'role' | 'updatedAt' | 'workspaceId' | PersonContactKeySpecifier)[];
+export type PersonContactKeySpecifier = ('business' | 'businessId' | 'contactType' | 'createdAt' | 'createdBy' | 'email' | 'id' | 'name' | 'notes' | 'personType' | 'phone' | 'profilePicture' | 'resourceMapIds' | 'resource_map_entries' | 'updatedAt' | 'workspaceId' | PersonContactKeySpecifier)[];
 export type PersonContactFieldPolicy = {
 	business?: FieldPolicy<any> | FieldReadFunction<any>,
 	businessId?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9182,11 +9213,11 @@ export type PersonContactFieldPolicy = {
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
 	name?: FieldPolicy<any> | FieldReadFunction<any>,
 	notes?: FieldPolicy<any> | FieldReadFunction<any>,
+	personType?: FieldPolicy<any> | FieldReadFunction<any>,
 	phone?: FieldPolicy<any> | FieldReadFunction<any>,
 	profilePicture?: FieldPolicy<any> | FieldReadFunction<any>,
 	resourceMapIds?: FieldPolicy<any> | FieldReadFunction<any>,
 	resource_map_entries?: FieldPolicy<any> | FieldReadFunction<any>,
-	role?: FieldPolicy<any> | FieldReadFunction<any>,
 	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
 	workspaceId?: FieldPolicy<any> | FieldReadFunction<any>
 };
@@ -9955,16 +9986,24 @@ export type ResourceMapGeofenceFieldPolicy = {
 	radiusMeters?: FieldPolicy<any> | FieldReadFunction<any>,
 	type?: FieldPolicy<any> | FieldReadFunction<any>
 };
+export type ResourceMapInteriorMetadataKeySpecifier = ('code' | 'floor' | 'qrPayload' | 'spaceType' | ResourceMapInteriorMetadataKeySpecifier)[];
+export type ResourceMapInteriorMetadataFieldPolicy = {
+	code?: FieldPolicy<any> | FieldReadFunction<any>,
+	floor?: FieldPolicy<any> | FieldReadFunction<any>,
+	qrPayload?: FieldPolicy<any> | FieldReadFunction<any>,
+	spaceType?: FieldPolicy<any> | FieldReadFunction<any>
+};
 export type ResourceMapLatLngKeySpecifier = ('accuracyMeters' | 'lat' | 'lng' | ResourceMapLatLngKeySpecifier)[];
 export type ResourceMapLatLngFieldPolicy = {
 	accuracyMeters?: FieldPolicy<any> | FieldReadFunction<any>,
 	lat?: FieldPolicy<any> | FieldReadFunction<any>,
 	lng?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type ResourceMapLocationKeySpecifier = ('address' | 'geofence' | 'kind' | 'latLng' | 'plusCode' | ResourceMapLocationKeySpecifier)[];
+export type ResourceMapLocationKeySpecifier = ('address' | 'geofence' | 'interior' | 'kind' | 'latLng' | 'plusCode' | ResourceMapLocationKeySpecifier)[];
 export type ResourceMapLocationFieldPolicy = {
 	address?: FieldPolicy<any> | FieldReadFunction<any>,
 	geofence?: FieldPolicy<any> | FieldReadFunction<any>,
+	interior?: FieldPolicy<any> | FieldReadFunction<any>,
 	kind?: FieldPolicy<any> | FieldReadFunction<any>,
 	latLng?: FieldPolicy<any> | FieldReadFunction<any>,
 	plusCode?: FieldPolicy<any> | FieldReadFunction<any>
@@ -10536,7 +10575,7 @@ export type WorkflowConfigurationFieldPolicy = {
 	updatedBy?: FieldPolicy<any> | FieldReadFunction<any>,
 	updatedByUser?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type WorkspaceKeySpecifier = ('accessType' | 'archived' | 'archivedAt' | 'bannerImageUrl' | 'brandId' | 'companyId' | 'createdAt' | 'createdBy' | 'description' | 'domain' | 'id' | 'logoUrl' | 'name' | 'ownerId' | 'updatedAt' | 'updatedBy' | WorkspaceKeySpecifier)[];
+export type WorkspaceKeySpecifier = ('accessType' | 'archived' | 'archivedAt' | 'bannerImageUrl' | 'brandId' | 'companyId' | 'createdAt' | 'createdBy' | 'description' | 'domain' | 'id' | 'logoUrl' | 'name' | 'orgBusinessContact' | 'orgBusinessContactId' | 'ownerId' | 'updatedAt' | 'updatedBy' | WorkspaceKeySpecifier)[];
 export type WorkspaceFieldPolicy = {
 	accessType?: FieldPolicy<any> | FieldReadFunction<any>,
 	archived?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -10551,6 +10590,8 @@ export type WorkspaceFieldPolicy = {
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
 	logoUrl?: FieldPolicy<any> | FieldReadFunction<any>,
 	name?: FieldPolicy<any> | FieldReadFunction<any>,
+	orgBusinessContact?: FieldPolicy<any> | FieldReadFunction<any>,
+	orgBusinessContactId?: FieldPolicy<any> | FieldReadFunction<any>,
 	ownerId?: FieldPolicy<any> | FieldReadFunction<any>,
 	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
 	updatedBy?: FieldPolicy<any> | FieldReadFunction<any>
@@ -11150,6 +11191,10 @@ export type StrictTypedTypePolicies = {
 		keyFields?: false | ResourceMapGeofenceKeySpecifier | (() => undefined | ResourceMapGeofenceKeySpecifier),
 		fields?: ResourceMapGeofenceFieldPolicy,
 	},
+	ResourceMapInteriorMetadata?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ResourceMapInteriorMetadataKeySpecifier | (() => undefined | ResourceMapInteriorMetadataKeySpecifier),
+		fields?: ResourceMapInteriorMetadataFieldPolicy,
+	},
 	ResourceMapLatLng?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | ResourceMapLatLngKeySpecifier | (() => undefined | ResourceMapLatLngKeySpecifier),
 		fields?: ResourceMapLatLngFieldPolicy,
@@ -11578,7 +11623,6 @@ export const CreatePersonContact_PersonMutationDocument = gql`
     id
     name
     email
-    role
     phone
     businessId
     resourceMapIds
@@ -11610,14 +11654,6 @@ export const UpdatePersonEmail_PersonMutationDocument = gql`
   }
 }
     `;
-export const UpdatePersonRole_PersonMutationDocument = gql`
-    mutation UpdatePersonRole_PersonMutation($id: ID!, $role: String!) {
-  updatePersonRole(id: $id, role: $role) {
-    id
-    role
-  }
-}
-    `;
 export const UpdatePersonBusiness_PersonMutationDocument = gql`
     mutation UpdatePersonBusiness_PersonMutation($id: ID!, $businessId: ID!) {
   updatePersonBusiness(id: $id, businessId: $businessId) {
@@ -11642,7 +11678,6 @@ export const GetContactById_PersonMutationDocument = gql`
       id
       name
       email
-      role
       phone
       businessId
       resourceMapIds
@@ -11684,7 +11719,6 @@ export const CreatePersonContactDocument = gql`
     profilePicture
     phone
     email
-    role
     businessId
     business {
       id
@@ -11716,7 +11750,6 @@ export const UpdatePersonContactDocument = gql`
     notes
     phone
     email
-    role
     businessId
     updatedAt
   }
@@ -11757,7 +11790,6 @@ export const GetBusinessContactWithEmployeesDocument = gql`
           id
           name
           email
-          role
           businessId
         }
         page {
@@ -14158,7 +14190,6 @@ export const CreatePersonContact_PurchaseOrderDocument = gql`
       id
       name
       email
-      role
       workspaceId
       businessId
       contactType
@@ -14743,7 +14774,6 @@ export const CreatePersonContactForTestsDocument = gql`
     id
     name
     email
-    role
     businessId
     contactType
   }
@@ -14963,7 +14993,6 @@ export const CreatePersonContactForReferenceNumbersDocument = gql`
       id
       name
       email
-      role
       workspaceId
       businessId
       contactType
@@ -15288,7 +15317,6 @@ export const CreatePersonContactForRfqDocument = gql`
     id
     name
     email
-    role
     businessId
     contactType
   }
@@ -16720,9 +16748,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     UpdatePersonEmail_PersonMutation(variables: UpdatePersonEmail_PersonMutationMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdatePersonEmail_PersonMutationMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdatePersonEmail_PersonMutationMutation>(UpdatePersonEmail_PersonMutationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'UpdatePersonEmail_PersonMutation', 'mutation');
-    },
-    UpdatePersonRole_PersonMutation(variables: UpdatePersonRole_PersonMutationMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdatePersonRole_PersonMutationMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdatePersonRole_PersonMutationMutation>(UpdatePersonRole_PersonMutationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'UpdatePersonRole_PersonMutation', 'mutation');
     },
     UpdatePersonBusiness_PersonMutation(variables: UpdatePersonBusiness_PersonMutationMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdatePersonBusiness_PersonMutationMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdatePersonBusiness_PersonMutationMutation>(UpdatePersonBusiness_PersonMutationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'UpdatePersonBusiness_PersonMutation', 'mutation');

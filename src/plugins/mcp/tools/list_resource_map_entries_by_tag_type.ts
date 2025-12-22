@@ -1,14 +1,15 @@
 import { z } from 'zod';
 import { gql } from 'graphql-request';
+import { ResourceMapTagType } from '../generated/graphql';
 import { createMcpTool } from './types';
 
 /**
- * GraphQL operation for delete_resource_map_tag tool.
+ * GraphQL operation for list_resource_map_entries_by_tag_type tool.
  * This is picked up by codegen to generate typed SDK methods.
  */
 gql`
-  mutation McpDeleteResourceMapTag($id: ID!, $cascade: Boolean) {
-    deleteResourceMapTag(id: $id, cascade: $cascade) {
+  query McpListResourceMapEntriesByTagType($types: [ResourceMapTagType!]!) {
+    listResourceMapEntriesByTagType(types: $types) {
       id
       value
       tagType
@@ -62,31 +63,23 @@ gql`
 `;
 
 /**
- * delete_resource_map_tag MCP tool definition
- *
- * Deletes a resource map tag. Use cascade to delete children.
+ * list_resource_map_entries_by_tag_type MCP tool definition
  */
-export const deleteResourceMapTagTool = createMcpTool({
-  name: 'delete_resource_map_tag',
-  description:
-    'Deletes a resource map tag. Set cascade=true to delete all child tags.',
+export const listResourceMapEntriesByTagTypeTool = createMcpTool({
+  name: 'list_resource_map_entries_by_tag_type',
+  description: 'Lists resource map entries by tag types.',
   inputSchema: {
-    id: z.string().describe('The resource map tag ID to delete'),
-    cascade: z
-      .boolean()
-      .optional()
-      .describe('Delete child tags as well'),
+    types: z
+      .array(z.nativeEnum(ResourceMapTagType))
+      .min(1)
+      .describe('Tag types to include (LOCATION, BUSINESS_UNIT, ROLE)'),
   },
   handler: async (sdk, args) => {
     try {
-      const { id, cascade } = args;
-
-      const result = await sdk.McpDeleteResourceMapTag({
-        id,
-        cascade,
+      const result = await sdk.McpListResourceMapEntriesByTagType({
+        types: args.types,
       });
-
-      const tag = result.deleteResourceMapTag;
+      const entries = result.listResourceMapEntriesByTagType || [];
 
       return {
         content: [
@@ -94,9 +87,9 @@ export const deleteResourceMapTagTool = createMcpTool({
             type: 'text' as const,
             text: JSON.stringify(
               {
-                success: true,
-                message: `Resource map tag "${tag?.value}" deleted successfully`,
-                tag,
+                types: args.types,
+                count: entries.length,
+                entries,
               },
               null,
               2,
@@ -109,7 +102,7 @@ export const deleteResourceMapTagTool = createMcpTool({
         content: [
           {
             type: 'text' as const,
-            text: `Error deleting resource map tag: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            text: `Error listing resource map entries by tag type: ${error instanceof Error ? error.message : 'Unknown error'}`,
           },
         ],
         isError: true,

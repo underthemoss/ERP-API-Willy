@@ -292,7 +292,6 @@ describe('MCP Server', () => {
           name: personName,
           email: `test-${Date.now()}@example.com`,
           businessId: createBusinessContact!.id,
-          role: 'Test Role',
         },
       });
 
@@ -453,7 +452,6 @@ describe('MCP Server', () => {
           name: personName,
           email: personEmail,
           phone: '555-5678',
-          role: 'Manager',
           resourceMapIds: [createResourceMapTag.id],
         },
       });
@@ -530,7 +528,6 @@ describe('MCP Server', () => {
           businessId: createBusinessContact!.id,
           name: originalName,
           email: `original-${Date.now()}@example.com`,
-          role: 'Original Role',
         },
       });
 
@@ -550,7 +547,6 @@ describe('MCP Server', () => {
           id: createPersonContact!.id,
           name: updatedName,
           email: updatedEmail,
-          role: 'Updated Role',
         },
       });
 

@@ -19,6 +19,7 @@ import { normalizeResourceMapTagType } from '../../services/resource_map/tag-typ
 import {
   RESOURCE_MAP_GEOFENCE_TYPE,
   RESOURCE_MAP_LOCATION_KIND,
+  RESOURCE_MAP_INTERIOR_SPACE_TYPE,
   type ResourceMapLocation as ResourceMapLocationDoc,
 } from '../../services/resource_map/location-types';
 
@@ -35,6 +36,11 @@ export const ResourceMapLocationTypeEnum = enumType({
 export const ResourceMapGeofenceTypeEnum = enumType({
   name: 'ResourceMapGeofenceType',
   members: Object.values(RESOURCE_MAP_GEOFENCE_TYPE),
+});
+
+export const ResourceMapInteriorSpaceTypeEnum = enumType({
+  name: 'ResourceMapInteriorSpaceType',
+  members: Object.values(RESOURCE_MAP_INTERIOR_SPACE_TYPE),
 });
 
 export const ResourceMapLatLng = objectType({
@@ -77,6 +83,16 @@ export const ResourceMapGeofence = objectType({
   },
 });
 
+export const ResourceMapInteriorMetadata = objectType({
+  name: 'ResourceMapInteriorMetadata',
+  definition(t) {
+    t.string('floor');
+    t.field('spaceType', { type: ResourceMapInteriorSpaceTypeEnum });
+    t.string('code');
+    t.string('qrPayload');
+  },
+});
+
 export const ResourceMapLocation = objectType({
   name: 'ResourceMapLocation',
   definition(t) {
@@ -85,6 +101,7 @@ export const ResourceMapLocation = objectType({
     t.field('latLng', { type: ResourceMapLatLng });
     t.field('plusCode', { type: ResourceMapPlusCode });
     t.field('geofence', { type: ResourceMapGeofence });
+    t.field('interior', { type: ResourceMapInteriorMetadata });
   },
 });
 
@@ -128,6 +145,15 @@ export const ResourceMapGeofenceInput = inputObjectType({
   },
 });
 
+export const ResourceMapInteriorMetadataInput = inputObjectType({
+  name: 'ResourceMapInteriorMetadataInput',
+  definition(t) {
+    t.string('floor');
+    t.field('spaceType', { type: ResourceMapInteriorSpaceTypeEnum });
+    t.string('code');
+  },
+});
+
 export const ResourceMapLocationInput = inputObjectType({
   name: 'ResourceMapLocationInput',
   definition(t) {
@@ -136,6 +162,7 @@ export const ResourceMapLocationInput = inputObjectType({
     t.field('latLng', { type: ResourceMapLatLngInput });
     t.field('plusCode', { type: ResourceMapPlusCodeInput });
     t.field('geofence', { type: ResourceMapGeofenceInput });
+    t.field('interior', { type: ResourceMapInteriorMetadataInput });
   },
 });
 
@@ -415,6 +442,14 @@ const mapLocationDocToGraphQL = (
           })),
         }
       : undefined,
+    interior: location.interior
+      ? {
+          floor: location.interior.floor,
+          spaceType: location.interior.space_type,
+          code: location.interior.code,
+          qrPayload: location.interior.qr_payload,
+        }
+      : undefined,
   };
 };
 
@@ -464,6 +499,13 @@ const mapLocationInputToDoc = (
             lng: point.lng,
             accuracy_meters: point.accuracyMeters,
           })),
+        }
+      : undefined,
+    interior: input.interior
+      ? {
+          floor: input.interior.floor,
+          space_type: input.interior.spaceType,
+          code: input.interior.code,
         }
       : undefined,
   };

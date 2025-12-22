@@ -4,6 +4,7 @@ import { generateId } from '../../lib/id-generator';
 type BaseGeneratedFields = '_id' | 'createdAt' | 'documentType' | 'updatedAt';
 
 type ContactType = 'BUSINESS' | 'PERSON';
+export type PersonContactType = 'EMPLOYEE';
 
 interface BaseContactDoc<T = ContactType> {
   _id: string;
@@ -35,8 +36,8 @@ export interface BusinessContactDoc extends BaseContactDoc<'BUSINESS'> {
 
 export interface PersonContactDoc extends BaseContactDoc<'PERSON'> {
   email: string;
-  role: string;
   businessId: string;
+  personType?: PersonContactType;
 }
 
 export type ContactDoc = BusinessContactDoc | PersonContactDoc;

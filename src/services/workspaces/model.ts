@@ -13,6 +13,7 @@ interface WorkspaceDoc {
   description?: string;
   domain?: string;
   brandId?: string;
+  orgBusinessContactId?: string;
   createdBy: string;
   bannerImageUrl?: string;
   logoUrl?: string;
@@ -42,8 +43,12 @@ export type CreateWorkspaceInput = Omit<
   GeneratedFields | 'updatedAt' | 'updatedBy'
 > & { _id?: string };
 
+type WithNullUnsets<T extends Record<string, unknown>> = {
+  [K in keyof T]: T[K] | null;
+};
+
 export type UpdateWorkspaceInput = Partial<
-  Omit<WorkspaceDoc, GeneratedFields | 'createdAt' | 'createdBy'>
+  WithNullUnsets<Omit<WorkspaceDoc, GeneratedFields | 'createdAt' | 'createdBy'>>
 > & {
   updatedBy: string;
 };

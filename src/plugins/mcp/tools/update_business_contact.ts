@@ -30,6 +30,34 @@ gql`
       placeId
       latitude
       longitude
+      resource_map_entries {
+        id
+        value
+        tagType
+        parent_id
+        hierarchy_id
+        hierarchy_name
+        path
+        location {
+          kind
+          latLng {
+            lat
+            lng
+            accuracyMeters
+          }
+          address {
+            line1
+            city
+            state
+            postalCode
+            country
+          }
+          plusCode {
+            code
+            localArea
+          }
+        }
+      }
       brand {
         name
         domain
@@ -43,7 +71,7 @@ gql`
           id
           name
           email
-          role
+          personType
           phone
         }
         page {

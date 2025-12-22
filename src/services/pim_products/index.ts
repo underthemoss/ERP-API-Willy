@@ -8,7 +8,7 @@ import {
 import { UserAuthPayload } from '../../authentication';
 import { PimProductsSinkConnector } from './kafka-sink-connector';
 import { EnvConfig } from '../../config';
-import { KafkaJS } from '@confluentinc/kafka-javascript';
+import type { KafkaJS } from '@confluentinc/kafka-javascript';
 import { OpenSearchService } from '../opensearch';
 
 // DTOs

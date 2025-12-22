@@ -1927,7 +1927,6 @@ type Mutation {
   updatePersonName(id: ID!, name: String!): PersonContact
   updatePersonPhone(id: ID!, phone: String!): PersonContact
   updatePersonResourceMap(id: ID!, resourceMapIds: [ID!]!): PersonContact
-  updatePersonRole(id: ID!, role: String!): PersonContact
   updatePriceBook(input: UpdatePriceBookInput!): PriceBook
   updateProject(id: String, input: ProjectInput): Project
   updateProjectCode(id: String!, project_code: String!): Project
@@ -1956,7 +1955,7 @@ type Mutation {
   updateTaxLineItem(input: UpdateTaxLineItemInput!): Invoice!
   updateWorkflowConfiguration(id: ID!, input: UpdateWorkflowConfigurationInput!): WorkflowConfiguration
   updateWorkspaceAccessType(accessType: WorkspaceAccessType!, workspaceId: String!): Workspace
-  updateWorkspaceSettings(bannerImageUrl: String, brandId: String, description: String, logoUrl: String, name: String, workspaceId: String!): Workspace
+  updateWorkspaceSettings(bannerImageUrl: String, brandId: String, description: String, logoUrl: String, name: String, orgBusinessContactId: String, workspaceId: String!): Workspace
   updateWorkspaceUserRoles(roles: [WorkspaceUserRole!]!, userId: String!, workspaceId: String!): WorkspaceMember
   upsertPimCategory(input: UpsertPimCategoryInput!): PimCategory
   upsertUser(id: String!, input: UserUpsertInput!): User
@@ -2110,11 +2109,11 @@ type PersonContact {
   id: ID!
   name: String!
   notes: String
+  personType: PersonContactType
   phone: String
   profilePicture: String
   resourceMapIds: [String!]
   resource_map_entries: [ResourceMapResource!]!
-  role: String
   updatedAt: DateTime!
   workspaceId: String!
 }
@@ -2124,11 +2123,15 @@ input PersonContactInput {
   email: String!
   name: String!
   notes: String
+  personType: PersonContactType
   phone: String
   profilePicture: String
   resourceMapIds: [ID!]
-  role: String!
   workspaceId: String!
+}
+
+enum PersonContactType {
+  EMPLOYEE
 }
 
 type PimCategory {
@@ -2508,7 +2511,7 @@ type Query {
   listInventoryGroupedByPimCategoryId(query: ListInventoryQuery): InventoryGroupedByCategoryResponse!
   listInventoryReservations(filter: ListInventoryReservationsFilter, page: ListInventoryPage): InventoryReservationsResponse!
   listInvoices(query: ListInvoicesQuery): InvoicesResponse!
-  listJoinableWorkspaces: ListWorkspacesResult!
+  listJoinableWorkspaces(page: PageInfoInput): ListWorkspacesResult!
 
   """
   List intake form submissions created by the authenticated user that have no buyer workspace assigned.
@@ -2566,7 +2569,7 @@ type Query {
   listUserResourcePermissions(resourceId: ID!, resourceType: ResourceType!): ListUserPermissionsResult!
   listWorkflowConfigurations(page: ListWorkflowConfigurationsPage): ListWorkflowConfigurationsResult
   listWorkspaceMembers(workspaceId: String!): ListWorkspaceMembersResult!
-  listWorkspaces: ListWorkspacesResult!
+  listWorkspaces(page: PageInfoInput): ListWorkspacesResult!
   llm: Llm
   quoteById(id: String!): Quote
   quoteRevisionById(id: String!): QuoteRevision
@@ -3240,6 +3243,33 @@ enum ResourceMapGeofenceType {
   POLYGON
 }
 
+type ResourceMapInteriorMetadata {
+  code: String
+  floor: String
+  qrPayload: String
+  spaceType: ResourceMapInteriorSpaceType
+}
+
+input ResourceMapInteriorMetadataInput {
+  code: String
+  floor: String
+  spaceType: ResourceMapInteriorSpaceType
+}
+
+enum ResourceMapInteriorSpaceType {
+  AISLE
+  BAY
+  BIN
+  BUILDING
+  FLOOR
+  OTHER
+  RACK
+  ROOM
+  ROW
+  SHELF
+  ZONE
+}
+
 type ResourceMapLatLng {
   accuracyMeters: Float
   lat: Float!
@@ -3255,6 +3285,7 @@ input ResourceMapLatLngInput {
 type ResourceMapLocation {
   address: ResourceMapAddress
   geofence: ResourceMapGeofence
+  interior: ResourceMapInteriorMetadata
   kind: ResourceMapLocationType!
   latLng: ResourceMapLatLng
   plusCode: ResourceMapPlusCode
@@ -3269,6 +3300,7 @@ input ResourceMapLocationFilterInput {
 input ResourceMapLocationInput {
   address: ResourceMapAddressInput
   geofence: ResourceMapGeofenceInput
+  interior: ResourceMapInteriorMetadataInput
   kind: ResourceMapLocationType!
   latLng: ResourceMapLatLngInput
   plusCode: ResourceMapPlusCodeInput
@@ -3942,10 +3974,10 @@ input UpdatePersonContactInput {
   email: String
   name: String
   notes: String
+  personType: PersonContactType
   phone: String
   profilePicture: String
   resourceMapIds: [ID!]
-  role: String
 }
 
 input UpdatePriceBookInput {
@@ -4325,6 +4357,8 @@ type Workspace {
   id: ID!
   logoUrl: String
   name: String!
+  orgBusinessContact: BusinessContact
+  orgBusinessContactId: ID
   ownerId: String
   updatedAt: String
   updatedBy: String

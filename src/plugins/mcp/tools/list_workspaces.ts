@@ -15,6 +15,11 @@ gql`
         accessType
         archived
         domain
+        orgBusinessContactId
+        orgBusinessContact {
+          id
+          name
+        }
         createdAt
         updatedAt
       }
@@ -42,6 +47,13 @@ export const listWorkspacesTool = createMcpTool({
           accessType: workspace?.accessType,
           archived: workspace?.archived,
           domain: workspace?.domain,
+          orgBusinessContactId: workspace?.orgBusinessContactId,
+          orgBusinessContact: workspace?.orgBusinessContact
+            ? {
+                id: workspace?.orgBusinessContact?.id,
+                name: workspace?.orgBusinessContact?.name,
+              }
+            : null,
           createdAt: workspace?.createdAt,
           updatedAt: workspace?.updatedAt,
         }),

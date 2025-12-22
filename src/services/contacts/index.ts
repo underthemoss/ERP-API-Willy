@@ -11,6 +11,7 @@ import {
 import { UserAuthPayload } from '../../authentication';
 import { type AuthZ } from '../../lib/authz';
 import { type EnvConfig } from '../../config';
+import { logger } from '../../lib/logger';
 import {
   ERP_CONTACT_SUBJECT_RELATIONS,
   ERP_CONTACT_SUBJECT_PERMISSIONS,
@@ -42,33 +43,49 @@ export class ContactsService {
   private async validatePersonResourceMapIds(
     resourceMapIds: string[] | undefined,
     user: UserAuthPayload,
+    personType?: 'EMPLOYEE',
   ) {
     if (this.envConfig.IN_TEST_MODE) {
       return;
     }
 
-    if (!resourceMapIds || resourceMapIds.length === 0) {
-      throw new Error('resourceMapIds is required for person contacts');
-    }
-
-    const { tagTypes } = await this.resourceMapResourcesService.validateResourceMapIds(
-      {
-        ids: resourceMapIds,
+    const { tagTypes } =
+      await this.resourceMapResourcesService.validateResourceMapIds({
+        ids: resourceMapIds ?? [],
         allowedTypes: [
           RESOURCE_MAP_TAG_TYPE.LOCATION,
           RESOURCE_MAP_TAG_TYPE.BUSINESS_UNIT,
           RESOURCE_MAP_TAG_TYPE.ROLE,
         ],
         user,
-      },
-    );
+        allowEmpty: true,
+      });
 
+    if (personType !== 'EMPLOYEE') {
+      return;
+    }
+
+    if (!resourceMapIds || resourceMapIds.length === 0) {
+      logger.warn(
+        'Person contact created/updated without resource map tags (expected for employees).',
+      );
+      return;
+    }
+
+    const hasRoleTag = tagTypes.includes(RESOURCE_MAP_TAG_TYPE.ROLE);
     const hasNonRoleTag = tagTypes.some(
       (tagType) => tagType !== RESOURCE_MAP_TAG_TYPE.ROLE,
     );
+
+    if (!hasRoleTag) {
+      logger.warn(
+        'Person contact missing role tag (expected for employee activity classification).',
+      );
+    }
+
     if (!hasNonRoleTag) {
-      throw new Error(
-        'Person contacts must include at least one location or business unit tag',
+      logger.warn(
+        'Person contact missing location or business unit tag (expected for employee home base/purpose).',
       );
     }
   }
@@ -167,7 +184,11 @@ export class ContactsService {
       );
     }
 
-    await this.validatePersonResourceMapIds(input.resourceMapIds, user);
+    await this.validatePersonResourceMapIds(
+      input.resourceMapIds,
+      user,
+      input.personType,
+    );
 
     // validation
     // business logic
@@ -247,8 +268,12 @@ export class ContactsService {
       throw new Error('You do not have permission to update this contact');
     }
 
-    if (input.resourceMapIds) {
-      await this.validatePersonResourceMapIds(input.resourceMapIds, user);
+    if (input.resourceMapIds || input.personType) {
+      await this.validatePersonResourceMapIds(
+        input.resourceMapIds,
+        user,
+        input.personType,
+      );
     }
 
     // validation
@@ -303,8 +328,12 @@ export class ContactsService {
       throw new Error('You do not have permission to update this contact');
     }
 
-    if (patch.resourceMapIds) {
-      await this.validatePersonResourceMapIds(patch.resourceMapIds, user);
+    if (patch.resourceMapIds || patch.personType) {
+      await this.validatePersonResourceMapIds(
+        patch.resourceMapIds,
+        user,
+        patch.personType,
+      );
     }
 
     return this.model.patchPersonContact(id, patch);

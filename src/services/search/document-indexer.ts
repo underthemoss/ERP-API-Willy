@@ -105,7 +105,9 @@ export class DocumentIndexer {
       if (doc.website) searchableFields.push(doc.website);
     } else {
       searchableFields.push(doc.email);
-      searchableFields.push(doc.role);
+      if (doc.personType) {
+        searchableFields.push(doc.personType);
+      }
     }
 
     const documentType =
@@ -114,6 +116,8 @@ export class DocumentIndexer {
     const email = doc.contactType === 'PERSON' ? doc.email : undefined;
     const businessId =
       doc.contactType === 'PERSON' ? doc.businessId : undefined;
+    const personType =
+      doc.contactType === 'PERSON' ? doc.personType : undefined;
 
     return {
       documentId: doc._id,
@@ -128,6 +132,7 @@ export class DocumentIndexer {
         email,
         phone: doc.phone,
         businessId,
+        personType,
       },
     };
   }

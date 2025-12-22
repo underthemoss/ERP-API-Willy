@@ -230,7 +230,6 @@ gql`
       id
       name
       email
-      role
       businessId
       contactType
     }
@@ -474,7 +473,6 @@ async function createTestSellerContact(
       workspaceId,
       name: `${name} Sales Rep`,
       email: `sales-${v4()}@example.com`,
-      role: 'Sales Representative',
       businessId,
     },
   });
@@ -503,7 +501,6 @@ async function createTestBuyerContact(
       workspaceId,
       name: `${name} Representative`,
       email: email || `buyer-${v4()}@example.com`,
-      role: 'Buyer',
       businessId,
     },
   });

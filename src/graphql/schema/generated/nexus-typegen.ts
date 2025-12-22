@@ -568,10 +568,10 @@ export interface NexusGenInputs {
     email: string; // String!
     name: string; // String!
     notes?: string | null; // String
+    personType?: NexusGenEnums['PersonContactType'] | null; // PersonContactType
     phone?: string | null; // String
     profilePicture?: string | null; // String
     resourceMapIds?: string[] | null; // [ID!]
-    role: string; // String!
     workspaceId: string; // String!
   }
   ProjectContactInput: { // input type
@@ -657,6 +657,11 @@ export interface NexusGenInputs {
     radiusMeters?: number | null; // Float
     type: NexusGenEnums['ResourceMapGeofenceType']; // ResourceMapGeofenceType!
   }
+  ResourceMapInteriorMetadataInput: { // input type
+    code?: string | null; // String
+    floor?: string | null; // String
+    spaceType?: NexusGenEnums['ResourceMapInteriorSpaceType'] | null; // ResourceMapInteriorSpaceType
+  }
   ResourceMapLatLngInput: { // input type
     accuracyMeters?: number | null; // Float
     lat: number; // Float!
@@ -670,6 +675,7 @@ export interface NexusGenInputs {
   ResourceMapLocationInput: { // input type
     address?: NexusGenInputs['ResourceMapAddressInput'] | null; // ResourceMapAddressInput
     geofence?: NexusGenInputs['ResourceMapGeofenceInput'] | null; // ResourceMapGeofenceInput
+    interior?: NexusGenInputs['ResourceMapInteriorMetadataInput'] | null; // ResourceMapInteriorMetadataInput
     kind: NexusGenEnums['ResourceMapLocationType']; // ResourceMapLocationType!
     latLng?: NexusGenInputs['ResourceMapLatLngInput'] | null; // ResourceMapLatLngInput
     plusCode?: NexusGenInputs['ResourceMapPlusCodeInput'] | null; // ResourceMapPlusCodeInput
@@ -745,10 +751,10 @@ export interface NexusGenInputs {
     email?: string | null; // String
     name?: string | null; // String
     notes?: string | null; // String
+    personType?: NexusGenEnums['PersonContactType'] | null; // PersonContactType
     phone?: string | null; // String
     profilePicture?: string | null; // String
     resourceMapIds?: string[] | null; // [ID!]
-    role?: string | null; // String
   }
   UpdatePriceBookInput: { // input type
     businessContactId?: string | null; // ID
@@ -966,6 +972,7 @@ export interface NexusGenEnums {
   POLineItemType: "RENTAL" | "SALE"
   PaginationOrder: "ASC" | "DESC"
   PermissionType: "delete" | "read" | "update" | "delete" | "read" | "update" | "is_member" | "delete" | "read" | "update" | "delete" | "manage_rental_period" | "read" | "update" | "create_submission" | "read" | "read_submissions" | "read" | "update" | "update" | "update_submissions" | "read" | "update" | "is_admin" | "read" | "update" | "read" | "update" | "read" | "update" | "read" | "update" | "accept" | "read" | "reject" | "update" | "read" | "update" | "portal_access" | "read" | "update" | "add_user" | "can_join" | "can_manage_buyer_intake_form_submissions" | "can_manage_charges" | "can_manage_contacts" | "can_manage_files" | "can_manage_intake_forms" | "can_manage_intake_form_submissions" | "can_manage_invoices" | "can_manage_prices" | "can_manage_price_books" | "can_manage_projects" | "can_manage_purchase_orders" | "can_manage_quotes" | "can_manage_reference_number_templates" | "can_manage_rfqs" | "can_manage_sales_orders" | "can_read_buyer_intake_form_submissions" | "can_read_charges" | "can_read_contacts" | "can_read_files" | "can_read_invoices" | "can_read_projects" | "can_read_purchase_orders" | "can_read_quotes" | "can_read_reference_number_templates" | "can_read_rfqs" | "can_read_sales_orders" | "create_intake_form" | "create_intake_form_submission" | "create_price_book" | "is_admin" | "manage" | "read" | "read_intake_forms" | "read_intake_form_submissions" | "read_prices" | "read_price_books" | "remove_user" | "update_user_roles"
+  PersonContactType: "EMPLOYEE"
   PriceType: "RENTAL" | "SALE"
   ProjectContactRelationEnum: "ARCHITECT_ENGINEER_OF_RECORD" | "EQUIPMENT_RENTAL_COORDINATOR" | "OWNERS_REPRESENTATIVE" | "PROJECT_MANAGER_GC" | "SAFETY_MANAGER" | "SITE_SUPERINTENDENT"
   ProjectStatusEnum: "ACTIVE_CONSTRUCTION" | "ARCHIVED_CLOSED" | "BIDDING_TENDERING" | "CLOSE_OUT" | "CONCEPT_OPPORTUNITY" | "MOBILIZATION" | "PRE_CONSTRUCTION" | "SUBSTANTIAL_COMPLETION" | "WARRANTY_MAINTENANCE"
@@ -979,6 +986,7 @@ export interface NexusGenEnums {
   ReservationType: "FULFILMENT"
   ResetFrequency: "daily" | "monthly" | "never" | "yearly"
   ResourceMapGeofenceType: "CIRCLE" | "POLYGON"
+  ResourceMapInteriorSpaceType: "AISLE" | "BAY" | "BIN" | "BUILDING" | "FLOOR" | "OTHER" | "RACK" | "ROOM" | "ROW" | "SHELF" | "ZONE"
   ResourceMapLocationType: "ADDRESS" | "GEOFENCE" | "LAT_LNG" | "PLUS_CODE"
   ResourceMapTagType: "BUSINESS_UNIT" | "LOCATION" | "ROLE"
   ResourceType: "erp/charge" | "erp/contact" | "erp/domain" | "erp/file" | "erp/fulfilment" | "erp/intake_form" | "erp/intake_form_submission" | "erp/invoice" | "erp/platform" | "erp/pricebook" | "erp/pricebook_price" | "erp/project" | "erp/purchase_order" | "erp/quote" | "erp/rfq" | "erp/sales_order" | "erp/service_account" | "erp/user" | "erp/workspace"
@@ -1534,10 +1542,10 @@ export interface NexusGenObjects {
     id: string; // ID!
     name: string; // String!
     notes?: string | null; // String
+    personType?: NexusGenEnums['PersonContactType'] | null; // PersonContactType
     phone?: string | null; // String
     profilePicture?: string | null; // String
     resourceMapIds?: string[] | null; // [String!]
-    role?: string | null; // String
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
     workspaceId: string; // String!
   }
@@ -1831,6 +1839,12 @@ export interface NexusGenObjects {
     radiusMeters?: number | null; // Float
     type: NexusGenEnums['ResourceMapGeofenceType']; // ResourceMapGeofenceType!
   }
+  ResourceMapInteriorMetadata: { // root type
+    code?: string | null; // String
+    floor?: string | null; // String
+    qrPayload?: string | null; // String
+    spaceType?: NexusGenEnums['ResourceMapInteriorSpaceType'] | null; // ResourceMapInteriorSpaceType
+  }
   ResourceMapLatLng: { // root type
     accuracyMeters?: number | null; // Float
     lat: number; // Float!
@@ -1839,6 +1853,7 @@ export interface NexusGenObjects {
   ResourceMapLocation: { // root type
     address?: NexusGenRootTypes['ResourceMapAddress'] | null; // ResourceMapAddress
     geofence?: NexusGenRootTypes['ResourceMapGeofence'] | null; // ResourceMapGeofence
+    interior?: NexusGenRootTypes['ResourceMapInteriorMetadata'] | null; // ResourceMapInteriorMetadata
     kind: NexusGenEnums['ResourceMapLocationType']; // ResourceMapLocationType!
     latLng?: NexusGenRootTypes['ResourceMapLatLng'] | null; // ResourceMapLatLng
     plusCode?: NexusGenRootTypes['ResourceMapPlusCode'] | null; // ResourceMapPlusCode
@@ -2154,6 +2169,7 @@ export interface NexusGenObjects {
     id: string; // ID!
     logoUrl?: string | null; // String
     name: string; // String!
+    orgBusinessContactId?: string | null; // ID
     ownerId?: string | null; // String
     updatedAt?: string | null; // String
     updatedBy?: string | null; // String
@@ -3042,7 +3058,6 @@ export interface NexusGenFieldTypes {
     updatePersonName: NexusGenRootTypes['PersonContact'] | null; // PersonContact
     updatePersonPhone: NexusGenRootTypes['PersonContact'] | null; // PersonContact
     updatePersonResourceMap: NexusGenRootTypes['PersonContact'] | null; // PersonContact
-    updatePersonRole: NexusGenRootTypes['PersonContact'] | null; // PersonContact
     updatePriceBook: NexusGenRootTypes['PriceBook'] | null; // PriceBook
     updateProject: NexusGenRootTypes['Project'] | null; // Project
     updateProjectCode: NexusGenRootTypes['Project'] | null; // Project
@@ -3106,11 +3121,11 @@ export interface NexusGenFieldTypes {
     id: string; // ID!
     name: string; // String!
     notes: string | null; // String
+    personType: NexusGenEnums['PersonContactType'] | null; // PersonContactType
     phone: string | null; // String
     profilePicture: string | null; // String
     resourceMapIds: string[] | null; // [String!]
     resource_map_entries: NexusGenRootTypes['ResourceMapResource'][]; // [ResourceMapResource!]!
-    role: string | null; // String
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
     workspaceId: string; // String!
   }
@@ -3832,6 +3847,12 @@ export interface NexusGenFieldTypes {
     radiusMeters: number | null; // Float
     type: NexusGenEnums['ResourceMapGeofenceType']; // ResourceMapGeofenceType!
   }
+  ResourceMapInteriorMetadata: { // field return type
+    code: string | null; // String
+    floor: string | null; // String
+    qrPayload: string | null; // String
+    spaceType: NexusGenEnums['ResourceMapInteriorSpaceType'] | null; // ResourceMapInteriorSpaceType
+  }
   ResourceMapLatLng: { // field return type
     accuracyMeters: number | null; // Float
     lat: number; // Float!
@@ -3840,6 +3861,7 @@ export interface NexusGenFieldTypes {
   ResourceMapLocation: { // field return type
     address: NexusGenRootTypes['ResourceMapAddress'] | null; // ResourceMapAddress
     geofence: NexusGenRootTypes['ResourceMapGeofence'] | null; // ResourceMapGeofence
+    interior: NexusGenRootTypes['ResourceMapInteriorMetadata'] | null; // ResourceMapInteriorMetadata
     kind: NexusGenEnums['ResourceMapLocationType']; // ResourceMapLocationType!
     latLng: NexusGenRootTypes['ResourceMapLatLng'] | null; // ResourceMapLatLng
     plusCode: NexusGenRootTypes['ResourceMapPlusCode'] | null; // ResourceMapPlusCode
@@ -4382,6 +4404,8 @@ export interface NexusGenFieldTypes {
     id: string; // ID!
     logoUrl: string | null; // String
     name: string; // String!
+    orgBusinessContact: NexusGenRootTypes['BusinessContact'] | null; // BusinessContact
+    orgBusinessContactId: string | null; // ID
     ownerId: string | null; // String
     updatedAt: string | null; // String
     updatedBy: string | null; // String
@@ -5298,7 +5322,6 @@ export interface NexusGenFieldTypeNames {
     updatePersonName: 'PersonContact'
     updatePersonPhone: 'PersonContact'
     updatePersonResourceMap: 'PersonContact'
-    updatePersonRole: 'PersonContact'
     updatePriceBook: 'PriceBook'
     updateProject: 'Project'
     updateProjectCode: 'Project'
@@ -5362,11 +5385,11 @@ export interface NexusGenFieldTypeNames {
     id: 'ID'
     name: 'String'
     notes: 'String'
+    personType: 'PersonContactType'
     phone: 'String'
     profilePicture: 'String'
     resourceMapIds: 'String'
     resource_map_entries: 'ResourceMapResource'
-    role: 'String'
     updatedAt: 'DateTime'
     workspaceId: 'String'
   }
@@ -6088,6 +6111,12 @@ export interface NexusGenFieldTypeNames {
     radiusMeters: 'Float'
     type: 'ResourceMapGeofenceType'
   }
+  ResourceMapInteriorMetadata: { // field return type name
+    code: 'String'
+    floor: 'String'
+    qrPayload: 'String'
+    spaceType: 'ResourceMapInteriorSpaceType'
+  }
   ResourceMapLatLng: { // field return type name
     accuracyMeters: 'Float'
     lat: 'Float'
@@ -6096,6 +6125,7 @@ export interface NexusGenFieldTypeNames {
   ResourceMapLocation: { // field return type name
     address: 'ResourceMapAddress'
     geofence: 'ResourceMapGeofence'
+    interior: 'ResourceMapInteriorMetadata'
     kind: 'ResourceMapLocationType'
     latLng: 'ResourceMapLatLng'
     plusCode: 'ResourceMapPlusCode'
@@ -6638,6 +6668,8 @@ export interface NexusGenFieldTypeNames {
     id: 'ID'
     logoUrl: 'String'
     name: 'String'
+    orgBusinessContact: 'BusinessContact'
+    orgBusinessContactId: 'ID'
     ownerId: 'String'
     updatedAt: 'String'
     updatedBy: 'String'
@@ -7215,10 +7247,6 @@ export interface NexusGenArgTypes {
       id: string; // ID!
       resourceMapIds: string[]; // [ID!]!
     }
-    updatePersonRole: { // args
-      id: string; // ID!
-      role: string; // String!
-    }
     updatePriceBook: { // args
       input: NexusGenInputs['UpdatePriceBookInput']; // UpdatePriceBookInput!
     }
@@ -7320,6 +7348,7 @@ export interface NexusGenArgTypes {
       description?: string | null; // String
       logoUrl?: string | null; // String
       name?: string | null; // String
+      orgBusinessContactId?: string | null; // String
       workspaceId: string; // String!
     }
     updateWorkspaceUserRoles: { // args
@@ -7525,6 +7554,9 @@ export interface NexusGenArgTypes {
     listInvoices: { // args
       query?: NexusGenInputs['ListInvoicesQuery'] | null; // ListInvoicesQuery
     }
+    listJoinableWorkspaces: { // args
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
+    }
     listNotesByEntityId: { // args
       parent_entity_id: string; // String!
     }
@@ -7612,6 +7644,9 @@ export interface NexusGenArgTypes {
     }
     listWorkspaceMembers: { // args
       workspaceId: string; // String!
+    }
+    listWorkspaces: { // args
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
     }
     quoteById: { // args
       id: string; // String!

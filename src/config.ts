@@ -48,6 +48,12 @@ const EnvSchema = Type.Object({
 
   OPENAI_API_KEY: Type.Optional(Type.String()),
   BRAVE_SEARCH_API_KEY: Type.Optional(Type.String()),
+  MAPBOX_ACCESS_TOKEN: Type.Optional(Type.String()),
+  MAPBOX_GEOCODING_ENDPOINT: Type.Optional(
+    Type.String({
+      default: 'https://api.mapbox.com/geocoding/v5/mapbox.places',
+    }),
+  ),
 
   FILE_SERVICE_KEY: Type.String(),
   FILE_SERVICE_SECRET: Type.String(),

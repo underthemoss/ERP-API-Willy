@@ -12,9 +12,35 @@ import { PaginationInfo } from './common';
 import { assertNoNulls } from '../utils';
 import { PersonContact as PersonContactType } from '../../services/contacts/index';
 
+async function getWorkspaceOrgBusinessContactId(ctx: any, workspaceId: string) {
+  if (!ctx.user) {
+    throw new Error('Unauthorized');
+  }
+
+  const workspace = await ctx.services.workspaceService.getWorkspaceById(
+    workspaceId,
+    ctx.user,
+  );
+  if (!workspace) {
+    throw new Error('Workspace not found');
+  }
+  const orgBusinessContactId = (workspace as any).orgBusinessContactId;
+  if (!orgBusinessContactId) {
+    throw new Error(
+      'Workspace business is not configured (set orgBusinessContactId on the workspace)',
+    );
+  }
+  return orgBusinessContactId as string;
+}
+
 export const ContactTypeEnum = enumType({
   name: 'ContactType',
   members: ['BUSINESS', 'PERSON'],
+});
+
+export const PersonContactTypeEnum = enumType({
+  name: 'PersonContactType',
+  members: ['EMPLOYEE'],
 });
 
 export const BusinessContact = objectType({
@@ -147,24 +173,21 @@ export const ContactFieldPatchMutations = extendType({
         businessId: nonNull(arg({ type: 'ID' })),
       },
       async resolve(_, { id, businessId }, ctx) {
+        const existing = await ctx.services.contactsService.getContactById(
+          id,
+          ctx.user,
+        );
+        if (!existing || existing.contactType !== 'PERSON') {
+          throw new Error('Person contact not found');
+        }
+        if ((existing as any).personType === 'EMPLOYEE') {
+          throw new Error(
+            'Employee contacts are always tied to the workspace business and cannot change business',
+          );
+        }
         return ctx.services.contactsService.patchPersonContact(
           id,
           { businessId },
-          ctx.user,
-        );
-      },
-    });
-
-    t.field('updatePersonRole', {
-      type: PersonContact,
-      args: {
-        id: nonNull(arg({ type: 'ID' })),
-        role: nonNull(arg({ type: 'String' })),
-      },
-      async resolve(_, { id, role }, ctx) {
-        return ctx.services.contactsService.patchPersonContact(
-          id,
-          { role },
           ctx.user,
         );
       },
@@ -320,7 +343,7 @@ export const PersonContact = objectType({
     t.nonNull.string('name');
     t.string('phone');
     t.nonNull.string('email');
-    t.string('role');
+    t.field('personType', { type: PersonContactTypeEnum });
     t.nonNull.string('businessId');
     t.field('business', {
       type: BusinessContact,
@@ -388,7 +411,7 @@ export const PersonContactInput = inputObjectType({
     t.nonNull.string('name');
     t.string('phone');
     t.nonNull.string('email');
-    t.nonNull.string('role');
+    t.field('personType', { type: PersonContactTypeEnum });
     t.nonNull.id('businessId');
     t.list.nonNull.id('resourceMapIds');
   },
@@ -402,7 +425,7 @@ export const UpdatePersonContactInput = inputObjectType({
     t.string('name');
     t.string('phone');
     t.string('email');
-    t.string('role');
+    t.field('personType', { type: PersonContactTypeEnum });
     t.id('businessId');
     t.list.nonNull.id('resourceMapIds');
   },
@@ -566,13 +589,24 @@ export const ContactMutation = extendType({
         input: nonNull(arg({ type: PersonContactInput })),
       },
       async resolve(_, { input }, ctx) {
+        if (input.personType === 'EMPLOYEE') {
+          const orgBusinessContactId = await getWorkspaceOrgBusinessContactId(
+            ctx,
+            input.workspaceId,
+          );
+          if (input.businessId !== orgBusinessContactId) {
+            throw new Error(
+              'Employee contacts must use the workspace orgBusinessContactId as businessId',
+            );
+          }
+        }
         return ctx.services.contactsService.createPersonContact(
           {
             ...input,
             notes: input.notes ?? undefined,
             phone: input.phone ?? undefined,
             profilePicture: input.profilePicture ?? undefined,
-            role: input.role ?? undefined,
+            personType: input.personType ?? undefined,
             resourceMapIds: input.resourceMapIds || undefined,
           },
           ctx.user,
@@ -599,6 +633,31 @@ export const ContactMutation = extendType({
       },
       async resolve(_, { id, input }, ctx) {
         assertNoNulls(input, 'UpdatePersonContactInput');
+
+        const existing = await ctx.services.contactsService.getContactById(
+          id,
+          ctx.user,
+        );
+        if (!existing || existing.contactType !== 'PERSON') {
+          throw new Error('Person contact not found');
+        }
+
+        const nextPersonType =
+          input.personType ?? (existing as any).personType ?? undefined;
+        const nextBusinessId =
+          input.businessId ?? (existing as any).businessId ?? undefined;
+
+        if (nextPersonType === 'EMPLOYEE') {
+          const orgBusinessContactId = await getWorkspaceOrgBusinessContactId(
+            ctx,
+            (existing as any).workspaceId,
+          );
+          if (nextBusinessId !== orgBusinessContactId) {
+            throw new Error(
+              'Employee contacts must use the workspace orgBusinessContactId as businessId',
+            );
+          }
+        }
 
         return ctx.services.contactsService.updatePersonContact(
           id,

@@ -21,6 +21,34 @@ export const gqlPlugin: FastifyPluginAsync<CreateContextConfig> = async (
     schema: buildNexusSchema({ envConfig }),
     graphiql: envConfig.GRAPHIQL_ENABLED,
     context: createContext(opts),
+    errorFormatter: (execution, context) => {
+      const reply: any = (context as any)?.reply;
+      const request: any = reply?.request;
+      const body: any = request?.body;
+      const opFromQueryParam = request?.query?.op;
+      const operationName = body?.operationName || opFromQueryParam;
+      const querySnippet =
+        typeof body?.query === 'string' ? body.query.slice(0, 800) : undefined;
+      const errorMessages =
+        execution.errors?.map((e: any) => e.message) ?? undefined;
+
+      if (errorMessages && errorMessages.length > 0) {
+        fastify.log.warn(
+          {
+            operationName,
+            url: request?.url,
+            errorMessages,
+            querySnippet,
+          },
+          'GraphQL execution/validation errors',
+        );
+      }
+
+      return {
+        statusCode: 200,
+        response: execution,
+      };
+    },
     subscription: {
       onConnect: async (data) => {
         // Extract JWT token from WebSocket connection payload

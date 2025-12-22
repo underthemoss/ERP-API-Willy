@@ -8,7 +8,7 @@ import {
   arg,
   list,
 } from 'nexus';
-import { PaginationInfo } from './common';
+import { PaginationInfo, PageInfoInput } from './common';
 import { dropNullKeys } from '../utils';
 import {
   ERP_WORKSPACE_SUBJECT_RELATIONS,
@@ -63,6 +63,7 @@ export const Workspace = objectType({
     t.string('description');
     t.string('domain');
     t.string('brandId');
+    t.id('orgBusinessContactId');
     t.string('createdBy');
     t.string('bannerImageUrl');
     t.string('logoUrl');
@@ -73,6 +74,19 @@ export const Workspace = objectType({
     t.string('updatedAt');
     t.string('updatedBy');
     t.string('ownerId');
+    t.field('orgBusinessContact', {
+      type: 'BusinessContact',
+      resolve: async (parent, _args, ctx) => {
+        const orgBusinessContactId = (parent as any).orgBusinessContactId;
+        if (!orgBusinessContactId) return null;
+        const contact =
+          await ctx.dataloaders.contacts.getContactsById.load(
+            orgBusinessContactId,
+          );
+        if (!contact || contact.contactType !== 'BUSINESS') return null;
+        return contact;
+      },
+    });
   },
 });
 
@@ -128,12 +142,18 @@ export const Query = extendType({
 
     t.nonNull.field('listWorkspaces', {
       type: ListWorkspacesResult,
+      args: {
+        page: arg({ type: PageInfoInput }),
+      },
       resolve: async (root, args, ctx) => {
         if (!ctx.user) {
           throw new Error('Unauthorized');
         }
         const { items, page } =
-          await ctx.services.workspaceService.listWorkspaces(ctx.user);
+          await ctx.services.workspaceService.listWorkspaces(
+            ctx.user,
+            args.page ?? undefined,
+          );
         return {
           items,
           page,
@@ -143,12 +163,18 @@ export const Query = extendType({
 
     t.nonNull.field('listJoinableWorkspaces', {
       type: ListWorkspacesResult,
+      args: {
+        page: arg({ type: PageInfoInput }),
+      },
       resolve: async (root, args, ctx) => {
         if (!ctx.user) {
           throw new Error('Unauthorized');
         }
         const { items, page } =
-          await ctx.services.workspaceService.listJoinableWorkspaces(ctx.user);
+          await ctx.services.workspaceService.listJoinableWorkspaces(
+            ctx.user,
+            args.page ?? undefined,
+          );
         return {
           items,
           page,
@@ -257,6 +283,7 @@ export const Mutation = extendType({
         name: stringArg(),
         description: stringArg(),
         brandId: stringArg(),
+        orgBusinessContactId: stringArg(),
         logoUrl: stringArg(),
         bannerImageUrl: stringArg(),
       },
@@ -265,10 +292,40 @@ export const Mutation = extendType({
           throw new Error('Unauthorized');
         }
 
-        const { workspaceId, ...rawUpdates } = args;
+        const { workspaceId, orgBusinessContactId, ...rawUpdates } = args;
 
         // Use dropNullKeys utility to filter out null values
-        const updates = dropNullKeys(rawUpdates);
+        const updates = dropNullKeys(rawUpdates) as {
+          name?: string;
+          description?: string;
+          brandId?: string;
+          logoUrl?: string;
+          bannerImageUrl?: string;
+          orgBusinessContactId?: string | null;
+        };
+
+        if (orgBusinessContactId !== undefined) {
+          if (orgBusinessContactId && orgBusinessContactId.trim().length > 0) {
+            const contact =
+              await ctx.services.contactsService.getContactById(
+                orgBusinessContactId,
+                ctx.user,
+              );
+            if (!contact || contact.contactType !== 'BUSINESS') {
+              throw new Error(
+                'orgBusinessContactId must reference a BusinessContact',
+              );
+            }
+            if (contact.workspaceId !== workspaceId) {
+              throw new Error(
+                'orgBusinessContactId must belong to this workspace',
+              );
+            }
+            updates.orgBusinessContactId = orgBusinessContactId;
+          } else {
+            updates.orgBusinessContactId = null;
+          }
+        }
 
         const workspace =
           await ctx.services.workspaceService.updateWorkspaceSettings(
