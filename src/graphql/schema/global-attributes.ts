@@ -291,6 +291,20 @@ export const CreateGlobalUnitDefinitionInput = inputObjectType({
   },
 });
 
+export const IngestGlobalAttributeStringInput = inputObjectType({
+  name: 'IngestGlobalAttributeStringInput',
+  definition(t) {
+    t.nonNull.string('raw');
+    t.string('attributeName');
+    t.string('value');
+    t.field('kind', { type: GlobalAttributeKind });
+    t.field('valueType', { type: GlobalAttributeValueType });
+    t.field('dimension', { type: GlobalAttributeDimension });
+    t.string('unitCode');
+    t.string('source');
+  },
+});
+
 export const GlobalAttributeTypeListResult = objectType({
   name: 'GlobalAttributeTypeListResult',
   definition(t) {
@@ -320,6 +334,15 @@ export const GlobalUnitDefinitionListResult = objectType({
   definition(t) {
     t.nonNull.list.nonNull.field('items', { type: GlobalUnitDefinition });
     t.nonNull.field('page', { type: PaginationInfo });
+  },
+});
+
+export const GlobalAttributeIngestionResult = objectType({
+  name: 'GlobalAttributeIngestionResult',
+  definition(t) {
+    t.nonNull.field('attributeType', { type: GlobalAttributeType });
+    t.field('attributeValue', { type: GlobalAttributeValue });
+    t.nonNull.field('parsed', { type: 'JSONObjectScalar' });
   },
 });
 
@@ -474,6 +497,20 @@ export const GlobalAttributesMutation = extendType({
       resolve: async (_root, { input }, ctx) => {
         if (!ctx.user) throw new Error('Unauthorized');
         return ctx.services.globalAttributesService.createUnitDefinition(
+          input as any,
+          ctx.user,
+        );
+      },
+    });
+
+    t.field('ingestGlobalAttributeString', {
+      type: GlobalAttributeIngestionResult,
+      args: {
+        input: nonNull(arg({ type: IngestGlobalAttributeStringInput })),
+      },
+      resolve: async (_root, { input }, ctx) => {
+        if (!ctx.user) throw new Error('Unauthorized');
+        return ctx.services.globalAttributesService.ingestGlobalAttributeString(
           input as any,
           ctx.user,
         );

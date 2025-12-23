@@ -158,6 +158,9 @@ const buildSearchFilter = (searchTerm: string | undefined, fields: string[]) => 
   };
 };
 
+const escapeRegex = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 export class GlobalAttributeTypesModel {
   private collection: Collection<GlobalAttributeTypeDoc>;
 
@@ -194,6 +197,16 @@ export class GlobalAttributeTypesModel {
 
   async getById(id: string) {
     const doc = await this.collection.findOne({ _id: id });
+    return doc ? this.map(doc) : null;
+  }
+
+  async findByNameOrSynonym(name: string) {
+    const normalized = name.trim();
+    if (!normalized) return null;
+    const regex = { $regex: `^${escapeRegex(normalized)}$`, $options: 'i' };
+    const doc = await this.collection.findOne({
+      $or: [{ name: regex }, { synonyms: regex }],
+    });
     return doc ? this.map(doc) : null;
   }
 
@@ -266,6 +279,20 @@ export class GlobalAttributeValuesModel {
     const doc = await this.collection.findOne({
       attributeTypeId,
       value: { $regex: `^${value}$`, $options: 'i' },
+    });
+    return doc ? this.map(doc) : null;
+  }
+
+  async findByAttributeAndValueOrSynonym(
+    attributeTypeId: string,
+    value: string,
+  ) {
+    const normalized = value.trim();
+    if (!normalized) return null;
+    const regex = { $regex: `^${escapeRegex(normalized)}$`, $options: 'i' };
+    const doc = await this.collection.findOne({
+      attributeTypeId,
+      $or: [{ value: regex }, { synonyms: regex }],
     });
     return doc ? this.map(doc) : null;
   }
