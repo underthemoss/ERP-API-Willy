@@ -32,6 +32,8 @@ Legend:
 - [x] Add audit status for auto-activation + later curation
 - [x] Seed minimal global unit definitions (LB, KG, IN, FT, M, MI, HR, MIN, SEC, DAY, L, GA)
 - [x] Add free-form ingestion mutation (string -> canonical attribute type/value)
+- [x] Regenerate schema/codegen for global attribute changes
+- [x] Validate ingestion with enum + numeric smoke cases
 - [ ] Admin/global curation workflows (approve, merge, deprecate)
 - [ ] Suggestion + review queue (LLM + fuzzy match + approval flow)
 - [ ] Agent access rules for global tag/attribute library

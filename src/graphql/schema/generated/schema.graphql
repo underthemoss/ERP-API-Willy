@@ -732,6 +732,53 @@ input CreateFulfilmentReservationInput {
   startDate: DateTime!
 }
 
+input CreateGlobalAttributeRelationInput {
+  confidence: Float
+  fromAttributeId: String!
+  relationType: GlobalAttributeRelationType!
+  source: String
+  toAttributeId: String!
+}
+
+input CreateGlobalAttributeTypeInput {
+  allowedUnits: [String]
+  appliesTo: GlobalAttributeAppliesTo
+  auditStatus: GlobalAttributeAuditStatus
+  canonicalUnit: String
+  canonicalValueSetId: String
+  dimension: GlobalAttributeDimension
+  kind: GlobalAttributeKind!
+  name: String!
+  notes: String
+  source: String
+  status: GlobalAttributeStatus
+  synonyms: [String]
+  usageHints: [GlobalAttributeUsageHint]
+  validationRules: JSONObject
+  valueType: GlobalAttributeValueType!
+}
+
+input CreateGlobalAttributeValueInput {
+  attributeTypeId: String!
+  auditStatus: GlobalAttributeAuditStatus
+  codes: JSONObject
+  source: String
+  status: GlobalAttributeStatus
+  synonyms: [String]
+  value: String!
+}
+
+input CreateGlobalUnitDefinitionInput {
+  canonicalUnitCode: String
+  code: String!
+  dimension: GlobalAttributeDimension
+  name: String
+  offset: Float
+  source: String
+  status: GlobalUnitStatus
+  toCanonicalFactor: Float
+}
+
 input CreateInventoryInput {
   actualReturnDate: DateTime
   assetId: String
@@ -1126,10 +1173,177 @@ type GenerateReferenceNumberResult {
   templateUsed: ReferenceNumberTemplate!
 }
 
+enum GlobalAttributeAppliesTo {
+  BOTH
+  MATERIAL
+  RESOURCE
+  SERVICE
+}
+
+enum GlobalAttributeAuditStatus {
+  FLAGGED
+  PENDING_REVIEW
+  REVIEWED
+}
+
+enum GlobalAttributeDimension {
+  AREA
+  DENSITY
+  ENERGY
+  FORCE
+  LENGTH
+  MASS
+  POWER
+  PRESSURE
+  SPEED
+  TEMPERATURE
+  TIME
+  VOLUME
+}
+
+type GlobalAttributeIngestionResult {
+  attributeType: GlobalAttributeType!
+  attributeValue: GlobalAttributeValue
+  parsed: JSONObject!
+}
+
+enum GlobalAttributeKind {
+  BRAND
+  PHYSICAL
+}
+
+type GlobalAttributeRelation {
+  confidence: Float
+  createdAt: DateTime
+  createdBy: String
+  fromAttributeId: String!
+  id: String!
+  relationType: GlobalAttributeRelationType!
+  source: String
+  toAttributeId: String!
+  updatedAt: DateTime
+  updatedBy: String
+}
+
+type GlobalAttributeRelationListResult {
+  items: [GlobalAttributeRelation!]!
+  page: PaginationInfo!
+}
+
+enum GlobalAttributeRelationType {
+  ALIAS
+  RELATED
+  REPLACES
+}
+
+enum GlobalAttributeStatus {
+  ACTIVE
+  DEPRECATED
+  PROPOSED
+}
+
+type GlobalAttributeType {
+  allowedUnits: [String]
+  appliesTo: GlobalAttributeAppliesTo
+  auditStatus: GlobalAttributeAuditStatus
+  canonicalUnit: String
+  canonicalValueSetId: String
+  createdAt: DateTime
+  createdBy: String
+  dimension: GlobalAttributeDimension
+  id: String!
+  kind: GlobalAttributeKind!
+  name: String!
+  notes: String
+  source: String
+  status: GlobalAttributeStatus!
+  synonyms: [String]
+  updatedAt: DateTime
+  updatedBy: String
+  usageHints: [GlobalAttributeUsageHint]
+  validationRules: JSONObject
+  valueType: GlobalAttributeValueType!
+}
+
+type GlobalAttributeTypeListResult {
+  items: [GlobalAttributeType!]!
+  page: PaginationInfo!
+}
+
+enum GlobalAttributeUsageHint {
+  BOTH
+  JOB_PARAMETER
+  RESOURCE_PROPERTY
+}
+
+type GlobalAttributeValue {
+  attributeTypeId: String!
+  auditStatus: GlobalAttributeAuditStatus
+  codes: JSONObject
+  createdAt: DateTime
+  createdBy: String
+  id: String!
+  source: String
+  status: GlobalAttributeStatus!
+  synonyms: [String]
+  updatedAt: DateTime
+  updatedBy: String
+  value: String!
+}
+
+type GlobalAttributeValueListResult {
+  items: [GlobalAttributeValue!]!
+  page: PaginationInfo!
+}
+
+enum GlobalAttributeValueType {
+  BOOLEAN
+  ENUM
+  NUMBER
+  REF
+  STRING
+}
+
+type GlobalUnitDefinition {
+  canonicalUnitCode: String
+  code: String!
+  createdAt: DateTime
+  createdBy: String
+  dimension: GlobalAttributeDimension
+  id: String!
+  name: String
+  offset: Float
+  status: GlobalUnitStatus!
+  toCanonicalFactor: Float
+  updatedAt: DateTime
+  updatedBy: String
+}
+
+type GlobalUnitDefinitionListResult {
+  items: [GlobalUnitDefinition!]!
+  page: PaginationInfo!
+}
+
+enum GlobalUnitStatus {
+  ACTIVE
+  DEPRECATED
+}
+
 type ImportPricesResult {
   errors: [String!]!
   failed: Int!
   imported: Int!
+}
+
+input IngestGlobalAttributeStringInput {
+  attributeName: String
+  dimension: GlobalAttributeDimension
+  kind: GlobalAttributeKind
+  raw: String!
+  source: String
+  unitCode: String
+  value: String
+  valueType: GlobalAttributeValueType
 }
 
 type IntakeForm {
@@ -1531,6 +1745,34 @@ type ListFulfilmentsResult {
   page: PaginationInfo!
 }
 
+input ListGlobalAttributeRelationsFilter {
+  fromAttributeId: String
+  relationType: GlobalAttributeRelationType
+  toAttributeId: String
+}
+
+input ListGlobalAttributeTypesFilter {
+  appliesTo: GlobalAttributeAppliesTo
+  dimension: GlobalAttributeDimension
+  kind: GlobalAttributeKind
+  searchTerm: String
+  status: GlobalAttributeStatus
+  usageHint: GlobalAttributeUsageHint
+  valueType: GlobalAttributeValueType
+}
+
+input ListGlobalAttributeValuesFilter {
+  attributeTypeId: String
+  searchTerm: String
+  status: GlobalAttributeStatus
+}
+
+input ListGlobalUnitsFilter {
+  dimension: GlobalAttributeDimension
+  searchTerm: String
+  status: GlobalUnitStatus
+}
+
 input ListInventoryFilter {
   assetId: String
   companyId: String
@@ -1793,6 +2035,10 @@ type Mutation {
   createBusinessContact(input: BusinessContactInput!): BusinessContact
   createCharge(input: CreateChargeInput!): Charge
   createFulfilmentReservation(input: CreateFulfilmentReservationInput!): FulfilmentReservation!
+  createGlobalAttributeRelation(input: CreateGlobalAttributeRelationInput!): GlobalAttributeRelation
+  createGlobalAttributeType(input: CreateGlobalAttributeTypeInput!): GlobalAttributeType
+  createGlobalAttributeValue(input: CreateGlobalAttributeValueInput!): GlobalAttributeValue
+  createGlobalUnitDefinition(input: CreateGlobalUnitDefinitionInput!): GlobalUnitDefinition
 
   """Create a new intake form"""
   createIntakeForm(input: IntakeFormInput!): IntakeForm
@@ -1852,6 +2098,7 @@ type Mutation {
   generateReferenceNumber(input: GenerateReferenceNumberInput!): GenerateReferenceNumberResult
   getSignedReadUrl(fileId: ID!, type: FileUrlType): String
   importPrices(fileId: ID!, priceBookId: ID!): ImportPricesResult
+  ingestGlobalAttributeString(input: IngestGlobalAttributeStringInput!): GlobalAttributeIngestionResult
   inviteUserToWorkspace(email: String!, roles: [WorkspaceUserRole!]!, workspaceId: String!): WorkspaceMember
   joinWorkspace(workspaceId: String!): Workspace
   markInvoiceAsPaid(input: MarkInvoiceAsPaidInput!): Invoice!
@@ -1908,6 +2155,8 @@ type Mutation {
   updateBusinessWebsite(id: ID!, website: String!): BusinessContact
   updateFulfilmentAssignee(assignedToId: ID, fulfilmentId: ID!): FulfilmentBase
   updateFulfilmentColumn(fulfilmentId: ID!, workflowColumnId: ID, workflowId: ID): FulfilmentBase
+  updateGlobalAttributeType(id: ID!, input: UpdateGlobalAttributeTypeInput!): GlobalAttributeType
+  updateGlobalAttributeValue(id: ID!, input: UpdateGlobalAttributeValueInput!): GlobalAttributeValue
 
   """Update an existing intake form"""
   updateIntakeForm(id: String!, input: UpdateIntakeFormInput!): IntakeForm
@@ -2447,6 +2696,7 @@ type Query {
   getCurrentUser: User
   getDefaultTemplates(workspaceId: String!): [ReferenceNumberTemplate!]!
   getFulfilmentById(id: ID!): Fulfilment
+  getGlobalAttributeTypeById(id: ID!): GlobalAttributeType
 
   """Get a single intake form by ID"""
   getIntakeFormById(id: String!): IntakeForm
@@ -2493,6 +2743,10 @@ type Query {
   listContacts(filter: ListContactsFilter!, page: ListContactsPage): ListContactsResult
   listFilesByEntityId(parent_entity_id: String!, workspace_id: String!): [File!]!
   listFulfilments(filter: ListFulfilmentsFilter!, page: ListFulfilmentsPage): ListFulfilmentsResult
+  listGlobalAttributeRelations(filter: ListGlobalAttributeRelationsFilter, page: PageInfoInput): GlobalAttributeRelationListResult
+  listGlobalAttributeTypes(filter: ListGlobalAttributeTypesFilter, page: PageInfoInput): GlobalAttributeTypeListResult
+  listGlobalAttributeValues(filter: ListGlobalAttributeValuesFilter, page: PageInfoInput): GlobalAttributeValueListResult
+  listGlobalUnitDefinitions(filter: ListGlobalUnitsFilter, page: PageInfoInput): GlobalUnitDefinitionListResult
 
   """List all line items for an intake form submission"""
   listIntakeFormSubmissionLineItems(submissionId: String!): [IntakeFormLineItem!]!
@@ -3945,6 +4199,33 @@ input UpdateBusinessContactInput {
   resourceMapIds: [ID!]
   taxId: String
   website: String
+}
+
+input UpdateGlobalAttributeTypeInput {
+  allowedUnits: [String]
+  appliesTo: GlobalAttributeAppliesTo
+  auditStatus: GlobalAttributeAuditStatus
+  canonicalUnit: String
+  canonicalValueSetId: String
+  dimension: GlobalAttributeDimension
+  kind: GlobalAttributeKind
+  name: String
+  notes: String
+  source: String
+  status: GlobalAttributeStatus
+  synonyms: [String]
+  usageHints: [GlobalAttributeUsageHint]
+  validationRules: JSONObject
+  valueType: GlobalAttributeValueType
+}
+
+input UpdateGlobalAttributeValueInput {
+  auditStatus: GlobalAttributeAuditStatus
+  codes: JSONObject
+  source: String
+  status: GlobalAttributeStatus
+  synonyms: [String]
+  value: String
 }
 
 input UpdateIntakeFormInput {

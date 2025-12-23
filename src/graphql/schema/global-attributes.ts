@@ -86,7 +86,7 @@ export const GlobalAttributeType = objectType({
     t.field('appliesTo', { type: GlobalAttributeAppliesTo });
     t.list.field('usageHints', { type: GlobalAttributeUsageHint });
     t.string('notes');
-    t.field('validationRules', { type: 'JSONObjectScalar' });
+    t.field('validationRules', { type: 'JSONObject' });
     t.string('source');
     t.field('createdAt', { type: 'DateTime' });
     t.field('updatedAt', { type: 'DateTime' });
@@ -106,7 +106,7 @@ export const GlobalAttributeValue = objectType({
     t.nonNull.string('attributeTypeId');
     t.nonNull.string('value');
     t.list.string('synonyms');
-    t.field('codes', { type: 'JSONObjectScalar' });
+    t.field('codes', { type: 'JSONObject' });
     t.nonNull.field('status', { type: GlobalAttributeStatus });
     t.field('auditStatus', { type: GlobalAttributeAuditStatus });
     t.string('source');
@@ -215,7 +215,7 @@ export const CreateGlobalAttributeTypeInput = inputObjectType({
     t.field('appliesTo', { type: GlobalAttributeAppliesTo });
     t.list.field('usageHints', { type: GlobalAttributeUsageHint });
     t.string('notes');
-    t.field('validationRules', { type: 'JSONObjectScalar' });
+    t.field('validationRules', { type: 'JSONObject' });
     t.string('source');
   },
 });
@@ -236,7 +236,7 @@ export const UpdateGlobalAttributeTypeInput = inputObjectType({
     t.field('appliesTo', { type: GlobalAttributeAppliesTo });
     t.list.field('usageHints', { type: GlobalAttributeUsageHint });
     t.string('notes');
-    t.field('validationRules', { type: 'JSONObjectScalar' });
+    t.field('validationRules', { type: 'JSONObject' });
     t.string('source');
   },
 });
@@ -247,7 +247,7 @@ export const CreateGlobalAttributeValueInput = inputObjectType({
     t.nonNull.string('attributeTypeId');
     t.nonNull.string('value');
     t.list.string('synonyms');
-    t.field('codes', { type: 'JSONObjectScalar' });
+    t.field('codes', { type: 'JSONObject' });
     t.field('status', { type: GlobalAttributeStatus });
     t.field('auditStatus', { type: GlobalAttributeAuditStatus });
     t.string('source');
@@ -259,7 +259,7 @@ export const UpdateGlobalAttributeValueInput = inputObjectType({
   definition(t) {
     t.string('value');
     t.list.string('synonyms');
-    t.field('codes', { type: 'JSONObjectScalar' });
+    t.field('codes', { type: 'JSONObject' });
     t.field('status', { type: GlobalAttributeStatus });
     t.field('auditStatus', { type: GlobalAttributeAuditStatus });
     t.string('source');
@@ -342,7 +342,7 @@ export const GlobalAttributeIngestionResult = objectType({
   definition(t) {
     t.nonNull.field('attributeType', { type: GlobalAttributeType });
     t.field('attributeValue', { type: GlobalAttributeValue });
-    t.nonNull.field('parsed', { type: 'JSONObjectScalar' });
+    t.nonNull.field('parsed', { type: 'JSONObject' });
   },
 });
 

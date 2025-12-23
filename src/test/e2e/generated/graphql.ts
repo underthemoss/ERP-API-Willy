@@ -704,6 +704,53 @@ export type CreateFulfilmentReservationInput = {
   startDate: Scalars['DateTime']['input'];
 };
 
+export type CreateGlobalAttributeRelationInput = {
+  confidence?: InputMaybe<Scalars['Float']['input']>;
+  fromAttributeId: Scalars['String']['input'];
+  relationType: GlobalAttributeRelationType;
+  source?: InputMaybe<Scalars['String']['input']>;
+  toAttributeId: Scalars['String']['input'];
+};
+
+export type CreateGlobalAttributeTypeInput = {
+  allowedUnits?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  appliesTo?: InputMaybe<GlobalAttributeAppliesTo>;
+  auditStatus?: InputMaybe<GlobalAttributeAuditStatus>;
+  canonicalUnit?: InputMaybe<Scalars['String']['input']>;
+  canonicalValueSetId?: InputMaybe<Scalars['String']['input']>;
+  dimension?: InputMaybe<GlobalAttributeDimension>;
+  kind: GlobalAttributeKind;
+  name: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalAttributeStatus>;
+  synonyms?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  usageHints?: InputMaybe<Array<InputMaybe<GlobalAttributeUsageHint>>>;
+  validationRules?: InputMaybe<Scalars['JSONObject']['input']>;
+  valueType: GlobalAttributeValueType;
+};
+
+export type CreateGlobalAttributeValueInput = {
+  attributeTypeId: Scalars['String']['input'];
+  auditStatus?: InputMaybe<GlobalAttributeAuditStatus>;
+  codes?: InputMaybe<Scalars['JSONObject']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalAttributeStatus>;
+  synonyms?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  value: Scalars['String']['input'];
+};
+
+export type CreateGlobalUnitDefinitionInput = {
+  canonicalUnitCode?: InputMaybe<Scalars['String']['input']>;
+  code: Scalars['String']['input'];
+  dimension?: InputMaybe<GlobalAttributeDimension>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  offset?: InputMaybe<Scalars['Float']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalUnitStatus>;
+  toCanonicalFactor?: InputMaybe<Scalars['Float']['input']>;
+};
+
 export type CreateInventoryInput = {
   actualReturnDate?: InputMaybe<Scalars['DateTime']['input']>;
   assetId?: InputMaybe<Scalars['String']['input']>;
@@ -1100,11 +1147,187 @@ export type GenerateReferenceNumberResult = {
   templateUsed: ReferenceNumberTemplate;
 };
 
+export enum GlobalAttributeAppliesTo {
+  Both = 'BOTH',
+  Material = 'MATERIAL',
+  Resource = 'RESOURCE',
+  Service = 'SERVICE'
+}
+
+export enum GlobalAttributeAuditStatus {
+  Flagged = 'FLAGGED',
+  PendingReview = 'PENDING_REVIEW',
+  Reviewed = 'REVIEWED'
+}
+
+export enum GlobalAttributeDimension {
+  Area = 'AREA',
+  Density = 'DENSITY',
+  Energy = 'ENERGY',
+  Force = 'FORCE',
+  Length = 'LENGTH',
+  Mass = 'MASS',
+  Power = 'POWER',
+  Pressure = 'PRESSURE',
+  Speed = 'SPEED',
+  Temperature = 'TEMPERATURE',
+  Time = 'TIME',
+  Volume = 'VOLUME'
+}
+
+export type GlobalAttributeIngestionResult = {
+  __typename?: 'GlobalAttributeIngestionResult';
+  attributeType: GlobalAttributeType;
+  attributeValue?: Maybe<GlobalAttributeValue>;
+  parsed: Scalars['JSONObject']['output'];
+};
+
+export enum GlobalAttributeKind {
+  Brand = 'BRAND',
+  Physical = 'PHYSICAL'
+}
+
+export type GlobalAttributeRelation = {
+  __typename?: 'GlobalAttributeRelation';
+  confidence?: Maybe<Scalars['Float']['output']>;
+  createdAt?: Maybe<Scalars['DateTime']['output']>;
+  createdBy?: Maybe<Scalars['String']['output']>;
+  fromAttributeId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  relationType: GlobalAttributeRelationType;
+  source?: Maybe<Scalars['String']['output']>;
+  toAttributeId: Scalars['String']['output'];
+  updatedAt?: Maybe<Scalars['DateTime']['output']>;
+  updatedBy?: Maybe<Scalars['String']['output']>;
+};
+
+export type GlobalAttributeRelationListResult = {
+  __typename?: 'GlobalAttributeRelationListResult';
+  items: Array<GlobalAttributeRelation>;
+  page: PaginationInfo;
+};
+
+export enum GlobalAttributeRelationType {
+  Alias = 'ALIAS',
+  Related = 'RELATED',
+  Replaces = 'REPLACES'
+}
+
+export enum GlobalAttributeStatus {
+  Active = 'ACTIVE',
+  Deprecated = 'DEPRECATED',
+  Proposed = 'PROPOSED'
+}
+
+export type GlobalAttributeType = {
+  __typename?: 'GlobalAttributeType';
+  allowedUnits?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  appliesTo?: Maybe<GlobalAttributeAppliesTo>;
+  auditStatus?: Maybe<GlobalAttributeAuditStatus>;
+  canonicalUnit?: Maybe<Scalars['String']['output']>;
+  canonicalValueSetId?: Maybe<Scalars['String']['output']>;
+  createdAt?: Maybe<Scalars['DateTime']['output']>;
+  createdBy?: Maybe<Scalars['String']['output']>;
+  dimension?: Maybe<GlobalAttributeDimension>;
+  id: Scalars['String']['output'];
+  kind: GlobalAttributeKind;
+  name: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  source?: Maybe<Scalars['String']['output']>;
+  status: GlobalAttributeStatus;
+  synonyms?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  updatedAt?: Maybe<Scalars['DateTime']['output']>;
+  updatedBy?: Maybe<Scalars['String']['output']>;
+  usageHints?: Maybe<Array<Maybe<GlobalAttributeUsageHint>>>;
+  validationRules?: Maybe<Scalars['JSONObject']['output']>;
+  valueType: GlobalAttributeValueType;
+};
+
+export type GlobalAttributeTypeListResult = {
+  __typename?: 'GlobalAttributeTypeListResult';
+  items: Array<GlobalAttributeType>;
+  page: PaginationInfo;
+};
+
+export enum GlobalAttributeUsageHint {
+  Both = 'BOTH',
+  JobParameter = 'JOB_PARAMETER',
+  ResourceProperty = 'RESOURCE_PROPERTY'
+}
+
+export type GlobalAttributeValue = {
+  __typename?: 'GlobalAttributeValue';
+  attributeTypeId: Scalars['String']['output'];
+  auditStatus?: Maybe<GlobalAttributeAuditStatus>;
+  codes?: Maybe<Scalars['JSONObject']['output']>;
+  createdAt?: Maybe<Scalars['DateTime']['output']>;
+  createdBy?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  source?: Maybe<Scalars['String']['output']>;
+  status: GlobalAttributeStatus;
+  synonyms?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  updatedAt?: Maybe<Scalars['DateTime']['output']>;
+  updatedBy?: Maybe<Scalars['String']['output']>;
+  value: Scalars['String']['output'];
+};
+
+export type GlobalAttributeValueListResult = {
+  __typename?: 'GlobalAttributeValueListResult';
+  items: Array<GlobalAttributeValue>;
+  page: PaginationInfo;
+};
+
+export enum GlobalAttributeValueType {
+  Boolean = 'BOOLEAN',
+  Enum = 'ENUM',
+  Number = 'NUMBER',
+  Ref = 'REF',
+  String = 'STRING'
+}
+
+export type GlobalUnitDefinition = {
+  __typename?: 'GlobalUnitDefinition';
+  canonicalUnitCode?: Maybe<Scalars['String']['output']>;
+  code: Scalars['String']['output'];
+  createdAt?: Maybe<Scalars['DateTime']['output']>;
+  createdBy?: Maybe<Scalars['String']['output']>;
+  dimension?: Maybe<GlobalAttributeDimension>;
+  id: Scalars['String']['output'];
+  name?: Maybe<Scalars['String']['output']>;
+  offset?: Maybe<Scalars['Float']['output']>;
+  status: GlobalUnitStatus;
+  toCanonicalFactor?: Maybe<Scalars['Float']['output']>;
+  updatedAt?: Maybe<Scalars['DateTime']['output']>;
+  updatedBy?: Maybe<Scalars['String']['output']>;
+};
+
+export type GlobalUnitDefinitionListResult = {
+  __typename?: 'GlobalUnitDefinitionListResult';
+  items: Array<GlobalUnitDefinition>;
+  page: PaginationInfo;
+};
+
+export enum GlobalUnitStatus {
+  Active = 'ACTIVE',
+  Deprecated = 'DEPRECATED'
+}
+
 export type ImportPricesResult = {
   __typename?: 'ImportPricesResult';
   errors: Array<Scalars['String']['output']>;
   failed: Scalars['Int']['output'];
   imported: Scalars['Int']['output'];
+};
+
+export type IngestGlobalAttributeStringInput = {
+  attributeName?: InputMaybe<Scalars['String']['input']>;
+  dimension?: InputMaybe<GlobalAttributeDimension>;
+  kind?: InputMaybe<GlobalAttributeKind>;
+  raw: Scalars['String']['input'];
+  source?: InputMaybe<Scalars['String']['input']>;
+  unitCode?: InputMaybe<Scalars['String']['input']>;
+  value?: InputMaybe<Scalars['String']['input']>;
+  valueType?: InputMaybe<GlobalAttributeValueType>;
 };
 
 export type IntakeForm = {
@@ -1523,6 +1746,34 @@ export type ListFulfilmentsResult = {
   page: PaginationInfo;
 };
 
+export type ListGlobalAttributeRelationsFilter = {
+  fromAttributeId?: InputMaybe<Scalars['String']['input']>;
+  relationType?: InputMaybe<GlobalAttributeRelationType>;
+  toAttributeId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ListGlobalAttributeTypesFilter = {
+  appliesTo?: InputMaybe<GlobalAttributeAppliesTo>;
+  dimension?: InputMaybe<GlobalAttributeDimension>;
+  kind?: InputMaybe<GlobalAttributeKind>;
+  searchTerm?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalAttributeStatus>;
+  usageHint?: InputMaybe<GlobalAttributeUsageHint>;
+  valueType?: InputMaybe<GlobalAttributeValueType>;
+};
+
+export type ListGlobalAttributeValuesFilter = {
+  attributeTypeId?: InputMaybe<Scalars['String']['input']>;
+  searchTerm?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalAttributeStatus>;
+};
+
+export type ListGlobalUnitsFilter = {
+  dimension?: InputMaybe<GlobalAttributeDimension>;
+  searchTerm?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalUnitStatus>;
+};
+
 export type ListInventoryFilter = {
   assetId?: InputMaybe<Scalars['String']['input']>;
   companyId?: InputMaybe<Scalars['String']['input']>;
@@ -1801,6 +2052,10 @@ export type Mutation = {
   createBusinessContact?: Maybe<BusinessContact>;
   createCharge?: Maybe<Charge>;
   createFulfilmentReservation: FulfilmentReservation;
+  createGlobalAttributeRelation?: Maybe<GlobalAttributeRelation>;
+  createGlobalAttributeType?: Maybe<GlobalAttributeType>;
+  createGlobalAttributeValue?: Maybe<GlobalAttributeValue>;
+  createGlobalUnitDefinition?: Maybe<GlobalUnitDefinition>;
   /** Create a new intake form */
   createIntakeForm?: Maybe<IntakeForm>;
   /** Create a new intake form submission */
@@ -1854,6 +2109,7 @@ export type Mutation = {
   generateReferenceNumber?: Maybe<GenerateReferenceNumberResult>;
   getSignedReadUrl?: Maybe<Scalars['String']['output']>;
   importPrices?: Maybe<ImportPricesResult>;
+  ingestGlobalAttributeString?: Maybe<GlobalAttributeIngestionResult>;
   inviteUserToWorkspace?: Maybe<WorkspaceMember>;
   joinWorkspace?: Maybe<Workspace>;
   markInvoiceAsPaid: Invoice;
@@ -1903,6 +2159,8 @@ export type Mutation = {
   updateBusinessWebsite?: Maybe<BusinessContact>;
   updateFulfilmentAssignee?: Maybe<FulfilmentBase>;
   updateFulfilmentColumn?: Maybe<FulfilmentBase>;
+  updateGlobalAttributeType?: Maybe<GlobalAttributeType>;
+  updateGlobalAttributeValue?: Maybe<GlobalAttributeValue>;
   /** Update an existing intake form */
   updateIntakeForm?: Maybe<IntakeForm>;
   /** Update an existing intake form submission */
@@ -2042,6 +2300,26 @@ export type MutationCreateChargeArgs = {
 
 export type MutationCreateFulfilmentReservationArgs = {
   input: CreateFulfilmentReservationInput;
+};
+
+
+export type MutationCreateGlobalAttributeRelationArgs = {
+  input: CreateGlobalAttributeRelationInput;
+};
+
+
+export type MutationCreateGlobalAttributeTypeArgs = {
+  input: CreateGlobalAttributeTypeInput;
+};
+
+
+export type MutationCreateGlobalAttributeValueArgs = {
+  input: CreateGlobalAttributeValueInput;
+};
+
+
+export type MutationCreateGlobalUnitDefinitionArgs = {
+  input: CreateGlobalUnitDefinitionInput;
 };
 
 
@@ -2294,6 +2572,11 @@ export type MutationImportPricesArgs = {
 };
 
 
+export type MutationIngestGlobalAttributeStringArgs = {
+  input: IngestGlobalAttributeStringInput;
+};
+
+
 export type MutationInviteUserToWorkspaceArgs = {
   email: Scalars['String']['input'];
   roles: Array<WorkspaceUserRole>;
@@ -2508,6 +2791,18 @@ export type MutationUpdateFulfilmentColumnArgs = {
   fulfilmentId: Scalars['ID']['input'];
   workflowColumnId?: InputMaybe<Scalars['ID']['input']>;
   workflowId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type MutationUpdateGlobalAttributeTypeArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateGlobalAttributeTypeInput;
+};
+
+
+export type MutationUpdateGlobalAttributeValueArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateGlobalAttributeValueInput;
 };
 
 
@@ -3247,6 +3542,7 @@ export type Query = {
   getCurrentUser?: Maybe<User>;
   getDefaultTemplates: Array<ReferenceNumberTemplate>;
   getFulfilmentById?: Maybe<Fulfilment>;
+  getGlobalAttributeTypeById?: Maybe<GlobalAttributeType>;
   /** Get a single intake form by ID */
   getIntakeFormById?: Maybe<IntakeForm>;
   /** Get a single intake form submission by ID */
@@ -3287,6 +3583,10 @@ export type Query = {
   listContacts?: Maybe<ListContactsResult>;
   listFilesByEntityId: Array<File>;
   listFulfilments?: Maybe<ListFulfilmentsResult>;
+  listGlobalAttributeRelations?: Maybe<GlobalAttributeRelationListResult>;
+  listGlobalAttributeTypes?: Maybe<GlobalAttributeTypeListResult>;
+  listGlobalAttributeValues?: Maybe<GlobalAttributeValueListResult>;
+  listGlobalUnitDefinitions?: Maybe<GlobalUnitDefinitionListResult>;
   /** List all line items for an intake form submission */
   listIntakeFormSubmissionLineItems: Array<IntakeFormLineItem>;
   /** List all intake form submissions for a workspace with pagination */
@@ -3401,6 +3701,11 @@ export type QueryGetDefaultTemplatesArgs = {
 
 
 export type QueryGetFulfilmentByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryGetGlobalAttributeTypeByIdArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -3575,6 +3880,30 @@ export type QueryListFilesByEntityIdArgs = {
 export type QueryListFulfilmentsArgs = {
   filter: ListFulfilmentsFilter;
   page?: InputMaybe<ListFulfilmentsPage>;
+};
+
+
+export type QueryListGlobalAttributeRelationsArgs = {
+  filter?: InputMaybe<ListGlobalAttributeRelationsFilter>;
+  page?: InputMaybe<PageInfoInput>;
+};
+
+
+export type QueryListGlobalAttributeTypesArgs = {
+  filter?: InputMaybe<ListGlobalAttributeTypesFilter>;
+  page?: InputMaybe<PageInfoInput>;
+};
+
+
+export type QueryListGlobalAttributeValuesArgs = {
+  filter?: InputMaybe<ListGlobalAttributeValuesFilter>;
+  page?: InputMaybe<PageInfoInput>;
+};
+
+
+export type QueryListGlobalUnitDefinitionsArgs = {
+  filter?: InputMaybe<ListGlobalUnitsFilter>;
+  page?: InputMaybe<PageInfoInput>;
 };
 
 
@@ -5244,6 +5573,33 @@ export type UpdateBusinessContactInput = {
   resourceMapIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   taxId?: InputMaybe<Scalars['String']['input']>;
   website?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateGlobalAttributeTypeInput = {
+  allowedUnits?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  appliesTo?: InputMaybe<GlobalAttributeAppliesTo>;
+  auditStatus?: InputMaybe<GlobalAttributeAuditStatus>;
+  canonicalUnit?: InputMaybe<Scalars['String']['input']>;
+  canonicalValueSetId?: InputMaybe<Scalars['String']['input']>;
+  dimension?: InputMaybe<GlobalAttributeDimension>;
+  kind?: InputMaybe<GlobalAttributeKind>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalAttributeStatus>;
+  synonyms?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  usageHints?: InputMaybe<Array<InputMaybe<GlobalAttributeUsageHint>>>;
+  validationRules?: InputMaybe<Scalars['JSONObject']['input']>;
+  valueType?: InputMaybe<GlobalAttributeValueType>;
+};
+
+export type UpdateGlobalAttributeValueInput = {
+  auditStatus?: InputMaybe<GlobalAttributeAuditStatus>;
+  codes?: InputMaybe<Scalars['JSONObject']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalAttributeStatus>;
+  synonyms?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  value?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateIntakeFormInput = {
@@ -8681,6 +9037,98 @@ export type GenerateReferenceNumberResultFieldPolicy = {
 	sequenceNumber?: FieldPolicy<any> | FieldReadFunction<any>,
 	templateUsed?: FieldPolicy<any> | FieldReadFunction<any>
 };
+export type GlobalAttributeIngestionResultKeySpecifier = ('attributeType' | 'attributeValue' | 'parsed' | GlobalAttributeIngestionResultKeySpecifier)[];
+export type GlobalAttributeIngestionResultFieldPolicy = {
+	attributeType?: FieldPolicy<any> | FieldReadFunction<any>,
+	attributeValue?: FieldPolicy<any> | FieldReadFunction<any>,
+	parsed?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type GlobalAttributeRelationKeySpecifier = ('confidence' | 'createdAt' | 'createdBy' | 'fromAttributeId' | 'id' | 'relationType' | 'source' | 'toAttributeId' | 'updatedAt' | 'updatedBy' | GlobalAttributeRelationKeySpecifier)[];
+export type GlobalAttributeRelationFieldPolicy = {
+	confidence?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	fromAttributeId?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	relationType?: FieldPolicy<any> | FieldReadFunction<any>,
+	source?: FieldPolicy<any> | FieldReadFunction<any>,
+	toAttributeId?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedBy?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type GlobalAttributeRelationListResultKeySpecifier = ('items' | 'page' | GlobalAttributeRelationListResultKeySpecifier)[];
+export type GlobalAttributeRelationListResultFieldPolicy = {
+	items?: FieldPolicy<any> | FieldReadFunction<any>,
+	page?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type GlobalAttributeTypeKeySpecifier = ('allowedUnits' | 'appliesTo' | 'auditStatus' | 'canonicalUnit' | 'canonicalValueSetId' | 'createdAt' | 'createdBy' | 'dimension' | 'id' | 'kind' | 'name' | 'notes' | 'source' | 'status' | 'synonyms' | 'updatedAt' | 'updatedBy' | 'usageHints' | 'validationRules' | 'valueType' | GlobalAttributeTypeKeySpecifier)[];
+export type GlobalAttributeTypeFieldPolicy = {
+	allowedUnits?: FieldPolicy<any> | FieldReadFunction<any>,
+	appliesTo?: FieldPolicy<any> | FieldReadFunction<any>,
+	auditStatus?: FieldPolicy<any> | FieldReadFunction<any>,
+	canonicalUnit?: FieldPolicy<any> | FieldReadFunction<any>,
+	canonicalValueSetId?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	dimension?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	kind?: FieldPolicy<any> | FieldReadFunction<any>,
+	name?: FieldPolicy<any> | FieldReadFunction<any>,
+	notes?: FieldPolicy<any> | FieldReadFunction<any>,
+	source?: FieldPolicy<any> | FieldReadFunction<any>,
+	status?: FieldPolicy<any> | FieldReadFunction<any>,
+	synonyms?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	usageHints?: FieldPolicy<any> | FieldReadFunction<any>,
+	validationRules?: FieldPolicy<any> | FieldReadFunction<any>,
+	valueType?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type GlobalAttributeTypeListResultKeySpecifier = ('items' | 'page' | GlobalAttributeTypeListResultKeySpecifier)[];
+export type GlobalAttributeTypeListResultFieldPolicy = {
+	items?: FieldPolicy<any> | FieldReadFunction<any>,
+	page?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type GlobalAttributeValueKeySpecifier = ('attributeTypeId' | 'auditStatus' | 'codes' | 'createdAt' | 'createdBy' | 'id' | 'source' | 'status' | 'synonyms' | 'updatedAt' | 'updatedBy' | 'value' | GlobalAttributeValueKeySpecifier)[];
+export type GlobalAttributeValueFieldPolicy = {
+	attributeTypeId?: FieldPolicy<any> | FieldReadFunction<any>,
+	auditStatus?: FieldPolicy<any> | FieldReadFunction<any>,
+	codes?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	source?: FieldPolicy<any> | FieldReadFunction<any>,
+	status?: FieldPolicy<any> | FieldReadFunction<any>,
+	synonyms?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	value?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type GlobalAttributeValueListResultKeySpecifier = ('items' | 'page' | GlobalAttributeValueListResultKeySpecifier)[];
+export type GlobalAttributeValueListResultFieldPolicy = {
+	items?: FieldPolicy<any> | FieldReadFunction<any>,
+	page?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type GlobalUnitDefinitionKeySpecifier = ('canonicalUnitCode' | 'code' | 'createdAt' | 'createdBy' | 'dimension' | 'id' | 'name' | 'offset' | 'status' | 'toCanonicalFactor' | 'updatedAt' | 'updatedBy' | GlobalUnitDefinitionKeySpecifier)[];
+export type GlobalUnitDefinitionFieldPolicy = {
+	canonicalUnitCode?: FieldPolicy<any> | FieldReadFunction<any>,
+	code?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	dimension?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	name?: FieldPolicy<any> | FieldReadFunction<any>,
+	offset?: FieldPolicy<any> | FieldReadFunction<any>,
+	status?: FieldPolicy<any> | FieldReadFunction<any>,
+	toCanonicalFactor?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedBy?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type GlobalUnitDefinitionListResultKeySpecifier = ('items' | 'page' | GlobalUnitDefinitionListResultKeySpecifier)[];
+export type GlobalUnitDefinitionListResultFieldPolicy = {
+	items?: FieldPolicy<any> | FieldReadFunction<any>,
+	page?: FieldPolicy<any> | FieldReadFunction<any>
+};
 export type ImportPricesResultKeySpecifier = ('errors' | 'failed' | 'imported' | ImportPricesResultKeySpecifier)[];
 export type ImportPricesResultFieldPolicy = {
 	errors?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9028,7 +9476,7 @@ export type LlmFieldPolicy = {
 	exampleTicket?: FieldPolicy<any> | FieldReadFunction<any>,
 	suggestTaxObligations?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type MutationKeySpecifier = ('acceptQuote' | 'addFileToEntity' | 'addInvoiceCharges' | 'addSearchRecent' | 'addTaxLineItem' | 'admin' | 'adoptOrphanedSubmissions' | 'archiveWorkspace' | 'assignInventoryToRentalFulfilment' | 'bulkMarkInventoryReceived' | 'cancelInvoice' | 'clearInvoiceTaxes' | 'clearSearchRecents' | 'createAssetSchedule' | 'createBusinessContact' | 'createCharge' | 'createFulfilmentReservation' | 'createIntakeForm' | 'createIntakeFormSubmission' | 'createIntakeFormSubmissionLineItem' | 'createInventory' | 'createInvoice' | 'createNote' | 'createPdfFromPageAndAttachToEntityId' | 'createPersonContact' | 'createPriceBook' | 'createProject' | 'createPurchaseOrder' | 'createQuote' | 'createQuoteFromIntakeFormSubmission' | 'createQuoteRevision' | 'createRFQ' | 'createReferenceNumberTemplate' | 'createRentalFulfilment' | 'createRentalPrice' | 'createRentalPurchaseOrderLineItem' | 'createRentalSalesOrderLineItem' | 'createResourceMapTag' | 'createSaleFulfilment' | 'createSalePrice' | 'createSalePurchaseOrderLineItem' | 'createSaleSalesOrderLineItem' | 'createSalesOrder' | 'createServiceFulfilment' | 'createTransaction' | 'createWorkflowConfiguration' | 'createWorkspace' | 'deleteContactById' | 'deleteFulfilment' | 'deleteIntakeForm' | 'deleteIntakeFormSubmissionLineItem' | 'deleteInventory' | 'deleteInvoice' | 'deleteNote' | 'deletePriceBookById' | 'deletePriceById' | 'deleteProject' | 'deleteReferenceNumberTemplate' | 'deleteResourceMapTag' | 'deleteWorkflowConfigurationById' | 'exportPrices' | 'generateReferenceNumber' | 'getSignedReadUrl' | 'importPrices' | 'inviteUserToWorkspace' | 'joinWorkspace' | 'markInvoiceAsPaid' | 'markInvoiceAsSent' | 'refreshBrand' | 'rejectQuote' | 'removeFileFromEntity' | 'removeSearchRecent' | 'removeTaxLineItem' | 'removeUserFromWorkspace' | 'renameFile' | 'resetSequenceNumber' | 'runNightlyRentalChargesJob' | 'runNightlyRentalChargesJobAsync' | 'sendQuote' | 'setExpectedRentalEndDate' | 'setFulfilmentPurchaseOrderLineItemId' | 'setIntakeFormActive' | 'setInvoiceTax' | 'setRentalEndDate' | 'setRentalStartDate' | 'softDeletePurchaseOrder' | 'softDeletePurchaseOrderLineItem' | 'softDeleteSalesOrder' | 'softDeleteSalesOrderLineItem' | 'submitIntakeFormSubmission' | 'submitPurchaseOrder' | 'submitSalesOrder' | 'syncCurrentUser' | 'toggleSearchFavorite' | 'touchAllContacts' | 'unarchiveWorkspace' | 'unassignInventoryFromRentalFulfilment' | 'updateBusinessAddress' | 'updateBusinessBrandId' | 'updateBusinessContact' | 'updateBusinessName' | 'updateBusinessPhone' | 'updateBusinessTaxId' | 'updateBusinessWebsite' | 'updateFulfilmentAssignee' | 'updateFulfilmentColumn' | 'updateIntakeForm' | 'updateIntakeFormSubmission' | 'updateIntakeFormSubmissionLineItem' | 'updateInventoryActualReturnDate' | 'updateInventoryExpectedReturnDate' | 'updateInventorySerialisedId' | 'updateNote' | 'updatePersonBusiness' | 'updatePersonContact' | 'updatePersonEmail' | 'updatePersonName' | 'updatePersonPhone' | 'updatePersonResourceMap' | 'updatePriceBook' | 'updateProject' | 'updateProjectCode' | 'updateProjectContacts' | 'updateProjectDescription' | 'updateProjectName' | 'updateProjectParentProject' | 'updateProjectScopeOfWork' | 'updateProjectStatus' | 'updatePurchaseOrder' | 'updatePurchaseOrderLineItem' | 'updateQuote' | 'updateQuoteRevision' | 'updateQuoteStatus' | 'updateRFQ' | 'updateReferenceNumberTemplate' | 'updateRentalPrice' | 'updateRentalPurchaseOrderLineItem' | 'updateRentalSalesOrderLineItem' | 'updateResourceMapTag' | 'updateSalePrice' | 'updateSalePurchaseOrderLineItem' | 'updateSaleSalesOrderLineItem' | 'updateSalesOrder' | 'updateSalesOrderLineItem' | 'updateTaxLineItem' | 'updateWorkflowConfiguration' | 'updateWorkspaceAccessType' | 'updateWorkspaceSettings' | 'updateWorkspaceUserRoles' | 'upsertPimCategory' | 'upsertUser' | MutationKeySpecifier)[];
+export type MutationKeySpecifier = ('acceptQuote' | 'addFileToEntity' | 'addInvoiceCharges' | 'addSearchRecent' | 'addTaxLineItem' | 'admin' | 'adoptOrphanedSubmissions' | 'archiveWorkspace' | 'assignInventoryToRentalFulfilment' | 'bulkMarkInventoryReceived' | 'cancelInvoice' | 'clearInvoiceTaxes' | 'clearSearchRecents' | 'createAssetSchedule' | 'createBusinessContact' | 'createCharge' | 'createFulfilmentReservation' | 'createGlobalAttributeRelation' | 'createGlobalAttributeType' | 'createGlobalAttributeValue' | 'createGlobalUnitDefinition' | 'createIntakeForm' | 'createIntakeFormSubmission' | 'createIntakeFormSubmissionLineItem' | 'createInventory' | 'createInvoice' | 'createNote' | 'createPdfFromPageAndAttachToEntityId' | 'createPersonContact' | 'createPriceBook' | 'createProject' | 'createPurchaseOrder' | 'createQuote' | 'createQuoteFromIntakeFormSubmission' | 'createQuoteRevision' | 'createRFQ' | 'createReferenceNumberTemplate' | 'createRentalFulfilment' | 'createRentalPrice' | 'createRentalPurchaseOrderLineItem' | 'createRentalSalesOrderLineItem' | 'createResourceMapTag' | 'createSaleFulfilment' | 'createSalePrice' | 'createSalePurchaseOrderLineItem' | 'createSaleSalesOrderLineItem' | 'createSalesOrder' | 'createServiceFulfilment' | 'createTransaction' | 'createWorkflowConfiguration' | 'createWorkspace' | 'deleteContactById' | 'deleteFulfilment' | 'deleteIntakeForm' | 'deleteIntakeFormSubmissionLineItem' | 'deleteInventory' | 'deleteInvoice' | 'deleteNote' | 'deletePriceBookById' | 'deletePriceById' | 'deleteProject' | 'deleteReferenceNumberTemplate' | 'deleteResourceMapTag' | 'deleteWorkflowConfigurationById' | 'exportPrices' | 'generateReferenceNumber' | 'getSignedReadUrl' | 'importPrices' | 'ingestGlobalAttributeString' | 'inviteUserToWorkspace' | 'joinWorkspace' | 'markInvoiceAsPaid' | 'markInvoiceAsSent' | 'refreshBrand' | 'rejectQuote' | 'removeFileFromEntity' | 'removeSearchRecent' | 'removeTaxLineItem' | 'removeUserFromWorkspace' | 'renameFile' | 'resetSequenceNumber' | 'runNightlyRentalChargesJob' | 'runNightlyRentalChargesJobAsync' | 'sendQuote' | 'setExpectedRentalEndDate' | 'setFulfilmentPurchaseOrderLineItemId' | 'setIntakeFormActive' | 'setInvoiceTax' | 'setRentalEndDate' | 'setRentalStartDate' | 'softDeletePurchaseOrder' | 'softDeletePurchaseOrderLineItem' | 'softDeleteSalesOrder' | 'softDeleteSalesOrderLineItem' | 'submitIntakeFormSubmission' | 'submitPurchaseOrder' | 'submitSalesOrder' | 'syncCurrentUser' | 'toggleSearchFavorite' | 'touchAllContacts' | 'unarchiveWorkspace' | 'unassignInventoryFromRentalFulfilment' | 'updateBusinessAddress' | 'updateBusinessBrandId' | 'updateBusinessContact' | 'updateBusinessName' | 'updateBusinessPhone' | 'updateBusinessTaxId' | 'updateBusinessWebsite' | 'updateFulfilmentAssignee' | 'updateFulfilmentColumn' | 'updateGlobalAttributeType' | 'updateGlobalAttributeValue' | 'updateIntakeForm' | 'updateIntakeFormSubmission' | 'updateIntakeFormSubmissionLineItem' | 'updateInventoryActualReturnDate' | 'updateInventoryExpectedReturnDate' | 'updateInventorySerialisedId' | 'updateNote' | 'updatePersonBusiness' | 'updatePersonContact' | 'updatePersonEmail' | 'updatePersonName' | 'updatePersonPhone' | 'updatePersonResourceMap' | 'updatePriceBook' | 'updateProject' | 'updateProjectCode' | 'updateProjectContacts' | 'updateProjectDescription' | 'updateProjectName' | 'updateProjectParentProject' | 'updateProjectScopeOfWork' | 'updateProjectStatus' | 'updatePurchaseOrder' | 'updatePurchaseOrderLineItem' | 'updateQuote' | 'updateQuoteRevision' | 'updateQuoteStatus' | 'updateRFQ' | 'updateReferenceNumberTemplate' | 'updateRentalPrice' | 'updateRentalPurchaseOrderLineItem' | 'updateRentalSalesOrderLineItem' | 'updateResourceMapTag' | 'updateSalePrice' | 'updateSalePurchaseOrderLineItem' | 'updateSaleSalesOrderLineItem' | 'updateSalesOrder' | 'updateSalesOrderLineItem' | 'updateTaxLineItem' | 'updateWorkflowConfiguration' | 'updateWorkspaceAccessType' | 'updateWorkspaceSettings' | 'updateWorkspaceUserRoles' | 'upsertPimCategory' | 'upsertUser' | MutationKeySpecifier)[];
 export type MutationFieldPolicy = {
 	acceptQuote?: FieldPolicy<any> | FieldReadFunction<any>,
 	addFileToEntity?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9047,6 +9495,10 @@ export type MutationFieldPolicy = {
 	createBusinessContact?: FieldPolicy<any> | FieldReadFunction<any>,
 	createCharge?: FieldPolicy<any> | FieldReadFunction<any>,
 	createFulfilmentReservation?: FieldPolicy<any> | FieldReadFunction<any>,
+	createGlobalAttributeRelation?: FieldPolicy<any> | FieldReadFunction<any>,
+	createGlobalAttributeType?: FieldPolicy<any> | FieldReadFunction<any>,
+	createGlobalAttributeValue?: FieldPolicy<any> | FieldReadFunction<any>,
+	createGlobalUnitDefinition?: FieldPolicy<any> | FieldReadFunction<any>,
 	createIntakeForm?: FieldPolicy<any> | FieldReadFunction<any>,
 	createIntakeFormSubmission?: FieldPolicy<any> | FieldReadFunction<any>,
 	createIntakeFormSubmissionLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9094,6 +9546,7 @@ export type MutationFieldPolicy = {
 	generateReferenceNumber?: FieldPolicy<any> | FieldReadFunction<any>,
 	getSignedReadUrl?: FieldPolicy<any> | FieldReadFunction<any>,
 	importPrices?: FieldPolicy<any> | FieldReadFunction<any>,
+	ingestGlobalAttributeString?: FieldPolicy<any> | FieldReadFunction<any>,
 	inviteUserToWorkspace?: FieldPolicy<any> | FieldReadFunction<any>,
 	joinWorkspace?: FieldPolicy<any> | FieldReadFunction<any>,
 	markInvoiceAsPaid?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9136,6 +9589,8 @@ export type MutationFieldPolicy = {
 	updateBusinessWebsite?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateFulfilmentAssignee?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateFulfilmentColumn?: FieldPolicy<any> | FieldReadFunction<any>,
+	updateGlobalAttributeType?: FieldPolicy<any> | FieldReadFunction<any>,
+	updateGlobalAttributeValue?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateIntakeForm?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateIntakeFormSubmission?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateIntakeFormSubmissionLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9378,7 +9833,7 @@ export type PurchaseOrderPricingFieldPolicy = {
 	sub_total_in_cents?: FieldPolicy<any> | FieldReadFunction<any>,
 	total_in_cents?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type QueryKeySpecifier = ('admin' | 'bulkCalculateSubTotal' | 'calculateSubTotal' | 'getBrandByDomain' | 'getBrandById' | 'getBrandsByIds' | 'getBulkSearchDocumentsById' | 'getContactById' | 'getCurrentSequenceNumber' | 'getCurrentUser' | 'getDefaultTemplates' | 'getFulfilmentById' | 'getIntakeFormById' | 'getIntakeFormSubmissionById' | 'getIntakeFormSubmissionByPurchaseOrderId' | 'getIntakeFormSubmissionBySalesOrderId' | 'getIntakeFormSubmissionLineItem' | 'getInventoryReservationById' | 'getNoteById' | 'getPimCategoryById' | 'getPimProductById' | 'getPriceBookById' | 'getPriceById' | 'getProjectById' | 'getPurchaseOrderById' | 'getPurchaseOrderLineItemById' | 'getReferenceNumberTemplate' | 'getResourceMapEntry' | 'getSalesOrderById' | 'getSalesOrderLineItemById' | 'getSearchDocumentByDocumentId' | 'getSearchDocumentById' | 'getSearchUserState' | 'getSignedUploadUrl' | 'getUsersById' | 'getWorkflowConfigurationById' | 'getWorkspaceById' | 'helloWorld' | 'inventoryById' | 'invoiceById' | 'listAssetSchedules' | 'listAssets' | 'listCharges' | 'listContacts' | 'listFilesByEntityId' | 'listFulfilments' | 'listIntakeFormSubmissionLineItems' | 'listIntakeFormSubmissions' | 'listIntakeFormSubmissionsAsBuyer' | 'listIntakeForms' | 'listIntakeFormsForUser' | 'listInventory' | 'listInventoryGroupedByPimCategoryId' | 'listInventoryReservations' | 'listInvoices' | 'listJoinableWorkspaces' | 'listMyOrphanedSubmissions' | 'listNotesByEntityId' | 'listPimCategories' | 'listPimProducts' | 'listPriceBookCategories' | 'listPriceBooks' | 'listPriceNames' | 'listPrices' | 'listProjectContactRelationCodes' | 'listProjectStatusCodes' | 'listProjects' | 'listProjectsByParentProjectId' | 'listPurchaseOrders' | 'listQuotes' | 'listRFQs' | 'listReferenceNumberTemplates' | 'listRentalFulfilments' | 'listRentalViews' | 'listResourceMapEntries' | 'listResourceMapEntriesByParentId' | 'listResourceMapEntriesByTagType' | 'listResourceMapLocationTags' | 'listSalesOrders' | 'listScopeOfWorkCodes' | 'listTopLevelProjects' | 'listTransactions' | 'listUserResourcePermissions' | 'listWorkflowConfigurations' | 'listWorkspaceMembers' | 'listWorkspaces' | 'llm' | 'quoteById' | 'quoteRevisionById' | 'rfqById' | 'searchBrands' | 'searchDocuments' | 'usersSearch' | 'validEnterpriseDomain' | QueryKeySpecifier)[];
+export type QueryKeySpecifier = ('admin' | 'bulkCalculateSubTotal' | 'calculateSubTotal' | 'getBrandByDomain' | 'getBrandById' | 'getBrandsByIds' | 'getBulkSearchDocumentsById' | 'getContactById' | 'getCurrentSequenceNumber' | 'getCurrentUser' | 'getDefaultTemplates' | 'getFulfilmentById' | 'getGlobalAttributeTypeById' | 'getIntakeFormById' | 'getIntakeFormSubmissionById' | 'getIntakeFormSubmissionByPurchaseOrderId' | 'getIntakeFormSubmissionBySalesOrderId' | 'getIntakeFormSubmissionLineItem' | 'getInventoryReservationById' | 'getNoteById' | 'getPimCategoryById' | 'getPimProductById' | 'getPriceBookById' | 'getPriceById' | 'getProjectById' | 'getPurchaseOrderById' | 'getPurchaseOrderLineItemById' | 'getReferenceNumberTemplate' | 'getResourceMapEntry' | 'getSalesOrderById' | 'getSalesOrderLineItemById' | 'getSearchDocumentByDocumentId' | 'getSearchDocumentById' | 'getSearchUserState' | 'getSignedUploadUrl' | 'getUsersById' | 'getWorkflowConfigurationById' | 'getWorkspaceById' | 'helloWorld' | 'inventoryById' | 'invoiceById' | 'listAssetSchedules' | 'listAssets' | 'listCharges' | 'listContacts' | 'listFilesByEntityId' | 'listFulfilments' | 'listGlobalAttributeRelations' | 'listGlobalAttributeTypes' | 'listGlobalAttributeValues' | 'listGlobalUnitDefinitions' | 'listIntakeFormSubmissionLineItems' | 'listIntakeFormSubmissions' | 'listIntakeFormSubmissionsAsBuyer' | 'listIntakeForms' | 'listIntakeFormsForUser' | 'listInventory' | 'listInventoryGroupedByPimCategoryId' | 'listInventoryReservations' | 'listInvoices' | 'listJoinableWorkspaces' | 'listMyOrphanedSubmissions' | 'listNotesByEntityId' | 'listPimCategories' | 'listPimProducts' | 'listPriceBookCategories' | 'listPriceBooks' | 'listPriceNames' | 'listPrices' | 'listProjectContactRelationCodes' | 'listProjectStatusCodes' | 'listProjects' | 'listProjectsByParentProjectId' | 'listPurchaseOrders' | 'listQuotes' | 'listRFQs' | 'listReferenceNumberTemplates' | 'listRentalFulfilments' | 'listRentalViews' | 'listResourceMapEntries' | 'listResourceMapEntriesByParentId' | 'listResourceMapEntriesByTagType' | 'listResourceMapLocationTags' | 'listSalesOrders' | 'listScopeOfWorkCodes' | 'listTopLevelProjects' | 'listTransactions' | 'listUserResourcePermissions' | 'listWorkflowConfigurations' | 'listWorkspaceMembers' | 'listWorkspaces' | 'llm' | 'quoteById' | 'quoteRevisionById' | 'rfqById' | 'searchBrands' | 'searchDocuments' | 'usersSearch' | 'validEnterpriseDomain' | QueryKeySpecifier)[];
 export type QueryFieldPolicy = {
 	admin?: FieldPolicy<any> | FieldReadFunction<any>,
 	bulkCalculateSubTotal?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9392,6 +9847,7 @@ export type QueryFieldPolicy = {
 	getCurrentUser?: FieldPolicy<any> | FieldReadFunction<any>,
 	getDefaultTemplates?: FieldPolicy<any> | FieldReadFunction<any>,
 	getFulfilmentById?: FieldPolicy<any> | FieldReadFunction<any>,
+	getGlobalAttributeTypeById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getIntakeFormById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getIntakeFormSubmissionById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getIntakeFormSubmissionByPurchaseOrderId?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9426,6 +9882,10 @@ export type QueryFieldPolicy = {
 	listContacts?: FieldPolicy<any> | FieldReadFunction<any>,
 	listFilesByEntityId?: FieldPolicy<any> | FieldReadFunction<any>,
 	listFulfilments?: FieldPolicy<any> | FieldReadFunction<any>,
+	listGlobalAttributeRelations?: FieldPolicy<any> | FieldReadFunction<any>,
+	listGlobalAttributeTypes?: FieldPolicy<any> | FieldReadFunction<any>,
+	listGlobalAttributeValues?: FieldPolicy<any> | FieldReadFunction<any>,
+	listGlobalUnitDefinitions?: FieldPolicy<any> | FieldReadFunction<any>,
 	listIntakeFormSubmissionLineItems?: FieldPolicy<any> | FieldReadFunction<any>,
 	listIntakeFormSubmissions?: FieldPolicy<any> | FieldReadFunction<any>,
 	listIntakeFormSubmissionsAsBuyer?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -10821,6 +11281,42 @@ export type StrictTypedTypePolicies = {
 	GenerateReferenceNumberResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | GenerateReferenceNumberResultKeySpecifier | (() => undefined | GenerateReferenceNumberResultKeySpecifier),
 		fields?: GenerateReferenceNumberResultFieldPolicy,
+	},
+	GlobalAttributeIngestionResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | GlobalAttributeIngestionResultKeySpecifier | (() => undefined | GlobalAttributeIngestionResultKeySpecifier),
+		fields?: GlobalAttributeIngestionResultFieldPolicy,
+	},
+	GlobalAttributeRelation?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | GlobalAttributeRelationKeySpecifier | (() => undefined | GlobalAttributeRelationKeySpecifier),
+		fields?: GlobalAttributeRelationFieldPolicy,
+	},
+	GlobalAttributeRelationListResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | GlobalAttributeRelationListResultKeySpecifier | (() => undefined | GlobalAttributeRelationListResultKeySpecifier),
+		fields?: GlobalAttributeRelationListResultFieldPolicy,
+	},
+	GlobalAttributeType?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | GlobalAttributeTypeKeySpecifier | (() => undefined | GlobalAttributeTypeKeySpecifier),
+		fields?: GlobalAttributeTypeFieldPolicy,
+	},
+	GlobalAttributeTypeListResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | GlobalAttributeTypeListResultKeySpecifier | (() => undefined | GlobalAttributeTypeListResultKeySpecifier),
+		fields?: GlobalAttributeTypeListResultFieldPolicy,
+	},
+	GlobalAttributeValue?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | GlobalAttributeValueKeySpecifier | (() => undefined | GlobalAttributeValueKeySpecifier),
+		fields?: GlobalAttributeValueFieldPolicy,
+	},
+	GlobalAttributeValueListResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | GlobalAttributeValueListResultKeySpecifier | (() => undefined | GlobalAttributeValueListResultKeySpecifier),
+		fields?: GlobalAttributeValueListResultFieldPolicy,
+	},
+	GlobalUnitDefinition?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | GlobalUnitDefinitionKeySpecifier | (() => undefined | GlobalUnitDefinitionKeySpecifier),
+		fields?: GlobalUnitDefinitionFieldPolicy,
+	},
+	GlobalUnitDefinitionListResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | GlobalUnitDefinitionListResultKeySpecifier | (() => undefined | GlobalUnitDefinitionListResultKeySpecifier),
+		fields?: GlobalUnitDefinitionListResultFieldPolicy,
 	},
 	ImportPricesResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | ImportPricesResultKeySpecifier | (() => undefined | ImportPricesResultKeySpecifier),

@@ -25,6 +25,7 @@ import type { IntakeFormDTO, IntakeFormSubmissionLineItemDTO, IntakeFormSubmissi
 import type { SearchUserStateFavorite, SearchUserStateRecent, SearchUserState } from "./../../../services/search/search-user-state-model"
 import type { SearchDocument } from "./../../../services/search/types"
 import type { Quote, QuoteRevisionServiceLineItem, QuoteRevisionRentalLineItem, QuoteRevisionSaleLineItem, RFQServiceLineItem, RFQRentalLineItem, RFQSaleLineItem, QuoteRevision, RFQ } from "./../../../services/quoting/index"
+import type { GlobalAttributeType, GlobalAttributeValue, GlobalAttributeRelation, GlobalUnitDefinition } from "./../../../services/global_attributes/index"
 import type { core } from "nexus"
 declare global {
   interface NexusGenCustomInputMethods<TypeName extends string> {
@@ -133,6 +134,49 @@ export interface NexusGenInputs {
     inventoryId: string; // ID!
     salesOrderType: NexusGenEnums['FulfilmentType']; // FulfilmentType!
     startDate: NexusGenScalars['DateTime']; // DateTime!
+  }
+  CreateGlobalAttributeRelationInput: { // input type
+    confidence?: number | null; // Float
+    fromAttributeId: string; // String!
+    relationType: NexusGenEnums['GlobalAttributeRelationType']; // GlobalAttributeRelationType!
+    source?: string | null; // String
+    toAttributeId: string; // String!
+  }
+  CreateGlobalAttributeTypeInput: { // input type
+    allowedUnits?: Array<string | null> | null; // [String]
+    appliesTo?: NexusGenEnums['GlobalAttributeAppliesTo'] | null; // GlobalAttributeAppliesTo
+    auditStatus?: NexusGenEnums['GlobalAttributeAuditStatus'] | null; // GlobalAttributeAuditStatus
+    canonicalUnit?: string | null; // String
+    canonicalValueSetId?: string | null; // String
+    dimension?: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
+    kind: NexusGenEnums['GlobalAttributeKind']; // GlobalAttributeKind!
+    name: string; // String!
+    notes?: string | null; // String
+    source?: string | null; // String
+    status?: NexusGenEnums['GlobalAttributeStatus'] | null; // GlobalAttributeStatus
+    synonyms?: Array<string | null> | null; // [String]
+    usageHints?: Array<NexusGenEnums['GlobalAttributeUsageHint'] | null> | null; // [GlobalAttributeUsageHint]
+    validationRules?: NexusGenScalars['JSONObject'] | null; // JSONObject
+    valueType: NexusGenEnums['GlobalAttributeValueType']; // GlobalAttributeValueType!
+  }
+  CreateGlobalAttributeValueInput: { // input type
+    attributeTypeId: string; // String!
+    auditStatus?: NexusGenEnums['GlobalAttributeAuditStatus'] | null; // GlobalAttributeAuditStatus
+    codes?: NexusGenScalars['JSONObject'] | null; // JSONObject
+    source?: string | null; // String
+    status?: NexusGenEnums['GlobalAttributeStatus'] | null; // GlobalAttributeStatus
+    synonyms?: Array<string | null> | null; // [String]
+    value: string; // String!
+  }
+  CreateGlobalUnitDefinitionInput: { // input type
+    canonicalUnitCode?: string | null; // String
+    code: string; // String!
+    dimension?: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
+    name?: string | null; // String
+    offset?: number | null; // Float
+    source?: string | null; // String
+    status?: NexusGenEnums['GlobalUnitStatus'] | null; // GlobalUnitStatus
+    toCanonicalFactor?: number | null; // Float
   }
   CreateInventoryInput: { // input type
     actualReturnDate?: NexusGenScalars['DateTime'] | null; // DateTime
@@ -340,6 +384,16 @@ export interface NexusGenInputs {
     projectCode?: string | null; // String
     templateId: string; // String!
   }
+  IngestGlobalAttributeStringInput: { // input type
+    attributeName?: string | null; // String
+    dimension?: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
+    kind?: NexusGenEnums['GlobalAttributeKind'] | null; // GlobalAttributeKind
+    raw: string; // String!
+    source?: string | null; // String
+    unitCode?: string | null; // String
+    value?: string | null; // String
+    valueType?: NexusGenEnums['GlobalAttributeValueType'] | null; // GlobalAttributeValueType
+  }
   IntakeFormInput: { // input type
     isActive: boolean; // Boolean!
     isPublic?: boolean | null; // Boolean
@@ -412,6 +466,30 @@ export interface NexusGenInputs {
   ListFulfilmentsPage: { // input type
     number: number | null; // Int
     size: number | null; // Int
+  }
+  ListGlobalAttributeRelationsFilter: { // input type
+    fromAttributeId?: string | null; // String
+    relationType?: NexusGenEnums['GlobalAttributeRelationType'] | null; // GlobalAttributeRelationType
+    toAttributeId?: string | null; // String
+  }
+  ListGlobalAttributeTypesFilter: { // input type
+    appliesTo?: NexusGenEnums['GlobalAttributeAppliesTo'] | null; // GlobalAttributeAppliesTo
+    dimension?: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
+    kind?: NexusGenEnums['GlobalAttributeKind'] | null; // GlobalAttributeKind
+    searchTerm?: string | null; // String
+    status?: NexusGenEnums['GlobalAttributeStatus'] | null; // GlobalAttributeStatus
+    usageHint?: NexusGenEnums['GlobalAttributeUsageHint'] | null; // GlobalAttributeUsageHint
+    valueType?: NexusGenEnums['GlobalAttributeValueType'] | null; // GlobalAttributeValueType
+  }
+  ListGlobalAttributeValuesFilter: { // input type
+    attributeTypeId?: string | null; // String
+    searchTerm?: string | null; // String
+    status?: NexusGenEnums['GlobalAttributeStatus'] | null; // GlobalAttributeStatus
+  }
+  ListGlobalUnitsFilter: { // input type
+    dimension?: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
+    searchTerm?: string | null; // String
+    status?: NexusGenEnums['GlobalUnitStatus'] | null; // GlobalUnitStatus
   }
   ListInventoryFilter: { // input type
     assetId?: string | null; // String
@@ -725,6 +803,31 @@ export interface NexusGenInputs {
     taxId?: string | null; // String
     website?: string | null; // String
   }
+  UpdateGlobalAttributeTypeInput: { // input type
+    allowedUnits?: Array<string | null> | null; // [String]
+    appliesTo?: NexusGenEnums['GlobalAttributeAppliesTo'] | null; // GlobalAttributeAppliesTo
+    auditStatus?: NexusGenEnums['GlobalAttributeAuditStatus'] | null; // GlobalAttributeAuditStatus
+    canonicalUnit?: string | null; // String
+    canonicalValueSetId?: string | null; // String
+    dimension?: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
+    kind?: NexusGenEnums['GlobalAttributeKind'] | null; // GlobalAttributeKind
+    name?: string | null; // String
+    notes?: string | null; // String
+    source?: string | null; // String
+    status?: NexusGenEnums['GlobalAttributeStatus'] | null; // GlobalAttributeStatus
+    synonyms?: Array<string | null> | null; // [String]
+    usageHints?: Array<NexusGenEnums['GlobalAttributeUsageHint'] | null> | null; // [GlobalAttributeUsageHint]
+    validationRules?: NexusGenScalars['JSONObject'] | null; // JSONObject
+    valueType?: NexusGenEnums['GlobalAttributeValueType'] | null; // GlobalAttributeValueType
+  }
+  UpdateGlobalAttributeValueInput: { // input type
+    auditStatus?: NexusGenEnums['GlobalAttributeAuditStatus'] | null; // GlobalAttributeAuditStatus
+    codes?: NexusGenScalars['JSONObject'] | null; // JSONObject
+    source?: string | null; // String
+    status?: NexusGenEnums['GlobalAttributeStatus'] | null; // GlobalAttributeStatus
+    synonyms?: Array<string | null> | null; // [String]
+    value?: string | null; // String
+  }
   UpdateIntakeFormInput: { // input type
     isActive?: boolean | null; // Boolean
     isPublic?: boolean | null; // Boolean
@@ -962,6 +1065,15 @@ export interface NexusGenEnums {
   DeliveryMethod: "DELIVERY" | "PICKUP"
   FileUrlType: "attachment" | "inline"
   FulfilmentType: "RENTAL" | "SALE" | "SERVICE"
+  GlobalAttributeAppliesTo: "BOTH" | "MATERIAL" | "RESOURCE" | "SERVICE"
+  GlobalAttributeAuditStatus: "FLAGGED" | "PENDING_REVIEW" | "REVIEWED"
+  GlobalAttributeDimension: "AREA" | "DENSITY" | "ENERGY" | "FORCE" | "LENGTH" | "MASS" | "POWER" | "PRESSURE" | "SPEED" | "TEMPERATURE" | "TIME" | "VOLUME"
+  GlobalAttributeKind: "BRAND" | "PHYSICAL"
+  GlobalAttributeRelationType: "ALIAS" | "RELATED" | "REPLACES"
+  GlobalAttributeStatus: "ACTIVE" | "DEPRECATED" | "PROPOSED"
+  GlobalAttributeUsageHint: "BOTH" | "JOB_PARAMETER" | "RESOURCE_PROPERTY"
+  GlobalAttributeValueType: "BOOLEAN" | "ENUM" | "NUMBER" | "REF" | "STRING"
+  GlobalUnitStatus: "ACTIVE" | "DEPRECATED"
   IntakeFormSubmissionStatus: "DRAFT" | "SUBMITTED"
   InventoryCondition: "DAMAGED" | "NEW" | "REFURBISHED" | "USED"
   InventoryStatus: "ON_ORDER" | "RECEIVED"
@@ -1355,6 +1467,31 @@ export interface NexusGenObjects {
     referenceNumber: string; // String!
     sequenceNumber: number; // Int!
     templateUsed: NexusGenRootTypes['ReferenceNumberTemplate']; // ReferenceNumberTemplate!
+  }
+  GlobalAttributeIngestionResult: { // root type
+    attributeType: NexusGenRootTypes['GlobalAttributeType']; // GlobalAttributeType!
+    attributeValue?: NexusGenRootTypes['GlobalAttributeValue'] | null; // GlobalAttributeValue
+    parsed: NexusGenScalars['JSONObject']; // JSONObject!
+  }
+  GlobalAttributeRelation: GlobalAttributeRelation;
+  GlobalAttributeRelationListResult: { // root type
+    items: NexusGenRootTypes['GlobalAttributeRelation'][]; // [GlobalAttributeRelation!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  GlobalAttributeType: GlobalAttributeType;
+  GlobalAttributeTypeListResult: { // root type
+    items: NexusGenRootTypes['GlobalAttributeType'][]; // [GlobalAttributeType!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  GlobalAttributeValue: GlobalAttributeValue;
+  GlobalAttributeValueListResult: { // root type
+    items: NexusGenRootTypes['GlobalAttributeValue'][]; // [GlobalAttributeValue!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  GlobalUnitDefinition: GlobalUnitDefinition;
+  GlobalUnitDefinitionListResult: { // root type
+    items: NexusGenRootTypes['GlobalUnitDefinition'][]; // [GlobalUnitDefinition!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
   }
   ImportPricesResult: { // root type
     errors: string[]; // [String!]!
@@ -2633,6 +2770,89 @@ export interface NexusGenFieldTypes {
     sequenceNumber: number; // Int!
     templateUsed: NexusGenRootTypes['ReferenceNumberTemplate']; // ReferenceNumberTemplate!
   }
+  GlobalAttributeIngestionResult: { // field return type
+    attributeType: NexusGenRootTypes['GlobalAttributeType']; // GlobalAttributeType!
+    attributeValue: NexusGenRootTypes['GlobalAttributeValue'] | null; // GlobalAttributeValue
+    parsed: NexusGenScalars['JSONObject']; // JSONObject!
+  }
+  GlobalAttributeRelation: { // field return type
+    confidence: number | null; // Float
+    createdAt: NexusGenScalars['DateTime'] | null; // DateTime
+    createdBy: string | null; // String
+    fromAttributeId: string; // String!
+    id: string; // String!
+    relationType: NexusGenEnums['GlobalAttributeRelationType']; // GlobalAttributeRelationType!
+    source: string | null; // String
+    toAttributeId: string; // String!
+    updatedAt: NexusGenScalars['DateTime'] | null; // DateTime
+    updatedBy: string | null; // String
+  }
+  GlobalAttributeRelationListResult: { // field return type
+    items: NexusGenRootTypes['GlobalAttributeRelation'][]; // [GlobalAttributeRelation!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  GlobalAttributeType: { // field return type
+    allowedUnits: Array<string | null> | null; // [String]
+    appliesTo: NexusGenEnums['GlobalAttributeAppliesTo'] | null; // GlobalAttributeAppliesTo
+    auditStatus: NexusGenEnums['GlobalAttributeAuditStatus'] | null; // GlobalAttributeAuditStatus
+    canonicalUnit: string | null; // String
+    canonicalValueSetId: string | null; // String
+    createdAt: NexusGenScalars['DateTime'] | null; // DateTime
+    createdBy: string | null; // String
+    dimension: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
+    id: string; // String!
+    kind: NexusGenEnums['GlobalAttributeKind']; // GlobalAttributeKind!
+    name: string; // String!
+    notes: string | null; // String
+    source: string | null; // String
+    status: NexusGenEnums['GlobalAttributeStatus']; // GlobalAttributeStatus!
+    synonyms: Array<string | null> | null; // [String]
+    updatedAt: NexusGenScalars['DateTime'] | null; // DateTime
+    updatedBy: string | null; // String
+    usageHints: Array<NexusGenEnums['GlobalAttributeUsageHint'] | null> | null; // [GlobalAttributeUsageHint]
+    validationRules: NexusGenScalars['JSONObject'] | null; // JSONObject
+    valueType: NexusGenEnums['GlobalAttributeValueType']; // GlobalAttributeValueType!
+  }
+  GlobalAttributeTypeListResult: { // field return type
+    items: NexusGenRootTypes['GlobalAttributeType'][]; // [GlobalAttributeType!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  GlobalAttributeValue: { // field return type
+    attributeTypeId: string; // String!
+    auditStatus: NexusGenEnums['GlobalAttributeAuditStatus'] | null; // GlobalAttributeAuditStatus
+    codes: NexusGenScalars['JSONObject'] | null; // JSONObject
+    createdAt: NexusGenScalars['DateTime'] | null; // DateTime
+    createdBy: string | null; // String
+    id: string; // String!
+    source: string | null; // String
+    status: NexusGenEnums['GlobalAttributeStatus']; // GlobalAttributeStatus!
+    synonyms: Array<string | null> | null; // [String]
+    updatedAt: NexusGenScalars['DateTime'] | null; // DateTime
+    updatedBy: string | null; // String
+    value: string; // String!
+  }
+  GlobalAttributeValueListResult: { // field return type
+    items: NexusGenRootTypes['GlobalAttributeValue'][]; // [GlobalAttributeValue!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  GlobalUnitDefinition: { // field return type
+    canonicalUnitCode: string | null; // String
+    code: string; // String!
+    createdAt: NexusGenScalars['DateTime'] | null; // DateTime
+    createdBy: string | null; // String
+    dimension: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
+    id: string; // String!
+    name: string | null; // String
+    offset: number | null; // Float
+    status: NexusGenEnums['GlobalUnitStatus']; // GlobalUnitStatus!
+    toCanonicalFactor: number | null; // Float
+    updatedAt: NexusGenScalars['DateTime'] | null; // DateTime
+    updatedBy: string | null; // String
+  }
+  GlobalUnitDefinitionListResult: { // field return type
+    items: NexusGenRootTypes['GlobalUnitDefinition'][]; // [GlobalUnitDefinition!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
   ImportPricesResult: { // field return type
     errors: string[]; // [String!]!
     failed: number; // Int!
@@ -2956,6 +3176,10 @@ export interface NexusGenFieldTypes {
     createBusinessContact: NexusGenRootTypes['BusinessContact'] | null; // BusinessContact
     createCharge: NexusGenRootTypes['Charge'] | null; // Charge
     createFulfilmentReservation: NexusGenRootTypes['FulfilmentReservation']; // FulfilmentReservation!
+    createGlobalAttributeRelation: NexusGenRootTypes['GlobalAttributeRelation'] | null; // GlobalAttributeRelation
+    createGlobalAttributeType: NexusGenRootTypes['GlobalAttributeType'] | null; // GlobalAttributeType
+    createGlobalAttributeValue: NexusGenRootTypes['GlobalAttributeValue'] | null; // GlobalAttributeValue
+    createGlobalUnitDefinition: NexusGenRootTypes['GlobalUnitDefinition'] | null; // GlobalUnitDefinition
     createIntakeForm: NexusGenRootTypes['IntakeForm'] | null; // IntakeForm
     createIntakeFormSubmission: NexusGenRootTypes['IntakeFormSubmission'] | null; // IntakeFormSubmission
     createIntakeFormSubmissionLineItem: NexusGenRootTypes['IntakeFormLineItem'] | null; // IntakeFormLineItem
@@ -3003,6 +3227,7 @@ export interface NexusGenFieldTypes {
     generateReferenceNumber: NexusGenRootTypes['GenerateReferenceNumberResult'] | null; // GenerateReferenceNumberResult
     getSignedReadUrl: string | null; // String
     importPrices: NexusGenRootTypes['ImportPricesResult'] | null; // ImportPricesResult
+    ingestGlobalAttributeString: NexusGenRootTypes['GlobalAttributeIngestionResult'] | null; // GlobalAttributeIngestionResult
     inviteUserToWorkspace: NexusGenRootTypes['WorkspaceMember'] | null; // WorkspaceMember
     joinWorkspace: NexusGenRootTypes['Workspace'] | null; // Workspace
     markInvoiceAsPaid: NexusGenRootTypes['Invoice']; // Invoice!
@@ -3045,6 +3270,8 @@ export interface NexusGenFieldTypes {
     updateBusinessWebsite: NexusGenRootTypes['BusinessContact'] | null; // BusinessContact
     updateFulfilmentAssignee: NexusGenRootTypes['FulfilmentBase'] | null; // FulfilmentBase
     updateFulfilmentColumn: NexusGenRootTypes['FulfilmentBase'] | null; // FulfilmentBase
+    updateGlobalAttributeType: NexusGenRootTypes['GlobalAttributeType'] | null; // GlobalAttributeType
+    updateGlobalAttributeValue: NexusGenRootTypes['GlobalAttributeValue'] | null; // GlobalAttributeValue
     updateIntakeForm: NexusGenRootTypes['IntakeForm'] | null; // IntakeForm
     updateIntakeFormSubmission: NexusGenRootTypes['IntakeFormSubmission'] | null; // IntakeFormSubmission
     updateIntakeFormSubmissionLineItem: NexusGenRootTypes['IntakeFormLineItem'] | null; // IntakeFormLineItem
@@ -3285,6 +3512,7 @@ export interface NexusGenFieldTypes {
     getCurrentUser: NexusGenRootTypes['User'] | null; // User
     getDefaultTemplates: NexusGenRootTypes['ReferenceNumberTemplate'][]; // [ReferenceNumberTemplate!]!
     getFulfilmentById: NexusGenRootTypes['Fulfilment'] | null; // Fulfilment
+    getGlobalAttributeTypeById: NexusGenRootTypes['GlobalAttributeType'] | null; // GlobalAttributeType
     getIntakeFormById: NexusGenRootTypes['IntakeForm'] | null; // IntakeForm
     getIntakeFormSubmissionById: NexusGenRootTypes['IntakeFormSubmission'] | null; // IntakeFormSubmission
     getIntakeFormSubmissionByPurchaseOrderId: NexusGenRootTypes['IntakeFormSubmission'] | null; // IntakeFormSubmission
@@ -3319,6 +3547,10 @@ export interface NexusGenFieldTypes {
     listContacts: NexusGenRootTypes['ListContactsResult'] | null; // ListContactsResult
     listFilesByEntityId: NexusGenRootTypes['File'][]; // [File!]!
     listFulfilments: NexusGenRootTypes['ListFulfilmentsResult'] | null; // ListFulfilmentsResult
+    listGlobalAttributeRelations: NexusGenRootTypes['GlobalAttributeRelationListResult'] | null; // GlobalAttributeRelationListResult
+    listGlobalAttributeTypes: NexusGenRootTypes['GlobalAttributeTypeListResult'] | null; // GlobalAttributeTypeListResult
+    listGlobalAttributeValues: NexusGenRootTypes['GlobalAttributeValueListResult'] | null; // GlobalAttributeValueListResult
+    listGlobalUnitDefinitions: NexusGenRootTypes['GlobalUnitDefinitionListResult'] | null; // GlobalUnitDefinitionListResult
     listIntakeFormSubmissionLineItems: NexusGenRootTypes['IntakeFormLineItem'][]; // [IntakeFormLineItem!]!
     listIntakeFormSubmissions: NexusGenRootTypes['IntakeFormSubmissionPage'] | null; // IntakeFormSubmissionPage
     listIntakeFormSubmissionsAsBuyer: NexusGenRootTypes['IntakeFormSubmissionPage'] | null; // IntakeFormSubmissionPage
@@ -4898,6 +5130,89 @@ export interface NexusGenFieldTypeNames {
     sequenceNumber: 'Int'
     templateUsed: 'ReferenceNumberTemplate'
   }
+  GlobalAttributeIngestionResult: { // field return type name
+    attributeType: 'GlobalAttributeType'
+    attributeValue: 'GlobalAttributeValue'
+    parsed: 'JSONObject'
+  }
+  GlobalAttributeRelation: { // field return type name
+    confidence: 'Float'
+    createdAt: 'DateTime'
+    createdBy: 'String'
+    fromAttributeId: 'String'
+    id: 'String'
+    relationType: 'GlobalAttributeRelationType'
+    source: 'String'
+    toAttributeId: 'String'
+    updatedAt: 'DateTime'
+    updatedBy: 'String'
+  }
+  GlobalAttributeRelationListResult: { // field return type name
+    items: 'GlobalAttributeRelation'
+    page: 'PaginationInfo'
+  }
+  GlobalAttributeType: { // field return type name
+    allowedUnits: 'String'
+    appliesTo: 'GlobalAttributeAppliesTo'
+    auditStatus: 'GlobalAttributeAuditStatus'
+    canonicalUnit: 'String'
+    canonicalValueSetId: 'String'
+    createdAt: 'DateTime'
+    createdBy: 'String'
+    dimension: 'GlobalAttributeDimension'
+    id: 'String'
+    kind: 'GlobalAttributeKind'
+    name: 'String'
+    notes: 'String'
+    source: 'String'
+    status: 'GlobalAttributeStatus'
+    synonyms: 'String'
+    updatedAt: 'DateTime'
+    updatedBy: 'String'
+    usageHints: 'GlobalAttributeUsageHint'
+    validationRules: 'JSONObject'
+    valueType: 'GlobalAttributeValueType'
+  }
+  GlobalAttributeTypeListResult: { // field return type name
+    items: 'GlobalAttributeType'
+    page: 'PaginationInfo'
+  }
+  GlobalAttributeValue: { // field return type name
+    attributeTypeId: 'String'
+    auditStatus: 'GlobalAttributeAuditStatus'
+    codes: 'JSONObject'
+    createdAt: 'DateTime'
+    createdBy: 'String'
+    id: 'String'
+    source: 'String'
+    status: 'GlobalAttributeStatus'
+    synonyms: 'String'
+    updatedAt: 'DateTime'
+    updatedBy: 'String'
+    value: 'String'
+  }
+  GlobalAttributeValueListResult: { // field return type name
+    items: 'GlobalAttributeValue'
+    page: 'PaginationInfo'
+  }
+  GlobalUnitDefinition: { // field return type name
+    canonicalUnitCode: 'String'
+    code: 'String'
+    createdAt: 'DateTime'
+    createdBy: 'String'
+    dimension: 'GlobalAttributeDimension'
+    id: 'String'
+    name: 'String'
+    offset: 'Float'
+    status: 'GlobalUnitStatus'
+    toCanonicalFactor: 'Float'
+    updatedAt: 'DateTime'
+    updatedBy: 'String'
+  }
+  GlobalUnitDefinitionListResult: { // field return type name
+    items: 'GlobalUnitDefinition'
+    page: 'PaginationInfo'
+  }
   ImportPricesResult: { // field return type name
     errors: 'String'
     failed: 'Int'
@@ -5221,6 +5536,10 @@ export interface NexusGenFieldTypeNames {
     createBusinessContact: 'BusinessContact'
     createCharge: 'Charge'
     createFulfilmentReservation: 'FulfilmentReservation'
+    createGlobalAttributeRelation: 'GlobalAttributeRelation'
+    createGlobalAttributeType: 'GlobalAttributeType'
+    createGlobalAttributeValue: 'GlobalAttributeValue'
+    createGlobalUnitDefinition: 'GlobalUnitDefinition'
     createIntakeForm: 'IntakeForm'
     createIntakeFormSubmission: 'IntakeFormSubmission'
     createIntakeFormSubmissionLineItem: 'IntakeFormLineItem'
@@ -5268,6 +5587,7 @@ export interface NexusGenFieldTypeNames {
     generateReferenceNumber: 'GenerateReferenceNumberResult'
     getSignedReadUrl: 'String'
     importPrices: 'ImportPricesResult'
+    ingestGlobalAttributeString: 'GlobalAttributeIngestionResult'
     inviteUserToWorkspace: 'WorkspaceMember'
     joinWorkspace: 'Workspace'
     markInvoiceAsPaid: 'Invoice'
@@ -5310,6 +5630,8 @@ export interface NexusGenFieldTypeNames {
     updateBusinessWebsite: 'BusinessContact'
     updateFulfilmentAssignee: 'FulfilmentBase'
     updateFulfilmentColumn: 'FulfilmentBase'
+    updateGlobalAttributeType: 'GlobalAttributeType'
+    updateGlobalAttributeValue: 'GlobalAttributeValue'
     updateIntakeForm: 'IntakeForm'
     updateIntakeFormSubmission: 'IntakeFormSubmission'
     updateIntakeFormSubmissionLineItem: 'IntakeFormLineItem'
@@ -5550,6 +5872,7 @@ export interface NexusGenFieldTypeNames {
     getCurrentUser: 'User'
     getDefaultTemplates: 'ReferenceNumberTemplate'
     getFulfilmentById: 'Fulfilment'
+    getGlobalAttributeTypeById: 'GlobalAttributeType'
     getIntakeFormById: 'IntakeForm'
     getIntakeFormSubmissionById: 'IntakeFormSubmission'
     getIntakeFormSubmissionByPurchaseOrderId: 'IntakeFormSubmission'
@@ -5584,6 +5907,10 @@ export interface NexusGenFieldTypeNames {
     listContacts: 'ListContactsResult'
     listFilesByEntityId: 'File'
     listFulfilments: 'ListFulfilmentsResult'
+    listGlobalAttributeRelations: 'GlobalAttributeRelationListResult'
+    listGlobalAttributeTypes: 'GlobalAttributeTypeListResult'
+    listGlobalAttributeValues: 'GlobalAttributeValueListResult'
+    listGlobalUnitDefinitions: 'GlobalUnitDefinitionListResult'
     listIntakeFormSubmissionLineItems: 'IntakeFormLineItem'
     listIntakeFormSubmissions: 'IntakeFormSubmissionPage'
     listIntakeFormSubmissionsAsBuyer: 'IntakeFormSubmissionPage'
@@ -6903,6 +7230,18 @@ export interface NexusGenArgTypes {
     createFulfilmentReservation: { // args
       input: NexusGenInputs['CreateFulfilmentReservationInput']; // CreateFulfilmentReservationInput!
     }
+    createGlobalAttributeRelation: { // args
+      input: NexusGenInputs['CreateGlobalAttributeRelationInput']; // CreateGlobalAttributeRelationInput!
+    }
+    createGlobalAttributeType: { // args
+      input: NexusGenInputs['CreateGlobalAttributeTypeInput']; // CreateGlobalAttributeTypeInput!
+    }
+    createGlobalAttributeValue: { // args
+      input: NexusGenInputs['CreateGlobalAttributeValueInput']; // CreateGlobalAttributeValueInput!
+    }
+    createGlobalUnitDefinition: { // args
+      input: NexusGenInputs['CreateGlobalUnitDefinitionInput']; // CreateGlobalUnitDefinitionInput!
+    }
     createIntakeForm: { // args
       input: NexusGenInputs['IntakeFormInput']; // IntakeFormInput!
     }
@@ -7058,6 +7397,9 @@ export interface NexusGenArgTypes {
       fileId: string; // ID!
       priceBookId: string; // ID!
     }
+    ingestGlobalAttributeString: { // args
+      input: NexusGenInputs['IngestGlobalAttributeStringInput']; // IngestGlobalAttributeStringInput!
+    }
     inviteUserToWorkspace: { // args
       email: string; // String!
       roles: NexusGenEnums['WorkspaceUserRole'][]; // [WorkspaceUserRole!]!
@@ -7196,6 +7538,14 @@ export interface NexusGenArgTypes {
       fulfilmentId: string; // ID!
       workflowColumnId?: string | null; // ID
       workflowId?: string | null; // ID
+    }
+    updateGlobalAttributeType: { // args
+      id: string; // ID!
+      input: NexusGenInputs['UpdateGlobalAttributeTypeInput']; // UpdateGlobalAttributeTypeInput!
+    }
+    updateGlobalAttributeValue: { // args
+      id: string; // ID!
+      input: NexusGenInputs['UpdateGlobalAttributeValueInput']; // UpdateGlobalAttributeValueInput!
     }
     updateIntakeForm: { // args
       id: string; // String!
@@ -7411,6 +7761,9 @@ export interface NexusGenArgTypes {
     getFulfilmentById: { // args
       id: string; // ID!
     }
+    getGlobalAttributeTypeById: { // args
+      id: string; // ID!
+    }
     getIntakeFormById: { // args
       id: string; // String!
     }
@@ -7517,6 +7870,22 @@ export interface NexusGenArgTypes {
     listFulfilments: { // args
       filter: NexusGenInputs['ListFulfilmentsFilter']; // ListFulfilmentsFilter!
       page?: NexusGenInputs['ListFulfilmentsPage'] | null; // ListFulfilmentsPage
+    }
+    listGlobalAttributeRelations: { // args
+      filter?: NexusGenInputs['ListGlobalAttributeRelationsFilter'] | null; // ListGlobalAttributeRelationsFilter
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
+    }
+    listGlobalAttributeTypes: { // args
+      filter?: NexusGenInputs['ListGlobalAttributeTypesFilter'] | null; // ListGlobalAttributeTypesFilter
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
+    }
+    listGlobalAttributeValues: { // args
+      filter?: NexusGenInputs['ListGlobalAttributeValuesFilter'] | null; // ListGlobalAttributeValuesFilter
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
+    }
+    listGlobalUnitDefinitions: { // args
+      filter?: NexusGenInputs['ListGlobalUnitsFilter'] | null; // ListGlobalUnitsFilter
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
     }
     listIntakeFormSubmissionLineItems: { // args
       submissionId: string; // String!
