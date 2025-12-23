@@ -109,6 +109,11 @@ const EnvSchema = Type.Object({
   // OpenSearch / SearchKit configuration (VPC-based, no auth required)
   OPENSEARCH_ENDPOINT: Type.Required(Type.String()),
 
+  // Global library database (attributes/tags/source-of-truth)
+  GLOBAL_LIBRARY_DB_NAME: Type.Optional(
+    Type.String({ default: 'es-erp-global' }),
+  ),
+
   // JWT Self-Signing Keys (for PDF generation, service-to-service auth, etc.)
   // Optional in schema - will auto-load from keys/ directory in dev if not provided
   JWT_PRIVATE_KEY: Type.String({ default: '' }),

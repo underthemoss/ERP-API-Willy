@@ -40,6 +40,7 @@ import { ViewService } from '../services/views';
 import { type QuotingService } from '../services/quoting';
 import { type AuthZ } from '../lib/authz';
 import { type JWTService } from '../services/jwt';
+import { type GlobalAttributesService } from '../services/global_attributes';
 
 export type CreateContextConfig = {
   envConfig: EnvConfig;
@@ -85,6 +86,7 @@ export type CreateContextConfig = {
     viewService: ViewService;
     quotingService: QuotingService;
     jwtService: JWTService;
+    globalAttributesService: GlobalAttributesService;
   };
 };
 

@@ -55,6 +55,7 @@ import mcpPlugin from './plugins/mcp';
 import { startCurrentTimePublisher } from './services/simple-pubsub';
 import { createOpenSearchService } from './services/opensearch';
 import { createJWTService } from './services/jwt';
+import { createGlobalAttributesService } from './services/global_attributes';
 
 async function startMainMode() {
   const startTime = Date.now();
@@ -154,6 +155,7 @@ async function startMainMode() {
     companiesService,
     pimProductsService,
     pimCategoriesService,
+    globalAttributesService,
     fileService,
     assetSchedulesService,
     brandfetchService,
@@ -184,6 +186,7 @@ async function startMainMode() {
       mongoClient,
       kafkaClient: kafkaClient as any,
     }),
+    Promise.resolve(createGlobalAttributesService({ envConfig, mongoClient })),
     createFileService({ mongoClient, envConfig, authZ }),
     createAssetSchedulesService({ mongoClient }),
     createBrandfetchService({ envConfig, mongoClient }),
@@ -468,6 +471,7 @@ async function startMainMode() {
       viewService,
       quotingService,
       jwtService,
+      globalAttributesService,
     },
   });
 
