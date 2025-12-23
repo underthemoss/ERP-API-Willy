@@ -118,7 +118,7 @@ gql`
 export const createResourceMapTagTool = createMcpTool({
   name: 'create_resource_map_tag',
   description:
-    'Creates a resource map tag. LOCATION tags can include location metadata; BUSINESS_UNIT and ROLE tags do not.',
+    'Creates a resource map tag. LOCATION tags should include location metadata so they can plot on maps (prefer location.kind=ADDRESS with location.address fields; backend geocodes via Mapbox when configured). BUSINESS_UNIT and ROLE tags do not use location.',
   inputSchema: {
     value: z.string().describe('The display name for the tag'),
     type: z.nativeEnum(ResourceMapTagType).describe('The tag type to create'),

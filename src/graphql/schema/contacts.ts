@@ -40,7 +40,7 @@ export const ContactTypeEnum = enumType({
 
 export const PersonContactTypeEnum = enumType({
   name: 'PersonContactType',
-  members: ['EMPLOYEE'],
+  members: ['EMPLOYEE', 'EXTERNAL'],
 });
 
 export const BusinessContact = objectType({

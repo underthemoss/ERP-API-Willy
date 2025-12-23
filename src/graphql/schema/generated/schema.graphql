@@ -2132,6 +2132,7 @@ input PersonContactInput {
 
 enum PersonContactType {
   EMPLOYEE
+  EXTERNAL
 }
 
 type PimCategory {
@@ -3335,6 +3336,7 @@ type ResourceMapResource {
   hierarchy_name: String
   id: String!
   location: ResourceMapLocation
+  map_point: ResourceMapLatLng
   parent: ResourceMapResource
   parent_id: String
   path: [String!]

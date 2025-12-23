@@ -78,9 +78,11 @@ export const createPersonContactTool = createMcpTool({
     name: z.string().describe("The contact's full name"),
     email: z.string().describe("The contact's email address"),
     personType: z
-      .enum(['EMPLOYEE'])
+      .enum(['EMPLOYEE', 'EXTERNAL'])
       .optional()
-      .describe('Set to EMPLOYEE for internal people; omit for external.'),
+      .describe(
+        'Optional person type. Use EMPLOYEE for internal people or EXTERNAL for outside contacts.',
+      ),
     businessId: z
       .string()
       .describe('The ID of the business contact this person works for'),
@@ -108,9 +110,12 @@ export const createPersonContactTool = createMcpTool({
         profilePicture,
         resourceMapIds,
       } = args;
-      const personTypeEnum = personType
-        ? PersonContactType.Employee
-        : undefined;
+      const personTypeEnum =
+        personType === 'EMPLOYEE'
+          ? PersonContactType.Employee
+          : personType === 'EXTERNAL'
+            ? PersonContactType.External
+            : undefined;
 
       const result = await sdk.McpCreatePersonContact({
         input: {

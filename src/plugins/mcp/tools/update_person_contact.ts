@@ -78,9 +78,11 @@ export const updatePersonContactTool = createMcpTool({
     phone: z.string().optional().describe("The contact's phone number"),
     email: z.string().optional().describe("The contact's email address"),
     personType: z
-      .enum(['EMPLOYEE'])
+      .enum(['EMPLOYEE', 'EXTERNAL'])
       .optional()
-      .describe('Set to EMPLOYEE for internal people; omit for external.'),
+      .describe(
+        'Optional person type. Use EMPLOYEE for internal people or EXTERNAL for outside contacts.',
+      ),
     businessId: z
       .string()
       .optional()
@@ -98,9 +100,12 @@ export const updatePersonContactTool = createMcpTool({
   handler: async (sdk, args) => {
     try {
       const { id, personType, ...inputFields } = args;
-      const personTypeEnum = personType
-        ? PersonContactType.Employee
-        : undefined;
+      const personTypeEnum =
+        personType === 'EMPLOYEE'
+          ? PersonContactType.Employee
+          : personType === 'EXTERNAL'
+            ? PersonContactType.External
+            : undefined;
 
       // Filter out undefined values to only send fields that were explicitly provided
       const input = Object.fromEntries(

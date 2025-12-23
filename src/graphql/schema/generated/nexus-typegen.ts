@@ -972,7 +972,7 @@ export interface NexusGenEnums {
   POLineItemType: "RENTAL" | "SALE"
   PaginationOrder: "ASC" | "DESC"
   PermissionType: "delete" | "read" | "update" | "delete" | "read" | "update" | "is_member" | "delete" | "read" | "update" | "delete" | "manage_rental_period" | "read" | "update" | "create_submission" | "read" | "read_submissions" | "read" | "update" | "update" | "update_submissions" | "read" | "update" | "is_admin" | "read" | "update" | "read" | "update" | "read" | "update" | "read" | "update" | "accept" | "read" | "reject" | "update" | "read" | "update" | "portal_access" | "read" | "update" | "add_user" | "can_join" | "can_manage_buyer_intake_form_submissions" | "can_manage_charges" | "can_manage_contacts" | "can_manage_files" | "can_manage_intake_forms" | "can_manage_intake_form_submissions" | "can_manage_invoices" | "can_manage_prices" | "can_manage_price_books" | "can_manage_projects" | "can_manage_purchase_orders" | "can_manage_quotes" | "can_manage_reference_number_templates" | "can_manage_rfqs" | "can_manage_sales_orders" | "can_read_buyer_intake_form_submissions" | "can_read_charges" | "can_read_contacts" | "can_read_files" | "can_read_invoices" | "can_read_projects" | "can_read_purchase_orders" | "can_read_quotes" | "can_read_reference_number_templates" | "can_read_rfqs" | "can_read_sales_orders" | "create_intake_form" | "create_intake_form_submission" | "create_price_book" | "is_admin" | "manage" | "read" | "read_intake_forms" | "read_intake_form_submissions" | "read_prices" | "read_price_books" | "remove_user" | "update_user_roles"
-  PersonContactType: "EMPLOYEE"
+  PersonContactType: "EMPLOYEE" | "EXTERNAL"
   PriceType: "RENTAL" | "SALE"
   ProjectContactRelationEnum: "ARCHITECT_ENGINEER_OF_RECORD" | "EQUIPMENT_RENTAL_COORDINATOR" | "OWNERS_REPRESENTATIVE" | "PROJECT_MANAGER_GC" | "SAFETY_MANAGER" | "SITE_SUPERINTENDENT"
   ProjectStatusEnum: "ACTIVE_CONSTRUCTION" | "ARCHIVED_CLOSED" | "BIDDING_TENDERING" | "CLOSE_OUT" | "CONCEPT_OPPORTUNITY" | "MOBILIZATION" | "PRE_CONSTRUCTION" | "SUBSTANTIAL_COMPLETION" | "WARRANTY_MAINTENANCE"
@@ -3876,6 +3876,7 @@ export interface NexusGenFieldTypes {
     hierarchy_name: string | null; // String
     id: string; // String!
     location: NexusGenRootTypes['ResourceMapLocation'] | null; // ResourceMapLocation
+    map_point: NexusGenRootTypes['ResourceMapLatLng'] | null; // ResourceMapLatLng
     parent: NexusGenRootTypes['ResourceMapResource'] | null; // ResourceMapResource
     parent_id: string | null; // String
     path: string[] | null; // [String!]
@@ -6140,6 +6141,7 @@ export interface NexusGenFieldTypeNames {
     hierarchy_name: 'String'
     id: 'String'
     location: 'ResourceMapLocation'
+    map_point: 'ResourceMapLatLng'
     parent: 'ResourceMapResource'
     parent_id: 'String'
     path: 'String'

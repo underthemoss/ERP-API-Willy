@@ -5,6 +5,7 @@ import {
   CreateBusinessContactInput,
   CreatePersonContactInput,
   ListContactsQuery,
+  PersonContactType,
   UpdateBusinessContactInput,
   UpdatePersonContactInput,
 } from './model';
@@ -43,7 +44,7 @@ export class ContactsService {
   private async validatePersonResourceMapIds(
     resourceMapIds: string[] | undefined,
     user: UserAuthPayload,
-    personType?: 'EMPLOYEE',
+    personType?: PersonContactType,
   ) {
     if (this.envConfig.IN_TEST_MODE) {
       return;

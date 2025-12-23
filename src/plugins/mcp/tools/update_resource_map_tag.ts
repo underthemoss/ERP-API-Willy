@@ -118,7 +118,7 @@ gql`
 export const updateResourceMapTagTool = createMcpTool({
   name: 'update_resource_map_tag',
   description:
-    'Updates a resource map tag. Only provided fields will be updated. LOCATION tags can update location metadata.',
+    'Updates a resource map tag. Only provided fields will be updated. For LOCATION tags, include location metadata to enable map plotting (prefer location.kind=ADDRESS with location.address fields; backend geocodes via Mapbox when configured).',
   inputSchema: {
     id: z.string().describe('The resource map tag ID to update'),
     value: z.string().optional().describe('New tag value'),

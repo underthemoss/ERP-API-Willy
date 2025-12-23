@@ -2941,7 +2941,8 @@ export type PersonContactInput = {
 };
 
 export enum PersonContactType {
-  Employee = 'EMPLOYEE'
+  Employee = 'EMPLOYEE',
+  External = 'EXTERNAL'
 }
 
 export type PimCategory = {
@@ -4606,6 +4607,7 @@ export type ResourceMapResource = {
   hierarchy_name?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   location?: Maybe<ResourceMapLocation>;
+  map_point?: Maybe<ResourceMapLatLng>;
   parent?: Maybe<ResourceMapResource>;
   parent_id?: Maybe<Scalars['String']['output']>;
   path?: Maybe<Array<Scalars['String']['output']>>;
@@ -10013,13 +10015,14 @@ export type ResourceMapPlusCodeFieldPolicy = {
 	code?: FieldPolicy<any> | FieldReadFunction<any>,
 	localArea?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type ResourceMapResourceKeySpecifier = ('children' | 'hierarchy_id' | 'hierarchy_name' | 'id' | 'location' | 'parent' | 'parent_id' | 'path' | 'resource_id' | 'tagType' | 'tenant_id' | 'type' | 'value' | ResourceMapResourceKeySpecifier)[];
+export type ResourceMapResourceKeySpecifier = ('children' | 'hierarchy_id' | 'hierarchy_name' | 'id' | 'location' | 'map_point' | 'parent' | 'parent_id' | 'path' | 'resource_id' | 'tagType' | 'tenant_id' | 'type' | 'value' | ResourceMapResourceKeySpecifier)[];
 export type ResourceMapResourceFieldPolicy = {
 	children?: FieldPolicy<any> | FieldReadFunction<any>,
 	hierarchy_id?: FieldPolicy<any> | FieldReadFunction<any>,
 	hierarchy_name?: FieldPolicy<any> | FieldReadFunction<any>,
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
 	location?: FieldPolicy<any> | FieldReadFunction<any>,
+	map_point?: FieldPolicy<any> | FieldReadFunction<any>,
 	parent?: FieldPolicy<any> | FieldReadFunction<any>,
 	parent_id?: FieldPolicy<any> | FieldReadFunction<any>,
 	path?: FieldPolicy<any> | FieldReadFunction<any>,

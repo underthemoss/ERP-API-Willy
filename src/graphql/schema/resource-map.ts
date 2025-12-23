@@ -20,6 +20,7 @@ import {
   RESOURCE_MAP_GEOFENCE_TYPE,
   RESOURCE_MAP_LOCATION_KIND,
   RESOURCE_MAP_INTERIOR_SPACE_TYPE,
+  type ResourceMapLatLng as ResourceMapLatLngDoc,
   type ResourceMapLocation as ResourceMapLocationDoc,
 } from '../../services/resource_map/location-types';
 
@@ -241,6 +242,12 @@ export const ResourceMapResource = objectType({
         return mapLocationDocToGraphQL((root as any).location);
       },
     });
+    t.field('map_point', {
+      type: ResourceMapLatLng,
+      resolve: (root) => {
+        return mapLocationToPoint((root as any).location);
+      },
+    });
     t.field('parent', {
       type: 'ResourceMapResource',
       resolve: async (root, _args, ctx: GraphQLContext) => {
@@ -394,6 +401,80 @@ export const deleteResourceMapTag = mutationField('deleteResourceMapTag', {
   },
 });
 
+const mapLatLngDocToGraphQL = (
+  latLng?: ResourceMapLatLngDoc | null,
+) => {
+  if (!latLng) return null;
+  return {
+    lat: latLng.lat,
+    lng: latLng.lng,
+    accuracyMeters: latLng.accuracy_meters,
+  };
+};
+
+const computePolygonCentroid = (
+  polygon?: ResourceMapLatLngDoc[] | null,
+): ResourceMapLatLngDoc | null => {
+  if (!polygon || polygon.length === 0) {
+    return null;
+  }
+
+  let points = polygon;
+  if (polygon.length > 1) {
+    const first = polygon[0];
+    const last = polygon[polygon.length - 1];
+    if (first.lat === last.lat && first.lng === last.lng) {
+      points = polygon.slice(0, -1);
+    }
+  }
+
+  if (!points.length) {
+    return null;
+  }
+
+  const totals = points.reduce(
+    (acc, point) => {
+      acc.lat += point.lat;
+      acc.lng += point.lng;
+      return acc;
+    },
+    { lat: 0, lng: 0 },
+  );
+
+  return {
+    lat: totals.lat / points.length,
+    lng: totals.lng / points.length,
+  };
+};
+
+const mapLocationToPoint = (
+  location?: ResourceMapLocationDoc | null,
+) => {
+  if (!location) return null;
+
+  if (
+    location.kind === RESOURCE_MAP_LOCATION_KIND.LAT_LNG ||
+    location.kind === RESOURCE_MAP_LOCATION_KIND.ADDRESS ||
+    location.kind === RESOURCE_MAP_LOCATION_KIND.PLUS_CODE
+  ) {
+    return mapLatLngDocToGraphQL(location.lat_lng);
+  }
+
+  if (location.kind === RESOURCE_MAP_LOCATION_KIND.GEOFENCE) {
+    const geofence = location.geofence;
+    if (!geofence) return null;
+    if (geofence.type === RESOURCE_MAP_GEOFENCE_TYPE.CIRCLE) {
+      return mapLatLngDocToGraphQL(geofence.center);
+    }
+    if (geofence.type === RESOURCE_MAP_GEOFENCE_TYPE.POLYGON) {
+      const centroid = computePolygonCentroid(geofence.polygon);
+      return mapLatLngDocToGraphQL(centroid);
+    }
+  }
+
+  return null;
+};
+
 const mapLocationDocToGraphQL = (
   location?: ResourceMapLocationDoc | null,
 ) => {
@@ -411,13 +492,7 @@ const mapLocationDocToGraphQL = (
           placeId: location.address.place_id,
         }
       : undefined,
-    latLng: location.lat_lng
-      ? {
-          lat: location.lat_lng.lat,
-          lng: location.lat_lng.lng,
-          accuracyMeters: location.lat_lng.accuracy_meters,
-        }
-      : undefined,
+    latLng: mapLatLngDocToGraphQL(location.lat_lng) || undefined,
     plusCode: location.plus_code
       ? {
           code: location.plus_code.code,
