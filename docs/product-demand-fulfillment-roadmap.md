@@ -34,6 +34,8 @@ Legend:
 - [x] Add free-form ingestion mutation (string -> canonical attribute type/value)
 - [x] Regenerate schema/codegen for global attribute changes
 - [x] Validate ingestion with enum + numeric smoke cases
+- [x] Add admin CRUD API for global attribute types/values/units
+- [~] Wire admin UI to global attribute CRUD (list/search/create/update)
 - [ ] Admin/global curation workflows (approve, merge, deprecate)
 - [ ] Suggestion + review queue (LLM + fuzzy match + approval flow)
 - [ ] Agent access rules for global tag/attribute library

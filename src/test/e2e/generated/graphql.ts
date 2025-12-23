@@ -64,6 +64,9 @@ export type AdminMutationNamespace = {
   assignRolesToUser?: Maybe<Scalars['Boolean']['output']>;
   /** Touch all documents in a collection by adding/updating a _touch timestamp field. */
   collectionSnapshot: CollectionSnapshotResult;
+  createGlobalAttributeType?: Maybe<GlobalAttributeType>;
+  createGlobalAttributeValue?: Maybe<GlobalAttributeValue>;
+  createGlobalUnitDefinition?: Maybe<GlobalUnitDefinition>;
   /** Delete a specific SpiceDB relationship */
   deleteRelationship: DeleteRelationshipResult;
   /** Remove roles from a user (Admin only) */
@@ -72,6 +75,9 @@ export type AdminMutationNamespace = {
   sendTemplatedEmail: SendTemplatedEmailResult;
   /** Send a test email to verify email configuration (Admin only) */
   sendTestEmail: SendTestEmailResult;
+  updateGlobalAttributeType?: Maybe<GlobalAttributeType>;
+  updateGlobalAttributeValue?: Maybe<GlobalAttributeValue>;
+  updateGlobalUnitDefinition?: Maybe<GlobalUnitDefinition>;
   /** Create or update a SpiceDB relationship */
   writeRelationship: WriteRelationshipResult;
 };
@@ -85,6 +91,21 @@ export type AdminMutationNamespaceAssignRolesToUserArgs = {
 
 export type AdminMutationNamespaceCollectionSnapshotArgs = {
   collectionName: Scalars['String']['input'];
+};
+
+
+export type AdminMutationNamespaceCreateGlobalAttributeTypeArgs = {
+  input: CreateGlobalAttributeTypeInput;
+};
+
+
+export type AdminMutationNamespaceCreateGlobalAttributeValueArgs = {
+  input: CreateGlobalAttributeValueInput;
+};
+
+
+export type AdminMutationNamespaceCreateGlobalUnitDefinitionArgs = {
+  input: CreateGlobalUnitDefinitionInput;
 };
 
 
@@ -126,6 +147,24 @@ export type AdminMutationNamespaceSendTestEmailArgs = {
 };
 
 
+export type AdminMutationNamespaceUpdateGlobalAttributeTypeArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateGlobalAttributeTypeInput;
+};
+
+
+export type AdminMutationNamespaceUpdateGlobalAttributeValueArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateGlobalAttributeValueInput;
+};
+
+
+export type AdminMutationNamespaceUpdateGlobalUnitDefinitionArgs = {
+  code: Scalars['String']['input'];
+  input: UpdateGlobalUnitDefinitionInput;
+};
+
+
 export type AdminMutationNamespaceWriteRelationshipArgs = {
   relation: Scalars['String']['input'];
   resourceId: Scalars['String']['input'];
@@ -137,12 +176,18 @@ export type AdminMutationNamespaceWriteRelationshipArgs = {
 
 export type AdminQueryNamespace = {
   __typename?: 'AdminQueryNamespace';
+  getGlobalAttributeTypeById?: Maybe<GlobalAttributeType>;
+  getGlobalAttributeValueById?: Maybe<GlobalAttributeValue>;
+  getGlobalUnitDefinitionByCode?: Maybe<GlobalUnitDefinition>;
   /** Get a single Auth0 user by ID (Admin only) */
   getUserById?: Maybe<Auth0User>;
   /** Get roles assigned to a user (Admin only) */
   getUserRoles?: Maybe<Array<Maybe<Auth0Role>>>;
   /** List available relations and permissions for a resource type */
   listAvailableRelations: Array<AvailableRelation>;
+  listGlobalAttributeTypes?: Maybe<GlobalAttributeTypeListResult>;
+  listGlobalAttributeValues?: Maybe<GlobalAttributeValueListResult>;
+  listGlobalUnitDefinitions?: Maybe<GlobalUnitDefinitionListResult>;
   /** List SpiceDB relationships with optional filters */
   listRelationships: ListRelationshipsResult;
   /** List all resource types defined in the SpiceDB schema */
@@ -162,6 +207,21 @@ export type AdminQueryNamespace = {
 };
 
 
+export type AdminQueryNamespaceGetGlobalAttributeTypeByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type AdminQueryNamespaceGetGlobalAttributeValueByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type AdminQueryNamespaceGetGlobalUnitDefinitionByCodeArgs = {
+  code: Scalars['String']['input'];
+};
+
+
 export type AdminQueryNamespaceGetUserByIdArgs = {
   userId: Scalars['String']['input'];
 };
@@ -174,6 +234,24 @@ export type AdminQueryNamespaceGetUserRolesArgs = {
 
 export type AdminQueryNamespaceListAvailableRelationsArgs = {
   resourceType?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type AdminQueryNamespaceListGlobalAttributeTypesArgs = {
+  filter?: InputMaybe<ListGlobalAttributeTypesFilter>;
+  page?: InputMaybe<PageInfoInput>;
+};
+
+
+export type AdminQueryNamespaceListGlobalAttributeValuesArgs = {
+  filter?: InputMaybe<ListGlobalAttributeValuesFilter>;
+  page?: InputMaybe<PageInfoInput>;
+};
+
+
+export type AdminQueryNamespaceListGlobalUnitDefinitionsArgs = {
+  filter?: InputMaybe<ListGlobalUnitsFilter>;
+  page?: InputMaybe<PageInfoInput>;
 };
 
 
@@ -2161,6 +2239,7 @@ export type Mutation = {
   updateFulfilmentColumn?: Maybe<FulfilmentBase>;
   updateGlobalAttributeType?: Maybe<GlobalAttributeType>;
   updateGlobalAttributeValue?: Maybe<GlobalAttributeValue>;
+  updateGlobalUnitDefinition?: Maybe<GlobalUnitDefinition>;
   /** Update an existing intake form */
   updateIntakeForm?: Maybe<IntakeForm>;
   /** Update an existing intake form submission */
@@ -2803,6 +2882,12 @@ export type MutationUpdateGlobalAttributeTypeArgs = {
 export type MutationUpdateGlobalAttributeValueArgs = {
   id: Scalars['ID']['input'];
   input: UpdateGlobalAttributeValueInput;
+};
+
+
+export type MutationUpdateGlobalUnitDefinitionArgs = {
+  code: Scalars['String']['input'];
+  input: UpdateGlobalUnitDefinitionInput;
 };
 
 
@@ -5600,6 +5685,16 @@ export type UpdateGlobalAttributeValueInput = {
   status?: InputMaybe<GlobalAttributeStatus>;
   synonyms?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   value?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateGlobalUnitDefinitionInput = {
+  canonicalUnitCode?: InputMaybe<Scalars['String']['input']>;
+  dimension?: InputMaybe<GlobalAttributeDimension>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  offset?: InputMaybe<Scalars['Float']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalUnitStatus>;
+  toCanonicalFactor?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type UpdateIntakeFormInput = {
@@ -8523,21 +8618,33 @@ export type AcceptQuoteResultFieldPolicy = {
 	quote?: FieldPolicy<any> | FieldReadFunction<any>,
 	salesOrder?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type AdminMutationNamespaceKeySpecifier = ('assignRolesToUser' | 'collectionSnapshot' | 'deleteRelationship' | 'removeRolesFromUser' | 'sendTemplatedEmail' | 'sendTestEmail' | 'writeRelationship' | AdminMutationNamespaceKeySpecifier)[];
+export type AdminMutationNamespaceKeySpecifier = ('assignRolesToUser' | 'collectionSnapshot' | 'createGlobalAttributeType' | 'createGlobalAttributeValue' | 'createGlobalUnitDefinition' | 'deleteRelationship' | 'removeRolesFromUser' | 'sendTemplatedEmail' | 'sendTestEmail' | 'updateGlobalAttributeType' | 'updateGlobalAttributeValue' | 'updateGlobalUnitDefinition' | 'writeRelationship' | AdminMutationNamespaceKeySpecifier)[];
 export type AdminMutationNamespaceFieldPolicy = {
 	assignRolesToUser?: FieldPolicy<any> | FieldReadFunction<any>,
 	collectionSnapshot?: FieldPolicy<any> | FieldReadFunction<any>,
+	createGlobalAttributeType?: FieldPolicy<any> | FieldReadFunction<any>,
+	createGlobalAttributeValue?: FieldPolicy<any> | FieldReadFunction<any>,
+	createGlobalUnitDefinition?: FieldPolicy<any> | FieldReadFunction<any>,
 	deleteRelationship?: FieldPolicy<any> | FieldReadFunction<any>,
 	removeRolesFromUser?: FieldPolicy<any> | FieldReadFunction<any>,
 	sendTemplatedEmail?: FieldPolicy<any> | FieldReadFunction<any>,
 	sendTestEmail?: FieldPolicy<any> | FieldReadFunction<any>,
+	updateGlobalAttributeType?: FieldPolicy<any> | FieldReadFunction<any>,
+	updateGlobalAttributeValue?: FieldPolicy<any> | FieldReadFunction<any>,
+	updateGlobalUnitDefinition?: FieldPolicy<any> | FieldReadFunction<any>,
 	writeRelationship?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type AdminQueryNamespaceKeySpecifier = ('getUserById' | 'getUserRoles' | 'listAvailableRelations' | 'listRelationships' | 'listResourceTypes' | 'listRoles' | 'previewEmailTemplate' | 'rawZedSchema' | 'searchUsers' | 'sendGridEmailActivity' | 'sendGridEmailDetails' | AdminQueryNamespaceKeySpecifier)[];
+export type AdminQueryNamespaceKeySpecifier = ('getGlobalAttributeTypeById' | 'getGlobalAttributeValueById' | 'getGlobalUnitDefinitionByCode' | 'getUserById' | 'getUserRoles' | 'listAvailableRelations' | 'listGlobalAttributeTypes' | 'listGlobalAttributeValues' | 'listGlobalUnitDefinitions' | 'listRelationships' | 'listResourceTypes' | 'listRoles' | 'previewEmailTemplate' | 'rawZedSchema' | 'searchUsers' | 'sendGridEmailActivity' | 'sendGridEmailDetails' | AdminQueryNamespaceKeySpecifier)[];
 export type AdminQueryNamespaceFieldPolicy = {
+	getGlobalAttributeTypeById?: FieldPolicy<any> | FieldReadFunction<any>,
+	getGlobalAttributeValueById?: FieldPolicy<any> | FieldReadFunction<any>,
+	getGlobalUnitDefinitionByCode?: FieldPolicy<any> | FieldReadFunction<any>,
 	getUserById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getUserRoles?: FieldPolicy<any> | FieldReadFunction<any>,
 	listAvailableRelations?: FieldPolicy<any> | FieldReadFunction<any>,
+	listGlobalAttributeTypes?: FieldPolicy<any> | FieldReadFunction<any>,
+	listGlobalAttributeValues?: FieldPolicy<any> | FieldReadFunction<any>,
+	listGlobalUnitDefinitions?: FieldPolicy<any> | FieldReadFunction<any>,
 	listRelationships?: FieldPolicy<any> | FieldReadFunction<any>,
 	listResourceTypes?: FieldPolicy<any> | FieldReadFunction<any>,
 	listRoles?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9476,7 +9583,7 @@ export type LlmFieldPolicy = {
 	exampleTicket?: FieldPolicy<any> | FieldReadFunction<any>,
 	suggestTaxObligations?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type MutationKeySpecifier = ('acceptQuote' | 'addFileToEntity' | 'addInvoiceCharges' | 'addSearchRecent' | 'addTaxLineItem' | 'admin' | 'adoptOrphanedSubmissions' | 'archiveWorkspace' | 'assignInventoryToRentalFulfilment' | 'bulkMarkInventoryReceived' | 'cancelInvoice' | 'clearInvoiceTaxes' | 'clearSearchRecents' | 'createAssetSchedule' | 'createBusinessContact' | 'createCharge' | 'createFulfilmentReservation' | 'createGlobalAttributeRelation' | 'createGlobalAttributeType' | 'createGlobalAttributeValue' | 'createGlobalUnitDefinition' | 'createIntakeForm' | 'createIntakeFormSubmission' | 'createIntakeFormSubmissionLineItem' | 'createInventory' | 'createInvoice' | 'createNote' | 'createPdfFromPageAndAttachToEntityId' | 'createPersonContact' | 'createPriceBook' | 'createProject' | 'createPurchaseOrder' | 'createQuote' | 'createQuoteFromIntakeFormSubmission' | 'createQuoteRevision' | 'createRFQ' | 'createReferenceNumberTemplate' | 'createRentalFulfilment' | 'createRentalPrice' | 'createRentalPurchaseOrderLineItem' | 'createRentalSalesOrderLineItem' | 'createResourceMapTag' | 'createSaleFulfilment' | 'createSalePrice' | 'createSalePurchaseOrderLineItem' | 'createSaleSalesOrderLineItem' | 'createSalesOrder' | 'createServiceFulfilment' | 'createTransaction' | 'createWorkflowConfiguration' | 'createWorkspace' | 'deleteContactById' | 'deleteFulfilment' | 'deleteIntakeForm' | 'deleteIntakeFormSubmissionLineItem' | 'deleteInventory' | 'deleteInvoice' | 'deleteNote' | 'deletePriceBookById' | 'deletePriceById' | 'deleteProject' | 'deleteReferenceNumberTemplate' | 'deleteResourceMapTag' | 'deleteWorkflowConfigurationById' | 'exportPrices' | 'generateReferenceNumber' | 'getSignedReadUrl' | 'importPrices' | 'ingestGlobalAttributeString' | 'inviteUserToWorkspace' | 'joinWorkspace' | 'markInvoiceAsPaid' | 'markInvoiceAsSent' | 'refreshBrand' | 'rejectQuote' | 'removeFileFromEntity' | 'removeSearchRecent' | 'removeTaxLineItem' | 'removeUserFromWorkspace' | 'renameFile' | 'resetSequenceNumber' | 'runNightlyRentalChargesJob' | 'runNightlyRentalChargesJobAsync' | 'sendQuote' | 'setExpectedRentalEndDate' | 'setFulfilmentPurchaseOrderLineItemId' | 'setIntakeFormActive' | 'setInvoiceTax' | 'setRentalEndDate' | 'setRentalStartDate' | 'softDeletePurchaseOrder' | 'softDeletePurchaseOrderLineItem' | 'softDeleteSalesOrder' | 'softDeleteSalesOrderLineItem' | 'submitIntakeFormSubmission' | 'submitPurchaseOrder' | 'submitSalesOrder' | 'syncCurrentUser' | 'toggleSearchFavorite' | 'touchAllContacts' | 'unarchiveWorkspace' | 'unassignInventoryFromRentalFulfilment' | 'updateBusinessAddress' | 'updateBusinessBrandId' | 'updateBusinessContact' | 'updateBusinessName' | 'updateBusinessPhone' | 'updateBusinessTaxId' | 'updateBusinessWebsite' | 'updateFulfilmentAssignee' | 'updateFulfilmentColumn' | 'updateGlobalAttributeType' | 'updateGlobalAttributeValue' | 'updateIntakeForm' | 'updateIntakeFormSubmission' | 'updateIntakeFormSubmissionLineItem' | 'updateInventoryActualReturnDate' | 'updateInventoryExpectedReturnDate' | 'updateInventorySerialisedId' | 'updateNote' | 'updatePersonBusiness' | 'updatePersonContact' | 'updatePersonEmail' | 'updatePersonName' | 'updatePersonPhone' | 'updatePersonResourceMap' | 'updatePriceBook' | 'updateProject' | 'updateProjectCode' | 'updateProjectContacts' | 'updateProjectDescription' | 'updateProjectName' | 'updateProjectParentProject' | 'updateProjectScopeOfWork' | 'updateProjectStatus' | 'updatePurchaseOrder' | 'updatePurchaseOrderLineItem' | 'updateQuote' | 'updateQuoteRevision' | 'updateQuoteStatus' | 'updateRFQ' | 'updateReferenceNumberTemplate' | 'updateRentalPrice' | 'updateRentalPurchaseOrderLineItem' | 'updateRentalSalesOrderLineItem' | 'updateResourceMapTag' | 'updateSalePrice' | 'updateSalePurchaseOrderLineItem' | 'updateSaleSalesOrderLineItem' | 'updateSalesOrder' | 'updateSalesOrderLineItem' | 'updateTaxLineItem' | 'updateWorkflowConfiguration' | 'updateWorkspaceAccessType' | 'updateWorkspaceSettings' | 'updateWorkspaceUserRoles' | 'upsertPimCategory' | 'upsertUser' | MutationKeySpecifier)[];
+export type MutationKeySpecifier = ('acceptQuote' | 'addFileToEntity' | 'addInvoiceCharges' | 'addSearchRecent' | 'addTaxLineItem' | 'admin' | 'adoptOrphanedSubmissions' | 'archiveWorkspace' | 'assignInventoryToRentalFulfilment' | 'bulkMarkInventoryReceived' | 'cancelInvoice' | 'clearInvoiceTaxes' | 'clearSearchRecents' | 'createAssetSchedule' | 'createBusinessContact' | 'createCharge' | 'createFulfilmentReservation' | 'createGlobalAttributeRelation' | 'createGlobalAttributeType' | 'createGlobalAttributeValue' | 'createGlobalUnitDefinition' | 'createIntakeForm' | 'createIntakeFormSubmission' | 'createIntakeFormSubmissionLineItem' | 'createInventory' | 'createInvoice' | 'createNote' | 'createPdfFromPageAndAttachToEntityId' | 'createPersonContact' | 'createPriceBook' | 'createProject' | 'createPurchaseOrder' | 'createQuote' | 'createQuoteFromIntakeFormSubmission' | 'createQuoteRevision' | 'createRFQ' | 'createReferenceNumberTemplate' | 'createRentalFulfilment' | 'createRentalPrice' | 'createRentalPurchaseOrderLineItem' | 'createRentalSalesOrderLineItem' | 'createResourceMapTag' | 'createSaleFulfilment' | 'createSalePrice' | 'createSalePurchaseOrderLineItem' | 'createSaleSalesOrderLineItem' | 'createSalesOrder' | 'createServiceFulfilment' | 'createTransaction' | 'createWorkflowConfiguration' | 'createWorkspace' | 'deleteContactById' | 'deleteFulfilment' | 'deleteIntakeForm' | 'deleteIntakeFormSubmissionLineItem' | 'deleteInventory' | 'deleteInvoice' | 'deleteNote' | 'deletePriceBookById' | 'deletePriceById' | 'deleteProject' | 'deleteReferenceNumberTemplate' | 'deleteResourceMapTag' | 'deleteWorkflowConfigurationById' | 'exportPrices' | 'generateReferenceNumber' | 'getSignedReadUrl' | 'importPrices' | 'ingestGlobalAttributeString' | 'inviteUserToWorkspace' | 'joinWorkspace' | 'markInvoiceAsPaid' | 'markInvoiceAsSent' | 'refreshBrand' | 'rejectQuote' | 'removeFileFromEntity' | 'removeSearchRecent' | 'removeTaxLineItem' | 'removeUserFromWorkspace' | 'renameFile' | 'resetSequenceNumber' | 'runNightlyRentalChargesJob' | 'runNightlyRentalChargesJobAsync' | 'sendQuote' | 'setExpectedRentalEndDate' | 'setFulfilmentPurchaseOrderLineItemId' | 'setIntakeFormActive' | 'setInvoiceTax' | 'setRentalEndDate' | 'setRentalStartDate' | 'softDeletePurchaseOrder' | 'softDeletePurchaseOrderLineItem' | 'softDeleteSalesOrder' | 'softDeleteSalesOrderLineItem' | 'submitIntakeFormSubmission' | 'submitPurchaseOrder' | 'submitSalesOrder' | 'syncCurrentUser' | 'toggleSearchFavorite' | 'touchAllContacts' | 'unarchiveWorkspace' | 'unassignInventoryFromRentalFulfilment' | 'updateBusinessAddress' | 'updateBusinessBrandId' | 'updateBusinessContact' | 'updateBusinessName' | 'updateBusinessPhone' | 'updateBusinessTaxId' | 'updateBusinessWebsite' | 'updateFulfilmentAssignee' | 'updateFulfilmentColumn' | 'updateGlobalAttributeType' | 'updateGlobalAttributeValue' | 'updateGlobalUnitDefinition' | 'updateIntakeForm' | 'updateIntakeFormSubmission' | 'updateIntakeFormSubmissionLineItem' | 'updateInventoryActualReturnDate' | 'updateInventoryExpectedReturnDate' | 'updateInventorySerialisedId' | 'updateNote' | 'updatePersonBusiness' | 'updatePersonContact' | 'updatePersonEmail' | 'updatePersonName' | 'updatePersonPhone' | 'updatePersonResourceMap' | 'updatePriceBook' | 'updateProject' | 'updateProjectCode' | 'updateProjectContacts' | 'updateProjectDescription' | 'updateProjectName' | 'updateProjectParentProject' | 'updateProjectScopeOfWork' | 'updateProjectStatus' | 'updatePurchaseOrder' | 'updatePurchaseOrderLineItem' | 'updateQuote' | 'updateQuoteRevision' | 'updateQuoteStatus' | 'updateRFQ' | 'updateReferenceNumberTemplate' | 'updateRentalPrice' | 'updateRentalPurchaseOrderLineItem' | 'updateRentalSalesOrderLineItem' | 'updateResourceMapTag' | 'updateSalePrice' | 'updateSalePurchaseOrderLineItem' | 'updateSaleSalesOrderLineItem' | 'updateSalesOrder' | 'updateSalesOrderLineItem' | 'updateTaxLineItem' | 'updateWorkflowConfiguration' | 'updateWorkspaceAccessType' | 'updateWorkspaceSettings' | 'updateWorkspaceUserRoles' | 'upsertPimCategory' | 'upsertUser' | MutationKeySpecifier)[];
 export type MutationFieldPolicy = {
 	acceptQuote?: FieldPolicy<any> | FieldReadFunction<any>,
 	addFileToEntity?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9591,6 +9698,7 @@ export type MutationFieldPolicy = {
 	updateFulfilmentColumn?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateGlobalAttributeType?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateGlobalAttributeValue?: FieldPolicy<any> | FieldReadFunction<any>,
+	updateGlobalUnitDefinition?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateIntakeForm?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateIntakeFormSubmission?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateIntakeFormSubmissionLineItem?: FieldPolicy<any> | FieldReadFunction<any>,

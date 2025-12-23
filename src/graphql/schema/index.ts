@@ -41,6 +41,7 @@ import * as searchSchema from './search';
 import * as rentalViewsSchema from './rental-views';
 import * as quotingSchema from './quoting';
 import * as globalAttributesSchema from './global-attributes';
+import * as globalAttributesAdminSchema from './global-attributes-admin';
 
 export const buildNexusSchema = (opts: { envConfig: EnvConfig }) => {
   const { envConfig } = opts;
@@ -94,6 +95,7 @@ export const buildNexusSchema = (opts: { envConfig: EnvConfig }) => {
       rentalViewsSchema,
       quotingSchema,
       globalAttributesSchema,
+      globalAttributesAdminSchema,
     ],
     shouldGenerateArtifacts: envConfig.GENERATE_NEXUS_ARTIFACTS,
     outputs: {

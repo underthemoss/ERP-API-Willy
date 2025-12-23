@@ -75,6 +75,10 @@ export type CreateGlobalUnitDefinitionInput = Omit<
   status?: GlobalUnitStatus;
 };
 
+export type UpdateGlobalUnitDefinitionInput = Partial<
+  Omit<GlobalUnitDefinitionDoc, '_id' | 'code' | 'createdAt' | 'createdBy'>
+>;
+
 export type IngestGlobalAttributeStringInput = {
   raw: string;
   attributeName?: string;
@@ -353,6 +357,10 @@ export class GlobalAttributesService {
     };
   }
 
+  async getAttributeValueById(id: string) {
+    return this.attributeValues.getById(id);
+  }
+
   async createAttributeRelation(
     input: CreateGlobalAttributeRelationInput,
     user?: UserAuthPayload,
@@ -408,6 +416,34 @@ export class GlobalAttributesService {
         total: result.total,
       }),
     };
+  }
+
+  async updateUnitDefinition(
+    code: string,
+    updates: UpdateGlobalUnitDefinitionInput,
+    user?: UserAuthPayload,
+  ): Promise<GlobalUnitDefinition | null> {
+    const existing = await this.units.getByCode(code);
+    if (!existing) return null;
+
+    const { id, ...existingDoc } = existing;
+    const now = new Date();
+    const next = { ...existingDoc };
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value !== undefined) {
+        (next as Record<string, unknown>)[key] = value;
+      }
+    });
+
+    return this.units.upsertByCode({
+      ...next,
+      code: existing.code,
+      createdAt: existing.createdAt,
+      createdBy: existing.createdBy,
+      updatedAt: now,
+      updatedBy: user?.id,
+    });
   }
 
   async ingestGlobalAttributeString(

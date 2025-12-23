@@ -54,6 +54,9 @@ type AdminMutationNamespace {
     """Name of the collection to snapshot"""
     collectionName: String!
   ): CollectionSnapshotResult!
+  createGlobalAttributeType(input: CreateGlobalAttributeTypeInput!): GlobalAttributeType
+  createGlobalAttributeValue(input: CreateGlobalAttributeValueInput!): GlobalAttributeValue
+  createGlobalUnitDefinition(input: CreateGlobalUnitDefinitionInput!): GlobalUnitDefinition
 
   """Delete a specific SpiceDB relationship"""
   deleteRelationship(
@@ -132,6 +135,9 @@ type AdminMutationNamespace {
     """Email address to send the test email to"""
     to: String!
   ): SendTestEmailResult!
+  updateGlobalAttributeType(id: ID!, input: UpdateGlobalAttributeTypeInput!): GlobalAttributeType
+  updateGlobalAttributeValue(id: ID!, input: UpdateGlobalAttributeValueInput!): GlobalAttributeValue
+  updateGlobalUnitDefinition(code: String!, input: UpdateGlobalUnitDefinitionInput!): GlobalUnitDefinition
 
   """Create or update a SpiceDB relationship"""
   writeRelationship(
@@ -158,6 +164,10 @@ type AdminMutationNamespace {
 }
 
 type AdminQueryNamespace {
+  getGlobalAttributeTypeById(id: ID!): GlobalAttributeType
+  getGlobalAttributeValueById(id: ID!): GlobalAttributeValue
+  getGlobalUnitDefinitionByCode(code: String!): GlobalUnitDefinition
+
   """Get a single Auth0 user by ID (Admin only)"""
   getUserById(
     """Auth0 user ID"""
@@ -175,6 +185,9 @@ type AdminQueryNamespace {
     """Resource type to get relations for (e.g., "erp/workspace")"""
     resourceType: String
   ): [AvailableRelation!]!
+  listGlobalAttributeTypes(filter: ListGlobalAttributeTypesFilter, page: PageInfoInput): GlobalAttributeTypeListResult
+  listGlobalAttributeValues(filter: ListGlobalAttributeValuesFilter, page: PageInfoInput): GlobalAttributeValueListResult
+  listGlobalUnitDefinitions(filter: ListGlobalUnitsFilter, page: PageInfoInput): GlobalUnitDefinitionListResult
 
   """List SpiceDB relationships with optional filters"""
   listRelationships(
@@ -2157,6 +2170,7 @@ type Mutation {
   updateFulfilmentColumn(fulfilmentId: ID!, workflowColumnId: ID, workflowId: ID): FulfilmentBase
   updateGlobalAttributeType(id: ID!, input: UpdateGlobalAttributeTypeInput!): GlobalAttributeType
   updateGlobalAttributeValue(id: ID!, input: UpdateGlobalAttributeValueInput!): GlobalAttributeValue
+  updateGlobalUnitDefinition(code: String!, input: UpdateGlobalUnitDefinitionInput!): GlobalUnitDefinition
 
   """Update an existing intake form"""
   updateIntakeForm(id: String!, input: UpdateIntakeFormInput!): IntakeForm
@@ -4226,6 +4240,16 @@ input UpdateGlobalAttributeValueInput {
   status: GlobalAttributeStatus
   synonyms: [String]
   value: String
+}
+
+input UpdateGlobalUnitDefinitionInput {
+  canonicalUnitCode: String
+  dimension: GlobalAttributeDimension
+  name: String
+  offset: Float
+  source: String
+  status: GlobalUnitStatus
+  toCanonicalFactor: Float
 }
 
 input UpdateIntakeFormInput {

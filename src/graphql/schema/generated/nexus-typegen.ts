@@ -828,6 +828,15 @@ export interface NexusGenInputs {
     synonyms?: Array<string | null> | null; // [String]
     value?: string | null; // String
   }
+  UpdateGlobalUnitDefinitionInput: { // input type
+    canonicalUnitCode?: string | null; // String
+    dimension?: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
+    name?: string | null; // String
+    offset?: number | null; // Float
+    source?: string | null; // String
+    status?: NexusGenEnums['GlobalUnitStatus'] | null; // GlobalUnitStatus
+    toCanonicalFactor?: number | null; // Float
+  }
   UpdateIntakeFormInput: { // input type
     isActive?: boolean | null; // Boolean
     isPublic?: boolean | null; // Boolean
@@ -2357,16 +2366,28 @@ export interface NexusGenFieldTypes {
   AdminMutationNamespace: { // field return type
     assignRolesToUser: boolean | null; // Boolean
     collectionSnapshot: NexusGenRootTypes['CollectionSnapshotResult']; // CollectionSnapshotResult!
+    createGlobalAttributeType: NexusGenRootTypes['GlobalAttributeType'] | null; // GlobalAttributeType
+    createGlobalAttributeValue: NexusGenRootTypes['GlobalAttributeValue'] | null; // GlobalAttributeValue
+    createGlobalUnitDefinition: NexusGenRootTypes['GlobalUnitDefinition'] | null; // GlobalUnitDefinition
     deleteRelationship: NexusGenRootTypes['DeleteRelationshipResult']; // DeleteRelationshipResult!
     removeRolesFromUser: boolean | null; // Boolean
     sendTemplatedEmail: NexusGenRootTypes['SendTemplatedEmailResult']; // SendTemplatedEmailResult!
     sendTestEmail: NexusGenRootTypes['SendTestEmailResult']; // SendTestEmailResult!
+    updateGlobalAttributeType: NexusGenRootTypes['GlobalAttributeType'] | null; // GlobalAttributeType
+    updateGlobalAttributeValue: NexusGenRootTypes['GlobalAttributeValue'] | null; // GlobalAttributeValue
+    updateGlobalUnitDefinition: NexusGenRootTypes['GlobalUnitDefinition'] | null; // GlobalUnitDefinition
     writeRelationship: NexusGenRootTypes['WriteRelationshipResult']; // WriteRelationshipResult!
   }
   AdminQueryNamespace: { // field return type
+    getGlobalAttributeTypeById: NexusGenRootTypes['GlobalAttributeType'] | null; // GlobalAttributeType
+    getGlobalAttributeValueById: NexusGenRootTypes['GlobalAttributeValue'] | null; // GlobalAttributeValue
+    getGlobalUnitDefinitionByCode: NexusGenRootTypes['GlobalUnitDefinition'] | null; // GlobalUnitDefinition
     getUserById: NexusGenRootTypes['Auth0User'] | null; // Auth0User
     getUserRoles: Array<NexusGenRootTypes['Auth0Role'] | null> | null; // [Auth0Role]
     listAvailableRelations: NexusGenRootTypes['AvailableRelation'][]; // [AvailableRelation!]!
+    listGlobalAttributeTypes: NexusGenRootTypes['GlobalAttributeTypeListResult'] | null; // GlobalAttributeTypeListResult
+    listGlobalAttributeValues: NexusGenRootTypes['GlobalAttributeValueListResult'] | null; // GlobalAttributeValueListResult
+    listGlobalUnitDefinitions: NexusGenRootTypes['GlobalUnitDefinitionListResult'] | null; // GlobalUnitDefinitionListResult
     listRelationships: NexusGenRootTypes['ListRelationshipsResult']; // ListRelationshipsResult!
     listResourceTypes: string[]; // [String!]!
     listRoles: Array<NexusGenRootTypes['Auth0Role'] | null> | null; // [Auth0Role]
@@ -3272,6 +3293,7 @@ export interface NexusGenFieldTypes {
     updateFulfilmentColumn: NexusGenRootTypes['FulfilmentBase'] | null; // FulfilmentBase
     updateGlobalAttributeType: NexusGenRootTypes['GlobalAttributeType'] | null; // GlobalAttributeType
     updateGlobalAttributeValue: NexusGenRootTypes['GlobalAttributeValue'] | null; // GlobalAttributeValue
+    updateGlobalUnitDefinition: NexusGenRootTypes['GlobalUnitDefinition'] | null; // GlobalUnitDefinition
     updateIntakeForm: NexusGenRootTypes['IntakeForm'] | null; // IntakeForm
     updateIntakeFormSubmission: NexusGenRootTypes['IntakeFormSubmission'] | null; // IntakeFormSubmission
     updateIntakeFormSubmissionLineItem: NexusGenRootTypes['IntakeFormLineItem'] | null; // IntakeFormLineItem
@@ -4717,16 +4739,28 @@ export interface NexusGenFieldTypeNames {
   AdminMutationNamespace: { // field return type name
     assignRolesToUser: 'Boolean'
     collectionSnapshot: 'CollectionSnapshotResult'
+    createGlobalAttributeType: 'GlobalAttributeType'
+    createGlobalAttributeValue: 'GlobalAttributeValue'
+    createGlobalUnitDefinition: 'GlobalUnitDefinition'
     deleteRelationship: 'DeleteRelationshipResult'
     removeRolesFromUser: 'Boolean'
     sendTemplatedEmail: 'SendTemplatedEmailResult'
     sendTestEmail: 'SendTestEmailResult'
+    updateGlobalAttributeType: 'GlobalAttributeType'
+    updateGlobalAttributeValue: 'GlobalAttributeValue'
+    updateGlobalUnitDefinition: 'GlobalUnitDefinition'
     writeRelationship: 'WriteRelationshipResult'
   }
   AdminQueryNamespace: { // field return type name
+    getGlobalAttributeTypeById: 'GlobalAttributeType'
+    getGlobalAttributeValueById: 'GlobalAttributeValue'
+    getGlobalUnitDefinitionByCode: 'GlobalUnitDefinition'
     getUserById: 'Auth0User'
     getUserRoles: 'Auth0Role'
     listAvailableRelations: 'AvailableRelation'
+    listGlobalAttributeTypes: 'GlobalAttributeTypeListResult'
+    listGlobalAttributeValues: 'GlobalAttributeValueListResult'
+    listGlobalUnitDefinitions: 'GlobalUnitDefinitionListResult'
     listRelationships: 'ListRelationshipsResult'
     listResourceTypes: 'String'
     listRoles: 'Auth0Role'
@@ -5632,6 +5666,7 @@ export interface NexusGenFieldTypeNames {
     updateFulfilmentColumn: 'FulfilmentBase'
     updateGlobalAttributeType: 'GlobalAttributeType'
     updateGlobalAttributeValue: 'GlobalAttributeValue'
+    updateGlobalUnitDefinition: 'GlobalUnitDefinition'
     updateIntakeForm: 'IntakeForm'
     updateIntakeFormSubmission: 'IntakeFormSubmission'
     updateIntakeFormSubmissionLineItem: 'IntakeFormLineItem'
@@ -7077,6 +7112,15 @@ export interface NexusGenArgTypes {
     collectionSnapshot: { // args
       collectionName: string; // String!
     }
+    createGlobalAttributeType: { // args
+      input: NexusGenInputs['CreateGlobalAttributeTypeInput']; // CreateGlobalAttributeTypeInput!
+    }
+    createGlobalAttributeValue: { // args
+      input: NexusGenInputs['CreateGlobalAttributeValueInput']; // CreateGlobalAttributeValueInput!
+    }
+    createGlobalUnitDefinition: { // args
+      input: NexusGenInputs['CreateGlobalUnitDefinitionInput']; // CreateGlobalUnitDefinitionInput!
+    }
     deleteRelationship: { // args
       relation: string; // String!
       resourceId: string; // String!
@@ -7107,6 +7151,18 @@ export interface NexusGenArgTypes {
       subject: string | null; // String
       to: string; // String!
     }
+    updateGlobalAttributeType: { // args
+      id: string; // ID!
+      input: NexusGenInputs['UpdateGlobalAttributeTypeInput']; // UpdateGlobalAttributeTypeInput!
+    }
+    updateGlobalAttributeValue: { // args
+      id: string; // ID!
+      input: NexusGenInputs['UpdateGlobalAttributeValueInput']; // UpdateGlobalAttributeValueInput!
+    }
+    updateGlobalUnitDefinition: { // args
+      code: string; // String!
+      input: NexusGenInputs['UpdateGlobalUnitDefinitionInput']; // UpdateGlobalUnitDefinitionInput!
+    }
     writeRelationship: { // args
       relation: string; // String!
       resourceId: string; // String!
@@ -7117,6 +7173,15 @@ export interface NexusGenArgTypes {
     }
   }
   AdminQueryNamespace: {
+    getGlobalAttributeTypeById: { // args
+      id: string; // ID!
+    }
+    getGlobalAttributeValueById: { // args
+      id: string; // ID!
+    }
+    getGlobalUnitDefinitionByCode: { // args
+      code: string; // String!
+    }
     getUserById: { // args
       userId: string; // String!
     }
@@ -7125,6 +7190,18 @@ export interface NexusGenArgTypes {
     }
     listAvailableRelations: { // args
       resourceType?: string | null; // String
+    }
+    listGlobalAttributeTypes: { // args
+      filter?: NexusGenInputs['ListGlobalAttributeTypesFilter'] | null; // ListGlobalAttributeTypesFilter
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
+    }
+    listGlobalAttributeValues: { // args
+      filter?: NexusGenInputs['ListGlobalAttributeValuesFilter'] | null; // ListGlobalAttributeValuesFilter
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
+    }
+    listGlobalUnitDefinitions: { // args
+      filter?: NexusGenInputs['ListGlobalUnitsFilter'] | null; // ListGlobalUnitsFilter
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
     }
     listRelationships: { // args
       cursor?: string | null; // String
@@ -7546,6 +7623,10 @@ export interface NexusGenArgTypes {
     updateGlobalAttributeValue: { // args
       id: string; // ID!
       input: NexusGenInputs['UpdateGlobalAttributeValueInput']; // UpdateGlobalAttributeValueInput!
+    }
+    updateGlobalUnitDefinition: { // args
+      code: string; // String!
+      input: NexusGenInputs['UpdateGlobalUnitDefinitionInput']; // UpdateGlobalUnitDefinitionInput!
     }
     updateIntakeForm: { // args
       id: string; // String!

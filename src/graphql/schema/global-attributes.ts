@@ -291,6 +291,19 @@ export const CreateGlobalUnitDefinitionInput = inputObjectType({
   },
 });
 
+export const UpdateGlobalUnitDefinitionInput = inputObjectType({
+  name: 'UpdateGlobalUnitDefinitionInput',
+  definition(t) {
+    t.string('name');
+    t.field('dimension', { type: GlobalAttributeDimension });
+    t.string('canonicalUnitCode');
+    t.float('toCanonicalFactor');
+    t.float('offset');
+    t.field('status', { type: GlobalUnitStatus });
+    t.string('source');
+  },
+});
+
 export const IngestGlobalAttributeStringInput = inputObjectType({
   name: 'IngestGlobalAttributeStringInput',
   definition(t) {
@@ -497,6 +510,22 @@ export const GlobalAttributesMutation = extendType({
       resolve: async (_root, { input }, ctx) => {
         if (!ctx.user) throw new Error('Unauthorized');
         return ctx.services.globalAttributesService.createUnitDefinition(
+          input as any,
+          ctx.user,
+        );
+      },
+    });
+
+    t.field('updateGlobalUnitDefinition', {
+      type: GlobalUnitDefinition,
+      args: {
+        code: nonNull(arg({ type: 'String' })),
+        input: nonNull(arg({ type: UpdateGlobalUnitDefinitionInput })),
+      },
+      resolve: async (_root, { code, input }, ctx) => {
+        if (!ctx.user) throw new Error('Unauthorized');
+        return ctx.services.globalAttributesService.updateUnitDefinition(
+          code,
           input as any,
           ctx.user,
         );
