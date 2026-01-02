@@ -42,13 +42,11 @@ import {
   type PurchaseOrderLineItemDoc,
 } from '../services/purchase_orders';
 import { type BrandfetchService, type BrandDoc } from '../services/brandfetch';
-import {
-  type IntakeFormService,
-  type IntakeFormSubmissionLineItemDTO,
-} from '../services/intake-forms';
+import { type IntakeFormService } from '../services/intake-forms';
 import { type SearchService } from '../services/search';
 import { type SearchDocument } from '../services/search/types';
 import { type QuotingService, type Quote } from '../services/quoting';
+import { type LineItem } from '../services/line_items';
 
 // Type for compound dataloader key for price forecasts
 type PriceForecastKey = {
@@ -327,7 +325,7 @@ export function createDataLoaders(config: CreateDataLoadersConfig) {
     intakeForms: {
       getLineItemsBySubmissionId: new DataLoader<
         string,
-        IntakeFormSubmissionLineItemDTO[]
+        LineItem[]
       >(async (submissionIds) => {
         // Batch fetch line items for multiple submissions
         const results = await Promise.all(
@@ -342,7 +340,7 @@ export function createDataLoaders(config: CreateDataLoadersConfig) {
       }),
       getLineItemById: new DataLoader<
         string,
-        IntakeFormSubmissionLineItemDTO | null
+        LineItem | null
       >(async (lineItemIds) => {
         const results = await Promise.all(
           lineItemIds.map(async (lineItemId) => {

@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://equipmentshare.com/schemas/studio-catalog-list.json",
+  "title": "Studio Catalog List",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "description": "List schema version",
+      "default": "1.0"
+    },
+    "id": {
+      "type": "string",
+      "description": "Stable list identifier (kebab or snake case)",
+      "pattern": "^[a-z0-9][a-z0-9-_]*$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable list name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional list description"
+    },
+    "listType": {
+      "type": "string",
+      "description": "Primary entity type for list items",
+      "enum": ["products", "assemblies", "tasks", "mixed"],
+      "default": "products"
+    },
+    "items": {
+      "type": "array",
+      "description": "Explicit entity references",
+      "items": { "$ref": "#/$defs/listItem" }
+    },
+    "filters": {
+      "type": "object",
+      "description": "Selection filters for dynamic lists",
+      "additionalProperties": false,
+      "properties": {
+        "tagsAny": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "tagsAll": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "attributeAny": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/attributeMatch" }
+        },
+        "attributeAll": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/attributeMatch" }
+        },
+        "categoryPaths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "statusIn": {
+          "type": "array",
+          "items": { "enum": ["draft", "active", "archived"] },
+          "uniqueItems": true
+        },
+        "text": {
+          "type": "string",
+          "description": "Free-form text search"
+        }
+      }
+    },
+    "sort": {
+      "type": "object",
+      "description": "Optional sort rule for resolved lists",
+      "additionalProperties": false,
+      "properties": {
+        "by": {
+          "type": "string",
+          "enum": ["name", "id", "updatedAt"]
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["asc", "desc"],
+          "default": "asc"
+        }
+      },
+      "required": ["by"]
+    },
+    "limit": {
+      "type": "integer",
+      "description": "Optional limit on resolved items",
+      "minimum": 1
+    },
+    "notes": {
+      "type": "string",
+      "description": "Free-form curation notes"
+    }
+  },
+  "required": ["schemaVersion", "id", "name"],
+  "anyOf": [{ "required": ["items"] }, { "required": ["filters"] }],
+  "$defs": {
+    "listItem": {
+      "description": "Either a direct product id or a typed reference",
+      "anyOf": [
+        {
+          "type": "string",
+          "description": "Product id"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": { "type": "string" },
+            "type": {
+              "type": "string",
+              "enum": ["product", "assembly", "task"],
+              "default": "product"
+            }
+          },
+          "required": ["id"]
+        }
+      ]
+    },
+    "attributeMatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "key": { "type": "string" },
+        "value": { "type": ["string", "number", "boolean"] },
+        "unit": { "type": "string" },
+        "contextTags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      },
+      "required": ["key", "value"]
+    }
+  }
+}

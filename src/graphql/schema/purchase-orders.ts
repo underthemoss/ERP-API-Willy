@@ -544,6 +544,22 @@ export const PurchaseOrder = objectType({
       },
     });
 
+    t.nonNull.list.nonNull.field('lineItems', {
+      type: 'LineItem',
+      description:
+        'Canonical line items for this purchase order (source of truth).',
+      async resolve(parent, _args, ctx) {
+        if (!ctx.user) return [];
+        const workspaceId = parent.workspace_id;
+        if (!workspaceId) return [];
+        return ctx.services.lineItemsService.listLineItemsByDocumentRef(
+          workspaceId,
+          { type: 'PURCHASE_ORDER', id: parent._id },
+          ctx.user,
+        );
+      },
+    });
+
     t.field('pricing', {
       type: 'PurchaseOrderPricing',
       description: 'Pricing summary for the sales order',
@@ -906,8 +922,10 @@ export const updateSalePurchaseOrderLineItem = mutationField(
       );
 
       // First, fetch the line item to verify it's a SALE type
-      const lineItem =
-        await ctx.services.purchaseOrdersService.getLineItemById(id);
+      const lineItem = await ctx.services.purchaseOrdersService.getLineItemById(
+        id,
+        ctx.user,
+      );
       if (!lineItem) {
         throw new Error('Line item not found');
       }
@@ -1018,7 +1036,10 @@ export const getPurchaseOrderLineItemById = queryField(
     },
     resolve: async (_root, { id }, ctx) => {
       if (!id) return null;
-      const item = await ctx.services.purchaseOrdersService.getLineItemById(id);
+      const item = await ctx.services.purchaseOrdersService.getLineItemById(
+        id,
+        ctx.user,
+      );
 
       return item;
     },

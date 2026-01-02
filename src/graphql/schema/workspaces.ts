@@ -306,11 +306,10 @@ export const Mutation = extendType({
 
         if (orgBusinessContactId !== undefined) {
           if (orgBusinessContactId && orgBusinessContactId.trim().length > 0) {
-            const contact =
-              await ctx.services.contactsService.getContactById(
-                orgBusinessContactId,
-                ctx.user,
-              );
+            const contact = await ctx.services.contactsService.getContactById(
+              orgBusinessContactId,
+              ctx.user,
+            );
             if (!contact || contact.contactType !== 'BUSINESS') {
               throw new Error(
                 'orgBusinessContactId must reference a BusinessContact',

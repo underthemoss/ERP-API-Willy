@@ -137,74 +137,137 @@ export const IntakeForm = objectType({
 export const IntakeFormLineItem = objectType({
   name: 'IntakeFormLineItem',
   sourceType: {
-    module: require.resolve('../../services/intake-forms'),
-    export: 'IntakeFormSubmissionLineItemDTO',
+    module: require.resolve('../../services/line_items'),
+    export: 'LineItem',
   },
   definition(t) {
     t.nonNull.id('id');
-    t.nonNull.field('startDate', { type: 'DateTime' });
+    t.nonNull.field('startDate', {
+      type: 'DateTime',
+      resolve: (lineItem: any) =>
+        lineItem.timeWindow?.startAt ?? lineItem.createdAt,
+    });
     t.nonNull.string('description');
-    t.nonNull.int('quantity');
-    t.nonNull.int('durationInDays');
-    t.nonNull.field('type', { type: 'RequestType' });
+    t.nonNull.int('quantity', {
+      resolve: (lineItem: any) => {
+        const parsed = Number(lineItem.quantity);
+        return Number.isFinite(parsed) ? parsed : 1;
+      },
+    });
+    t.nonNull.int('durationInDays', {
+      resolve: (lineItem: any) => {
+        const startAt = lineItem.timeWindow?.startAt ?? null;
+        const endAt = lineItem.timeWindow?.endAt ?? null;
+        if (!startAt || !endAt) return 1;
+        return Math.max(
+          1,
+          Math.round(
+            (endAt.getTime() - startAt.getTime()) / (24 * 60 * 60 * 1000),
+          ),
+        );
+      },
+    });
+    t.nonNull.field('type', {
+      type: 'RequestType',
+      resolve: (lineItem: any) =>
+        lineItem.type === 'RENTAL' ? 'RENTAL' : 'PURCHASE',
+    });
 
     // new fields
-    t.nonNull.string('pimCategoryId');
+    t.nonNull.string('pimCategoryId', {
+      resolve: (lineItem: any) => lineItem.productRef?.productId ?? '',
+    });
     t.field('pimCategory', {
       type: 'PimCategory',
       resolve: (lineItem, _, ctx) => {
         return ctx.dataloaders.pimCategories.getPimCategoriesById.load(
-          lineItem.pimCategoryId,
+          (lineItem as any).productRef?.productId ?? '',
         );
       },
     });
-    t.string('priceId');
+    t.string('priceId', {
+      resolve: (lineItem: any) => lineItem.pricingRef?.priceId ?? null,
+    });
     t.field('price', {
       type: 'Price',
       resolve: (lineItem, _, ctx) => {
-        if (!lineItem.priceId) {
+        const priceId = (lineItem as any).pricingRef?.priceId;
+        if (!priceId) {
           return null;
         }
 
-        return ctx.dataloaders.prices.getPriceById.load(lineItem.priceId);
+        return ctx.dataloaders.prices.getPriceById.load(priceId);
       },
     });
     t.field('priceForecast', {
       type: 'LineItemPriceForecast',
       resolve: (lineItem, _, ctx) => {
         // Return null for PURCHASE type (forecast only applies to rentals)
-        if (lineItem.type !== 'RENTAL') {
+        if ((lineItem as any).type !== 'RENTAL') {
           return null;
         }
 
         // Return null if no priceId (custom price)
-        if (!lineItem.priceId) {
+        const priceId = (lineItem as any).pricingRef?.priceId;
+        if (!priceId) {
           return null;
         }
 
+        const startAt = (lineItem as any).timeWindow?.startAt ?? null;
+        const endAt = (lineItem as any).timeWindow?.endAt ?? null;
+        const durationInDays =
+          startAt && endAt
+            ? Math.max(
+                1,
+                Math.round(
+                  (endAt.getTime() - startAt.getTime()) /
+                    (24 * 60 * 60 * 1000),
+                ),
+              )
+            : 1;
+
         return ctx.dataloaders.prices.getPriceForecast.load({
-          priceId: lineItem.priceId,
-          durationInDays: lineItem.durationInDays,
+          priceId,
+          durationInDays,
         });
       },
     });
-    t.string('customPriceName');
-    t.nonNull.field('deliveryMethod', { type: 'DeliveryMethod' });
-    t.string('deliveryLocation');
-    t.string('deliveryNotes');
+    t.string('customPriceName', {
+      resolve: (lineItem: any) => lineItem.customPriceName ?? null,
+    });
+    t.nonNull.field('deliveryMethod', {
+      type: 'DeliveryMethod',
+      resolve: (lineItem: any) => lineItem.delivery?.method ?? 'PICKUP',
+    });
+    t.string('deliveryLocation', {
+      resolve: (lineItem: any) => lineItem.delivery?.location ?? null,
+    });
+    t.string('deliveryNotes', {
+      resolve: (lineItem: any) => lineItem.delivery?.notes ?? null,
+    });
 
     // rental fields
     t.field('rentalStartDate', {
       type: 'DateTime',
-      resolve: (lineItem) => lineItem.rentalStartDate || null,
+      resolve: (lineItem: any) =>
+        lineItem.type === 'RENTAL' ? lineItem.timeWindow?.startAt ?? null : null,
     });
     t.field('rentalEndDate', {
       type: 'DateTime',
-      resolve: (lineItem) => lineItem.rentalEndDate || null,
+      resolve: (lineItem: any) =>
+        lineItem.type === 'RENTAL' ? lineItem.timeWindow?.endAt ?? null : null,
     });
 
     // tracking if this line item has been converted to a sales order
-    t.string('salesOrderId');
+    t.string('salesOrderId', {
+      resolve: async (lineItem, _, ctx) => {
+        const salesOrderLineItem =
+          await ctx.dataloaders.salesOrders.getSalesOrderLineItemByIntakeFormSubmissionLineItemId.load(
+            lineItem.id,
+          );
+        return salesOrderLineItem?.sales_order_id ?? null;
+      },
+    });
     t.field('salesOrderLineItem', {
       type: 'SalesOrderLineItem',
       resolve: (lineItem, _, ctx) => {
@@ -215,7 +278,9 @@ export const IntakeFormLineItem = objectType({
     });
 
     // pricing
-    t.nonNull.int('subtotalInCents');
+    t.nonNull.int('subtotalInCents', {
+      resolve: (lineItem: any) => lineItem.subtotalInCents ?? 0,
+    });
 
     t.string('fulfilmentId', {
       resolve: async (lineItem, args, ctx) => {

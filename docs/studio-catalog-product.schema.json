@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://equipmentshare.com/schemas/studio-catalog-product.json",
+  "title": "Studio Catalog Product",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "description": "Product schema version",
+      "default": "1.0"
+    },
+    "id": {
+      "type": "string",
+      "description": "Stable product identifier (kebab or snake case)",
+      "pattern": "^[a-z0-9][a-z0-9-_]*$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable product name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional product description"
+    },
+    "kind": {
+      "type": "string",
+      "description": "Product kind (service, material, or assembly)",
+      "enum": ["material", "service", "assembly"]
+    },
+    "status": {
+      "type": "string",
+      "description": "Curation status",
+      "enum": ["draft", "active", "archived"],
+      "default": "active"
+    },
+    "categoryPath": {
+      "type": "string",
+      "description": "Optional category path (e.g., equipment/vehicles)"
+    },
+    "tags": {
+      "type": "array",
+      "description": "Catalog tags (non-measurable concepts)",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "activityTags": {
+      "type": "array",
+      "description": "Service activity tags (verb-like)",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "targetSpecs": {
+      "type": "array",
+      "description": "Service targets (tags or product archetype)",
+      "items": { "$ref": "#/$defs/targetSpec" }
+    },
+    "attributes": {
+      "type": "array",
+      "description": "Normalized attributes with optional units",
+      "items": { "$ref": "#/$defs/attributeValue" }
+    },
+    "sourceRefs": {
+      "type": "array",
+      "description": "References to entries in catalog.jsonc sources",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "sourcePaths": {
+      "type": "array",
+      "description": "References to files under /sources",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "images": {
+      "type": "array",
+      "description": "Image URLs or file paths",
+      "items": { "$ref": "#/$defs/imageRef" }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Free-form curation notes"
+    }
+  },
+  "required": ["schemaVersion", "id", "name"],
+  "$defs": {
+    "attributeValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "Attribute key (prefer atomic types)"
+        },
+        "value": {
+          "type": ["string", "number", "boolean"],
+          "description": "Attribute value"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Optional unit for numeric values (e.g., lb, in, psi)"
+        },
+        "contextTags": {
+          "type": "array",
+          "description": "Context tags qualifying the attribute value",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "sourceRef": {
+          "type": "string",
+          "description": "Optional reference to a source entry"
+        }
+      },
+      "required": ["key", "value"]
+    },
+    "imageRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "uri": {
+          "type": "string",
+          "description": "URL or StudioFS path"
+        },
+        "alt": {
+          "type": "string",
+          "description": "Optional alt text"
+        }
+      },
+      "required": ["uri"]
+    },
+    "targetSpec": {
+      "oneOf": [
+        { "$ref": "#/$defs/tagTarget" },
+        { "$ref": "#/$defs/productTarget" }
+      ]
+    },
+    "tagTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "const": "tags" },
+        "tagIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": ["kind", "tagIds"]
+    },
+    "productTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "const": "product" },
+        "productId": { "type": "string" }
+      },
+      "required": ["kind", "productId"]
+    }
+  }
+}

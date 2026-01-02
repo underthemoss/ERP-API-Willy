@@ -4,7 +4,7 @@ This document maps the current data model to the thesis primitives and
 identifies what stays, what changes, and what is missing. It is intended to be
 updated progressively as we execute the roadmap.
 
-Last updated: 2025-01-04
+Last updated: 2025-12-26
 
 ---
 
@@ -32,16 +32,19 @@ Current:
 - PIM categories/products are the only formal catalog (`pim_products`, `pim_categories`).
 - Prices are tied to PIM categories/products (`prices`).
 - No native ServiceProduct/MaterialProduct/AssemblyProduct catalog layer.
+- Studio catalog curation is file-based (StudioFS) with JSON schemas for products, lists, and compiled indexes plus compile/preview outputs.
 
 Gaps:
-- No service product model or service taxonomy tags.
+- No service product model; service taxonomy/activity tags are global-only today.
 - No material attributes model (physics + brand) beyond PIM data.
 - No assemblies or BOM documents.
+- Service product targets (object-of-action) are not yet mapped to fulfillment entities.
 
 Keep / Modify / Replace:
 - Keep PIM as a source of material product data.
 - Add explicit ServiceProduct, MaterialProduct, AssemblyProduct models.
 - Add catalog_ref in prices to decouple pricing from PIM-only.
+- Brand attributes must be typed via GlobalAttributeType.kind=BRAND (no key/value).
 
 ---
 
@@ -50,18 +53,23 @@ Keep / Modify / Replace:
 Current:
 - Quote revisions include line items of types SERVICE/RENTAL/SALE with
   `sellersPriceId`, quantity, delivery fields (`quote-revisions-model`).
+- Quote line items now accept `productRef`, `unitCode`, `timeWindow`,
+  `placeRef`, `constraints`, `pricingRef`, `notes`, and service
+  `targetSelectors` (see `docs/quote.md`).
 - Sales orders line items: RENTAL/SALE only (`sales-order-line-items-model.ts`).
 - Purchase order line items: RENTAL/SALE only (`purchase-order-line-items-model.ts`).
 
 Gaps:
-- No constraint envelope (REQUIRED/PREFERRED/EXCLUDED).
-- No explicit catalog_ref type for service/material/assembly.
-- No shared line item shape across quote/SO/PO.
+- No shared line item shape across quote/SO/PO (SO/PO still PIM-centric).
+- Service target selectors are not yet used in SO/PO/fulfillment.
+- Pricing still uses `sellersPriceId`; `pricingRef` is not yet first-class.
 
 Keep / Modify / Replace:
 - Keep quote revisions as the main demand expression.
-- Add constraint envelope and catalog_ref to quote line items first.
+- Expand SO/PO line items to accept product_ref + constraints.
+- Use service target selectors to drive fulfillment orchestration.
 - Derive SO/PO from accepted quote revision for interoperability.
+- See `docs/quote.md` for the target QuoteLineItem shape and service-target rules.
 
 ---
 
@@ -158,15 +166,19 @@ Keep / Modify / Replace:
 Current:
 - Resource Map tags: LOCATION, BUSINESS_UNIT, ROLE.
 - PIM categories provide hierarchical product grouping.
-- No global attribute registry or normalized physics attributes.
+- Global attribute library exists (types/values/units) in a global DB.
+- Global tag library exists (single tag pool + governance) in a global DB.
+- Taxonomy/activity/context are rendered views derived from tag usage patterns
+  (plus optional curated relations).
+- Attribute ingestion supports deterministic decomposition of blended names into atomic types + context tags.
 
 Gaps:
-- No global tag/attribute governance or curation.
-- No tag relations (alias, related, broader).
+- Curation workflows are not implemented (approve, merge, deprecate).
+- Global tags/attributes are not yet bound to products/resources/line items.
 
 Keep / Modify / Replace:
 - Keep resource_map for location/BU/role tagging.
-- Add global tag and attribute registries with curation workflow.
+- Use global tag/attribute registries as the canonical vocabulary.
 
 ---
 
@@ -175,7 +187,7 @@ Keep / Modify / Replace:
 1) Contract envelope is not explicit (no constraint schema).
 2) Party semantics are inconsistent across documents.
 3) No snapshot semantics for BOM/prices at acceptance.
-4) No global tags/attributes for normalized matching.
+4) Global tags/attributes exist but are not yet wired into products/resources/line items.
 5) Fulfillment matching lacks conformance scoring.
 
 ---
@@ -184,7 +196,7 @@ Keep / Modify / Replace:
 
 - Introduce DocumentParty model and align buyer/seller roles.
 - Add catalog_ref + constraint envelope to quote line items.
-- Add global tags/attributes registry and curation workflow.
+- Bind global tags/attributes to products/resources/line items.
 - Add price snapshot at acceptance.
 - Add conformance evaluator in fulfilment flow.
 
@@ -197,4 +209,3 @@ As phases are implemented, update this document with:
 - what changed
 - what was deprecated
 - data migrations needed
-

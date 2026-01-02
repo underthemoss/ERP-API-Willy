@@ -327,7 +327,9 @@ export const listResourceMapEntriesByTagType = queryField(
     type: list('ResourceMapResource'),
     description: 'List resource map entries filtered by tag type',
     args: {
-      types: nonNull(arg({ type: nonNull(list(nonNull(ResourceMapTagTypeEnum))) })),
+      types: nonNull(
+        arg({ type: nonNull(list(nonNull(ResourceMapTagTypeEnum))) }),
+      ),
     },
     resolve: async (_root, args, ctx: GraphQLContext) => {
       const service: ResourceMapResourcesService =
@@ -401,9 +403,7 @@ export const deleteResourceMapTag = mutationField('deleteResourceMapTag', {
   },
 });
 
-const mapLatLngDocToGraphQL = (
-  latLng?: ResourceMapLatLngDoc | null,
-) => {
+const mapLatLngDocToGraphQL = (latLng?: ResourceMapLatLngDoc | null) => {
   if (!latLng) return null;
   return {
     lat: latLng.lat,
@@ -447,9 +447,7 @@ const computePolygonCentroid = (
   };
 };
 
-const mapLocationToPoint = (
-  location?: ResourceMapLocationDoc | null,
-) => {
+const mapLocationToPoint = (location?: ResourceMapLocationDoc | null) => {
   if (!location) return null;
 
   if (
@@ -475,9 +473,7 @@ const mapLocationToPoint = (
   return null;
 };
 
-const mapLocationDocToGraphQL = (
-  location?: ResourceMapLocationDoc | null,
-) => {
+const mapLocationDocToGraphQL = (location?: ResourceMapLocationDoc | null) => {
   if (!location) return null;
   return {
     kind: location.kind,
@@ -528,9 +524,7 @@ const mapLocationDocToGraphQL = (
   };
 };
 
-const mapLocationInputToDoc = (
-  input: any,
-): ResourceMapLocationDoc | null => {
+const mapLocationInputToDoc = (input: any): ResourceMapLocationDoc | null => {
   if (!input) return null;
   return {
     kind: input.kind,
@@ -607,11 +601,15 @@ const mapUpdateResourceMapTagInput = (
   if ('parentId' in input) mapped.parent_id = input.parentId;
   if ('hierarchyId' in input) mapped.hierarchy_id = input.hierarchyId;
   if ('hierarchyName' in input) mapped.hierarchy_name = input.hierarchyName;
-  if ('location' in input) mapped.location = mapLocationInputToDoc(input.location);
+  if ('location' in input) {
+    mapped.location = mapLocationInputToDoc(input.location);
+  }
   return mapped;
 };
 
-const mapLocationFilterInput = (input: any): ListResourceMapLocationTagsInput => {
+const mapLocationFilterInput = (
+  input: any,
+): ListResourceMapLocationTagsInput => {
   const mapped: ListResourceMapLocationTagsInput = {};
   if (input.bounds) {
     mapped.bounds = {

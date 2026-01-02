@@ -22,6 +22,9 @@ export const normalizeResourceMapTagType = (
   rawType?: string | null,
 ): ResourceMapTagType | null => {
   if (!rawType) return null;
-  const normalized = rawType.trim().toUpperCase().replace(/[\s-]+/g, '_');
+  const normalized = rawType
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, '_');
   return TAG_TYPE_ALIASES[normalized] || null;
 };

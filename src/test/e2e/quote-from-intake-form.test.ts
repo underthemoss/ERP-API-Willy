@@ -41,6 +41,10 @@ gql`
             deliveryMethod
             deliveryLocation
             deliveryNotes
+            placeRef {
+              kind
+              id
+            }
           }
           ... on QuoteRevisionSaleLineItem {
             id
@@ -54,6 +58,10 @@ gql`
             deliveryMethod
             deliveryLocation
             deliveryNotes
+            placeRef {
+              kind
+              id
+            }
           }
           ... on QuoteRevisionServiceLineItem {
             id
@@ -66,6 +74,10 @@ gql`
             deliveryMethod
             deliveryLocation
             deliveryNotes
+            placeRef {
+              kind
+              id
+            }
           }
         }
       }
@@ -174,6 +186,10 @@ gql`
           deliveryMethod
           deliveryLocation
           deliveryNotes
+          placeRef {
+            kind
+            id
+          }
         }
         ... on QuoteRevisionSaleLineItem {
           id
@@ -187,6 +203,10 @@ gql`
           deliveryMethod
           deliveryLocation
           deliveryNotes
+          placeRef {
+            kind
+            id
+          }
         }
       }
     }
@@ -231,6 +251,10 @@ gql`
           deliveryMethod
           deliveryLocation
           deliveryNotes
+          placeRef {
+            kind
+            id
+          }
         }
         ... on QuoteRevisionSaleLineItem {
           id
@@ -244,6 +268,10 @@ gql`
           deliveryMethod
           deliveryLocation
           deliveryNotes
+          placeRef {
+            kind
+            id
+          }
         }
         ... on QuoteRevisionServiceLineItem {
           id
@@ -256,6 +284,10 @@ gql`
           deliveryMethod
           deliveryLocation
           deliveryNotes
+          placeRef {
+            kind
+            id
+          }
         }
       }
     }

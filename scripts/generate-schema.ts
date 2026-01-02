@@ -3,7 +3,7 @@ import { EnvConfig } from '../src/config';
 
 // Minimal config for schema generation (dummy values for unused fields)
 const envConfig: EnvConfig = {
-  PORT: 5000,
+  PORT: 5001,
   GRAPHIQL_ENABLED: false,
   GENERATE_NEXUS_ARTIFACTS: true,
   MONGO_CONNECTION_STRING: 'mongodb://localhost:27017/dummy',

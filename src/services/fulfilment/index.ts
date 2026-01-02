@@ -17,12 +17,15 @@ import {
   RentalFulfilment,
   SaleFulfilment,
   ServiceFulfilment,
+  ServiceFulfilmentTask,
+  ServiceFulfilmentTaskStatus,
 } from './model';
 import { type UserAuthPayload } from '../../authentication';
 import {
   SalesOrderLineItemDoc,
   type SalesOrdersService,
 } from '../sales_orders';
+import { LineItemsService } from '../line_items';
 import { type PricesService } from '../prices';
 import { type PriceEngineService } from '../price_engine';
 import { type ChargeService } from '../charges';
@@ -40,6 +43,8 @@ export type {
   RentalFulfilment,
   SaleFulfilment,
   ServiceFulfilment,
+  ServiceFulfilmentTask,
+  ServiceFulfilmentTaskStatus,
   CreateRentalFulfilmentInput,
   CreateSaleFulfilmentInput,
   CreateServiceFulfilmentInput,
@@ -64,6 +69,7 @@ type BaseCreateInputWithOutFields<OmitList extends string, R extends {} = {}> =
 export class FulfilmentService {
   private model: FulfilmentModel;
   private salesOrdersService: SalesOrdersService;
+  private lineItemsService: LineItemsService;
   private pricesService: PricesService;
   private priceEngineService: PriceEngineService;
   private chargeService: ChargeService;
@@ -81,6 +87,7 @@ export class FulfilmentService {
   constructor(config: {
     model: FulfilmentModel;
     salesOrdersService: SalesOrdersService;
+    lineItemsService: LineItemsService;
     pricesService: PricesService;
     priceEngineService: PriceEngineService;
     chargeService: ChargeService;
@@ -91,6 +98,7 @@ export class FulfilmentService {
   }) {
     this.model = config.model;
     this.salesOrdersService = config.salesOrdersService;
+    this.lineItemsService = config.lineItemsService;
     this.pricesService = config.pricesService;
     this.priceEngineService = config.priceEngineService;
     this.chargeService = config.chargeService;
@@ -149,6 +157,7 @@ export class FulfilmentService {
           // Get the sales order line item
           const saleOrderItem = await this.salesOrdersService.getLineItemById(
             fulfilment.salesOrderLineItemId,
+            this.systemUser,
           );
 
           await this.createDeliveryCharge({
@@ -518,6 +527,7 @@ export class FulfilmentService {
 
     const saleOrderItem = await this.salesOrdersService.getLineItemById(
       input.salesOrderLineItemId,
+      user,
     );
     if (!saleOrderItem) {
       throw new Error('Sales order item not found');
@@ -536,6 +546,13 @@ export class FulfilmentService {
       throw new Error('Price not found for sales order line item');
     }
 
+    const pimCategoryId = price.pimCategoryId;
+    const pimCategoryPath = price.pimCategoryPath;
+    const pimCategoryName = price.pimCategoryName;
+    if (!pimCategoryId || !pimCategoryPath || !pimCategoryName) {
+      throw new Error('Price is missing PIM category data');
+    }
+
     if (saleOrderItem.lineitem_type === 'RENTAL') {
       if (price.priceType !== 'RENTAL') {
         throw new Error(
@@ -551,9 +568,9 @@ export class FulfilmentService {
             salesOrderType: 'RENTAL',
             priceId: price.id,
             priceName: price.name,
-            pimCategoryId: price.pimCategoryId,
-            pimCategoryPath: price.pimCategoryPath,
-            pimCategoryName: price.pimCategoryName,
+            pimCategoryId,
+            pimCategoryPath,
+            pimCategoryName,
             pimProductId: price.pimProductId,
             createdBy: user.id,
             pricePerDayInCents: price.pricePerDayInCents,
@@ -640,9 +657,9 @@ export class FulfilmentService {
             salesOrderType: 'SALE',
             priceId: price.id,
             priceName: price.name,
-            pimCategoryId: price.pimCategoryId,
-            pimCategoryPath: price.pimCategoryPath,
-            pimCategoryName: price.pimCategoryName,
+            pimCategoryId,
+            pimCategoryPath,
+            pimCategoryName,
             pimProductId: price.pimProductId,
             createdBy: user.id,
             unitCostInCents: price.unitCostInCents,
@@ -699,6 +716,128 @@ export class FulfilmentService {
       // @ts-ignore
       `Unsupported sales order item type: ${saleOrderItem.lineitem_type}`,
     );
+  }
+
+  async createServiceFulfilmentFromLineItem(
+    input: {
+      lineItemId: string;
+      serviceDate?: Date | string | null;
+      workflowId?: string | null;
+      workflowColumnId?: string | null;
+      assignedToId?: string | null;
+    },
+    user?: UserAuthPayload,
+  ): Promise<ServiceFulfilment> {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const lineItem = await this.lineItemsService.getLineItemById(
+      input.lineItemId,
+      user,
+    );
+    if (!lineItem) {
+      throw new Error('Line item not found or access denied');
+    }
+    if (lineItem.type !== 'SERVICE') {
+      throw new Error('lineItemId must reference a SERVICE line item');
+    }
+    if (lineItem.documentRef.type !== 'SALES_ORDER') {
+      throw new Error('lineItemId must reference a SALES_ORDER line item');
+    }
+
+    const salesOrderId = lineItem.documentRef.id;
+    const [salesOrder] = await this.salesOrdersService.batchGetSalesOrdersById(
+      [salesOrderId],
+      user,
+    );
+    if (!salesOrder) {
+      throw new Error('Sales order not found or access denied');
+    }
+
+    const serviceDateValue =
+      input.serviceDate ??
+      (lineItem.timeWindow?.startAt ? new Date(lineItem.timeWindow.startAt) : null);
+    const serviceDate =
+      serviceDateValue instanceof Date
+        ? serviceDateValue
+        : serviceDateValue
+          ? new Date(serviceDateValue)
+          : null;
+    if (!serviceDate || Number.isNaN(serviceDate.getTime())) {
+      throw new Error(
+        'serviceDate is required (provide input.serviceDate or set lineItem.timeWindow.startAt)',
+      );
+    }
+
+    const unitCostInCents =
+      lineItem.rateInCentsSnapshot ??
+      (lineItem.pricingSpecSnapshot &&
+      typeof (lineItem.pricingSpecSnapshot as any).rateInCents === 'number'
+        ? (lineItem.pricingSpecSnapshot as any).rateInCents
+        : null);
+    if (unitCostInCents === null || unitCostInCents === undefined) {
+      throw new Error(
+        'SERVICE line item requires rateInCentsSnapshot (pricing snapshot) to create a fulfilment',
+      );
+    }
+
+    const tasks = Array.isArray(lineItem.scopeTasks)
+      ? lineItem.scopeTasks.map((task) => ({
+          id: task.id,
+          title: task.title,
+          activityTagIds: task.activityTagIds,
+          contextTagIds: task.contextTagIds ?? undefined,
+          notes: task.notes ?? undefined,
+          status: 'OPEN' as const,
+        }))
+      : undefined;
+
+    const priceId = lineItem.pricingRef?.priceId ?? undefined;
+    let priceName: string | undefined;
+    let pimCategoryId: string | undefined;
+    let pimCategoryPath: string | undefined;
+    let pimCategoryName: string | undefined;
+    let pimProductId: string | undefined;
+
+    if (priceId) {
+      const [price] = await this.pricesService.batchGetPricesByIds([priceId], user);
+      if (price && !(price instanceof Error)) {
+        priceName = price.name ?? undefined;
+        pimCategoryId = price.pimCategoryId ?? undefined;
+        pimCategoryPath = price.pimCategoryPath ?? undefined;
+        pimCategoryName = price.pimCategoryName ?? undefined;
+        pimProductId = price.pimProductId ?? undefined;
+      }
+    }
+
+    return this.model.withTransaction(async (session) => {
+      const fulfilment = await this.createFulfilment(
+        {
+          salesOrderId,
+          salesOrderLineItemId: lineItem.id,
+          salesOrderType: 'SERVICE' as const,
+          serviceDate,
+          unitCostInCents,
+          assignedToId: input.assignedToId ?? null,
+          workflowId: input.workflowId ?? null,
+          workflowColumnId: input.workflowColumnId ?? null,
+          priceId,
+          priceName,
+          pimCategoryId,
+          pimCategoryPath,
+          pimCategoryName,
+          pimProductId,
+          ...(tasks && tasks.length > 0 ? { tasks } : {}),
+        },
+        user,
+        session,
+      );
+      if (fulfilment.salesOrderType !== 'SERVICE') {
+        throw new Error('Unexpected fulfilment type created from SERVICE line item');
+      }
+      return fulfilment;
+    });
   }
 
   // Delete
@@ -966,6 +1105,46 @@ export class FulfilmentService {
     return updated;
   }
 
+  async updateServiceTaskStatus(
+    fulfilmentId: string,
+    input: { taskId: string; status: 'OPEN' | 'DONE' | 'SKIPPED' },
+    user?: UserAuthPayload,
+  ): Promise<ServiceFulfilment> {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const canUpdate = await this.authZ.fulfilment.hasPermission({
+      permission: ERP_FULFILMENT_SUBJECT_PERMISSIONS.USER_UPDATE,
+      resourceId: fulfilmentId,
+      subjectId: user.id,
+    });
+    if (!canUpdate) {
+      throw new Error('You do not have permission to update this fulfilment');
+    }
+
+    const existing = await this.model.getFulfilmentById(fulfilmentId);
+    if (!existing) {
+      throw new Error('Fulfilment not found');
+    }
+    if (existing.salesOrderType !== 'SERVICE') {
+      throw new Error('Fulfilment is not a service fulfilment');
+    }
+
+    const updated = await this.model.updateServiceTaskStatus(
+      fulfilmentId,
+      { taskId: input.taskId, status: input.status },
+      user.id,
+    );
+    if (!updated) {
+      throw new Error('Fulfilment not found');
+    }
+    if (updated.salesOrderType !== 'SERVICE') {
+      throw new Error('Unexpected fulfilment type after update');
+    }
+    return updated;
+  }
+
   async setRentalStartDate(
     id: string,
     rentalStartDate: Date,
@@ -1052,6 +1231,7 @@ export class FulfilmentService {
 
         const saleOrderItem = await this.salesOrdersService.getLineItemById(
           fulfilment.salesOrderLineItemId,
+          user,
         );
 
         if (
@@ -1359,6 +1539,7 @@ export class FulfilmentService {
 export const createFulfilmentService = (config: {
   mongoClient: MongoClient;
   salesOrdersService: SalesOrdersService;
+  lineItemsService: LineItemsService;
   pricesService: PricesService;
   priceEngineService: PriceEngineService;
   chargeService: ChargeService;
@@ -1371,6 +1552,7 @@ export const createFulfilmentService = (config: {
   const fulfilmentService = new FulfilmentService({
     model,
     salesOrdersService: config.salesOrdersService,
+    lineItemsService: config.lineItemsService,
     pricesService: config.pricesService,
     priceEngineService: config.priceEngineService,
     chargeService: config.chargeService,

@@ -1,5 +1,14 @@
 # Global Attribute Library Model
 
+> ARCHIVED / DEPRECATED
+>
+> This document predates the current “global canonical + workspace draft overlay”
+> approach. Keep it for historical reference only.
+>
+> Current specs:
+> - `docs/global-vocabulary.md`
+> - `docs/workspace-vocabulary.md`
+
 This document defines the global attribute library that underpins product
 catalogs, line-item constraints, resources, and fulfillment matching. It
 focuses on what we know, what is still uncertain, and how data should be
@@ -28,6 +37,7 @@ Normalization of physical attributes is required (QUDT or equivalent).
 - Physical attributes can be contextualized with tags (e.g., bucket weight).
 - Material products and service products use the same attribute library, but
   their attribute *content* differs.
+- Core QUDT-aligned seed data is listed in `docs/global-attribute-seed-data.md`.
 
 ---
 
@@ -36,9 +46,14 @@ Normalization of physical attributes is required (QUDT or equivalent).
 - No per-workspace attribute types.
 - No ad-hoc string attributes stored directly on products/resources.
 - No duplicated attribute types for context (e.g., "bucket_weight" is not allowed).
+- Attribute type names must be atomic and unqualified (no overall/operating/max/tank/payload).
+- Synonyms must be true synonyms only (no contextual variants like overall_length).
+- Blended names must be decomposed into atomic types + context tags via deterministic ingestion rules.
 - No implicit constraints stored as freeform JSON; use typed predicates.
 - No unitless numeric values for physical attributes (unit + canonical required).
 - No brand identity stored as tags if a brand attribute exists.
+- No key/value brand attributes on products; brand attributes must reference
+  GlobalAttributeType.kind=BRAND.
 - No attribute versioning via v1/v2; use deprecation + relations.
 
 ---
@@ -68,7 +83,7 @@ Suggested fields:
 - `canonical_unit` (PHYSICAL only)
 - `allowed_units[]` (PHYSICAL only)
 - `canonical_value_set_id` (if value_type=ENUM)
-- `synonyms[]`
+- `synonyms[]` (true synonyms only; contextual variants are decomposed into base type + context tags)
 - `status` (ACTIVE | PROPOSED | DEPRECATED)
 - `audit_status` (PENDING_REVIEW | REVIEWED | FLAGGED)
 - `created_by`, `created_at`, `updated_at`
@@ -106,6 +121,23 @@ Suggested fields:
 - `confidence`
 - `source`
 
+### GlobalAttributeParseRule
+Optional deterministic decomposition helpers from legacy/blended strings to atomic types + context tags.
+
+These are ingestion-time mappings (execution behavior), not part of the stored ontology:
+- products store only atomic GlobalAttributeTypes + context_tag_ids[] on values
+- server-side validation must reject blended attribute type creation regardless of ingestion approach
+
+Suggested fields:
+- `id`
+- `raw` (source string, e.g., "overall_length")
+- `raw_key` (normalized key used for matching)
+- `attribute_type_id` (atomic GlobalAttributeType)
+- `context_tag_ids[]` (GlobalTag IDs to apply as context)
+- `audit_status` (PENDING_REVIEW | REVIEWED | FLAGGED)
+- `created_by`, `created_at`, `updated_at`
+- `source` (human | llm | import)
+
 ---
 
 ## Storage Model (Attribute Values)
@@ -118,7 +150,7 @@ Fields:
 - `value`
 - `unit_code`
 - `value_canonical` (normalized to canonical unit)
-- `context_tag_ids[]` (optional)
+- `context_tag_ids[]` (optional; qualifiers like overall, operating, payload, capacity)
 - `source` (measured | estimated | inferred)
 
 ### BrandAttributeValue
@@ -135,7 +167,7 @@ Fields:
 ## Subject and Usage Hints (Job vs Resource)
 
 Attributes can apply to different subjects:
-- JOB PARAMETERS: properties of the scope (distance, duration, load weight)
+- JOB PARAMETERS: properties of the scope (distance, duration, payload weight)
 - RESOURCE PROPERTIES: properties of the fulfiller (max payload, certification)
 
 Both can use the same global attribute types, but we should guide usage:
@@ -195,6 +227,7 @@ Define which attributes are relevant to a service product:
 - `requirement_level` (REQUIRED | OPTIONAL)
 - `default_unit_code`
 - `default_range` (optional)
+- `context_tag_ids[]` (optional; disambiguates inputs like payload weight)
 
 This allows the UI/agent to prompt for the right inputs when creating a quote.
 
@@ -230,7 +263,7 @@ matching and indexing straightforward.
 Material: "Skid Steer - Generic"
 - material tags: `equipment`, `skid_steer`
 - physical attributes:
-  - weight: 7000 `unit:LB` (context: `equipment`)
+  - weight: 7000 `unit:LB` (context: `operating`)
   - width: 66 `unit:IN`
 - brand attributes:
   - manufacturer: "John Deere" (optional preference, not required)
@@ -244,7 +277,7 @@ Service: "Heavy Hauling"
 - activity tags: `delivery`
 - attribute schema:
   - distance (REQUIRED, unit:MI)
-  - load_weight (OPTIONAL, unit:LB)
+  - weight (OPTIONAL, unit:LB, context: payload)
 
 ---
 

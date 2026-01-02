@@ -4,9 +4,9 @@ export type EntityType = 'prices' | 'pim_products';
 
 export interface PricePromptData {
   name?: string;
-  pimCategoryName: string;
-  pimCategoryPath: string;
-  priceType: 'RENTAL' | 'SALE';
+  pimCategoryName?: string;
+  pimCategoryPath?: string;
+  priceType: 'RENTAL' | 'SALE' | 'SERVICE';
 }
 
 export interface PimProductPromptData {
@@ -36,13 +36,13 @@ export class ImagePromptBuilder {
    * @returns Prompt string for OpenAI image generation
    */
   static buildPricePrompt(data: PricePromptData): string {
-    const productName = data.name || data.pimCategoryName;
+    const productName = data.name || data.pimCategoryName || 'equipment';
     const categoryBreadcrumb = data.pimCategoryPath
       ? data.pimCategoryPath
           .split('|')
           .filter((p) => p.length > 0)
           .join(' > ')
-      : data.pimCategoryName;
+      : (data.pimCategoryName ?? '');
 
     return `Generate a hyper-realistic, professional product photograph of ${productName}${
       categoryBreadcrumb ? ` from ${categoryBreadcrumb}` : ''

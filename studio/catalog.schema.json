@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "catalog.schema.json",
+  "title": "Studio Catalog Workspace Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "catalog", "sources", "products"],
+  "properties": {
+    "schemaVersion": { "type": "string" },
+    "catalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/source" }
+    },
+    "products": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/product" }
+    }
+  },
+  "$defs": {
+    "tagLabel": {
+      "type": "string",
+      "description": "Canonical tag label (snake_case), intended to map to GlobalTag.label."
+    },
+    "attributeTypeName": {
+      "type": "string",
+      "description": "Canonical attribute type name, intended to map to GlobalAttributeType.name."
+    },
+    "unitCode": {
+      "type": "string",
+      "description": "Unit code (e.g., KG, MM, KW). Intended to map to GlobalUnitDefinition.code."
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sourceType": { "type": "string", "enum": ["url", "file", "text"] },
+        "ref": { "type": "string", "description": "URL or relative file path." },
+        "quote": { "type": "string" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "kind", "discoveredAt"],
+      "properties": {
+        "path": { "type": "string" },
+        "kind": { "type": "string", "enum": ["url", "file", "text"] },
+        "discoveredAt": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    },
+    "physicalAttribute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attributeType", "value", "unit"],
+      "properties": {
+        "attributeType": { "$ref": "#/$defs/attributeTypeName" },
+        "value": { "type": "number" },
+        "unit": { "$ref": "#/$defs/unitCode" },
+        "contextTags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/tagLabel" }
+        },
+        "evidence": { "$ref": "#/$defs/evidence" }
+      }
+    },
+    "brandAttribute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attributeType", "value"],
+      "properties": {
+        "attributeType": { "$ref": "#/$defs/attributeTypeName" },
+        "value": {},
+        "contextTags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/tagLabel" }
+        },
+        "evidence": { "$ref": "#/$defs/evidence" }
+      }
+    },
+    "serviceSchemaEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attributeType", "requirement", "defaultUnit"],
+      "properties": {
+        "attributeType": { "$ref": "#/$defs/attributeTypeName" },
+        "requirement": { "type": "string", "enum": ["REQUIRED", "OPTIONAL"] },
+        "defaultUnit": { "$ref": "#/$defs/unitCode" },
+        "contextTags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/tagLabel" }
+        },
+        "evidence": { "$ref": "#/$defs/evidence" }
+      }
+    },
+    "targetSpec": {
+      "oneOf": [
+        { "$ref": "#/$defs/tagTarget" },
+        { "$ref": "#/$defs/productTarget" }
+      ]
+    },
+    "tagTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "tagIds"],
+      "properties": {
+        "kind": { "const": "tags" },
+        "tagIds": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/tagLabel" },
+          "minItems": 1
+        }
+      }
+    },
+    "productTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "productId"],
+      "properties": {
+        "kind": { "const": "product" },
+        "productId": { "type": "string" }
+      }
+    },
+    "assemblyComponent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["productId"],
+      "properties": {
+        "productId": { "type": "string" },
+        "quantity": { "type": "number" },
+        "unit": { "type": "string" }
+      }
+    },
+    "productBase": {
+      "type": "object",
+      "required": ["id", "kind", "name", "tags"],
+      "properties": {
+        "id": { "type": "string" },
+        "kind": { "type": "string", "enum": ["MATERIAL", "SERVICE", "ASSEMBLY"] },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "$ref": "#/$defs/tagLabel" } }
+      }
+    },
+    "materialProduct": {
+      "unevaluatedProperties": false,
+      "allOf": [
+        { "$ref": "#/$defs/productBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "MATERIAL" },
+            "physicalAttributes": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/physicalAttribute" }
+            },
+            "brandAttributes": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/brandAttribute" }
+            }
+          }
+        }
+      ]
+    },
+    "serviceProduct": {
+      "unevaluatedProperties": false,
+      "allOf": [
+        { "$ref": "#/$defs/productBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "SERVICE" },
+            "activityTags": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/tagLabel" }
+            },
+            "targetSpecs": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/targetSpec" }
+            },
+            "attributeSchema": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/serviceSchemaEntry" }
+            }
+          }
+        }
+      ]
+    },
+    "assemblyProduct": {
+      "unevaluatedProperties": false,
+      "allOf": [
+        { "$ref": "#/$defs/productBase" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "ASSEMBLY" },
+            "components": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/assemblyComponent" }
+            }
+          }
+        }
+      ]
+    },
+    "product": {
+      "oneOf": [
+        { "$ref": "#/$defs/materialProduct" },
+        { "$ref": "#/$defs/serviceProduct" },
+        { "$ref": "#/$defs/assemblyProduct" }
+      ]
+    }
+  }
+}

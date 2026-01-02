@@ -1110,5 +1110,31 @@ describe('MCP Server', () => {
       // Response should indicate API key not configured
       expect(responseText).toContain('BRAVE_SEARCH_API_KEY');
     });
+
+    it('should expose web.fetch tool and block localhost SSRF', async () => {
+      const { user } = await createClient();
+
+      const token = await mintTestJwtToken({
+        es_user_id: user.id,
+        uid: user.id,
+        email: user.email,
+      });
+      const apiUrl = getApiUrl();
+
+      const response = await makeMCPRequest(apiUrl, token, 'tools/call', {
+        name: 'web.fetch',
+        arguments: {
+          url: 'http://localhost:5001/health',
+        },
+      });
+
+      expect(response.status).toBe(200);
+
+      const responseText = await response.text();
+      const sseEvents = parseSSEResponse(responseText);
+      expect(sseEvents.length).toBeGreaterThan(0);
+
+      expect(responseText).toContain('Access to private networks is not allowed');
+    });
   });
 });

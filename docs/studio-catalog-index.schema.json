@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://equipmentshare.com/schemas/studio-catalog-index.json",
+  "title": "Studio Catalog Compiled Index",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "description": "Index schema version",
+      "default": "1.0"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when the index was generated"
+    },
+    "catalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "slug": { "type": "string" },
+        "name": { "type": "string" },
+        "path": { "type": "string" }
+      },
+      "required": ["id", "name", "path"]
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "products": { "type": "integer", "minimum": 0 },
+        "assemblies": { "type": "integer", "minimum": 0 },
+        "tasks": { "type": "integer", "minimum": 0 },
+        "lists": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["products", "assemblies", "tasks", "lists"]
+    },
+    "products": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/productSummary" }
+    },
+    "lists": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/listSummary" }
+    },
+    "assemblies": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/assemblySummary" }
+    },
+    "tasks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/taskSummary" }
+    },
+    "warnings": {
+      "type": "array",
+      "description": "Non-fatal issues encountered during compilation",
+      "items": { "$ref": "#/$defs/issue" }
+    }
+  },
+  "required": ["schemaVersion", "generatedAt", "catalog", "counts", "products", "lists"],
+  "$defs": {
+    "issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "message": { "type": "string" },
+        "path": { "type": "string" }
+      },
+      "required": ["message"]
+    },
+    "productSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "path": { "type": "string" },
+        "kind": { "enum": ["material", "service", "assembly"] },
+        "status": { "enum": ["draft", "active", "archived"] },
+        "categoryPath": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      },
+      "required": ["id", "name", "path"]
+    },
+    "listSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "path": { "type": "string" },
+        "listType": {
+          "type": "string",
+          "enum": ["products", "assemblies", "tasks", "mixed"]
+        },
+        "itemCount": { "type": "integer", "minimum": 0 },
+        "resolvedPath": { "type": "string" }
+      },
+      "required": ["id", "name", "path", "itemCount"]
+    },
+    "assemblySummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "path": { "type": "string" },
+        "itemCount": { "type": "integer", "minimum": 0 },
+        "status": { "enum": ["draft", "active", "archived"] }
+      },
+      "required": ["id", "name", "path"]
+    },
+    "taskSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "path": { "type": "string" },
+        "status": { "enum": ["draft", "active", "archived"] }
+      },
+      "required": ["id", "name", "path"]
+    }
+  }
+}

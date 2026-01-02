@@ -20,7 +20,9 @@ const nearSchema = z.object({
  * This is picked up by codegen to generate typed SDK methods.
  */
 gql`
-  query McpListResourceMapLocationTags($filter: ResourceMapLocationFilterInput) {
+  query McpListResourceMapLocationTags(
+    $filter: ResourceMapLocationFilterInput
+  ) {
     listResourceMapLocationTags(filter: $filter) {
       id
       value
@@ -88,10 +90,7 @@ export const listResourceMapLocationTagsTool = createMcpTool({
     near: nearSchema
       .optional()
       .describe('Near filter (lat/lng + radiusMeters)'),
-    hierarchyId: z
-      .string()
-      .optional()
-      .describe('Optional hierarchy ID filter'),
+    hierarchyId: z.string().optional().describe('Optional hierarchy ID filter'),
   },
   handler: async (sdk, args) => {
     try {

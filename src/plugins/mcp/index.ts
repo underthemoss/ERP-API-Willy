@@ -9,7 +9,8 @@ import { getEnvConfig } from '../../config';
  */
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
-  'http://localhost:5000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5001',
   'https://staging-erp.estrack.com',
   'https://erp.estrack.com',
 ];

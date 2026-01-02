@@ -2,9 +2,29 @@ import { createTestEnvironment } from './test-environment';
 import { v4 } from 'uuid';
 import { WorkspaceAccessType } from './generated/graphql';
 
-const { createClient } = createTestEnvironment();
+const { createClient, createAnonTestClient } = createTestEnvironment();
 
 describe('Searchkit Prices Authorization e2e', () => {
+  describe('CORS preflight', () => {
+    it('allows x-workspace-id header', async () => {
+      const { httpClient } = createAnonTestClient();
+
+      const response = await httpClient.fetch('/api/search/_msearch', {
+        method: 'OPTIONS',
+        headers: {
+          Origin: 'http://localhost:3000',
+          'Access-Control-Request-Method': 'POST',
+          'Access-Control-Request-Headers': 'x-workspace-id,content-type',
+        },
+      });
+
+      expect([200, 204]).toContain(response.status);
+
+      const allowHeaders = response.headers.get('access-control-allow-headers');
+      expect(allowHeaders?.toLowerCase()).toContain('x-workspace-id');
+    });
+  });
+
   /**
    * Helper to build InstantSearch request body with facetFilters
    */

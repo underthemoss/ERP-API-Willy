@@ -8,7 +8,41 @@ import {
 } from 'mongodb';
 import { generateId } from '../../lib/id-generator';
 
-export type PriceType = 'RENTAL' | 'SALE';
+export type PriceType = 'RENTAL' | 'SALE' | 'SERVICE';
+
+export type CatalogProductKind =
+  | 'MATERIAL_PRODUCT'
+  | 'SERVICE_PRODUCT'
+  | 'ASSEMBLY_PRODUCT';
+
+export type PriceCatalogRef = {
+  kind: CatalogProductKind;
+  id: string;
+};
+
+export type PricingSpecUnit = {
+  kind: 'UNIT';
+  unitCode: string;
+  rateInCents: number;
+};
+
+export type PricingSpecTime = {
+  kind: 'TIME';
+  unitCode: string;
+  rateInCents: number;
+};
+
+export type PricingSpecRentalRateTable = {
+  kind: 'RENTAL_RATE_TABLE';
+  pricePerDayInCents: number;
+  pricePerWeekInCents: number;
+  pricePerMonthInCents: number;
+};
+
+export type PricingSpec =
+  | PricingSpecUnit
+  | PricingSpecTime
+  | PricingSpecRentalRateTable;
 
 type BaseGeneratedFields = '_id' | 'createdAt' | 'updatedAt';
 
@@ -22,9 +56,11 @@ interface BasePriceDoc<T = PriceType> {
   createdAt: Date;
   updatedAt: Date;
   updatedBy: string;
-  pimCategoryId: string;
-  pimCategoryPath: string;
-  pimCategoryName: string;
+  catalogRef?: PriceCatalogRef;
+  pricingSpec?: PricingSpec;
+  pimCategoryId?: string;
+  pimCategoryPath?: string;
+  pimCategoryName?: string;
   pimProductId?: string; // if this price is for a specific product
   priceType: T;
   priceBookId?: string;
@@ -46,12 +82,17 @@ interface SalePriceDoc extends BasePriceDoc<'SALE'> {
   discounts: Record<number, number>;
 }
 
-type PriceDoc = RentalPriceDoc | SalePriceDoc;
+interface ServicePriceDoc extends BasePriceDoc<'SERVICE'> {
+  pricingSpec: PricingSpecUnit | PricingSpecTime;
+}
+
+type PriceDoc = RentalPriceDoc | SalePriceDoc | ServicePriceDoc;
 
 // DTOs
 export type RentalPrice = Omit<RentalPriceDoc, '_id'> & { id: string };
 export type SalePrice = Omit<SalePriceDoc, '_id'> & { id: string };
-export type Price = RentalPrice | SalePrice;
+export type ServicePrice = Omit<ServicePriceDoc, '_id'> & { id: string };
+export type Price = RentalPrice | SalePrice | ServicePrice;
 
 // input types
 export type CreateRentalPriceInput = Omit<
@@ -62,16 +103,23 @@ export type CreateSalePriceInput = Omit<
   SalePriceDoc,
   BaseGeneratedFields | 'priceType' | 'deleted' | 'updatedBy'
 >;
+export type CreateServicePriceInput = Omit<
+  ServicePriceDoc,
+  BaseGeneratedFields | 'priceType' | 'deleted' | 'updatedBy'
+>;
 
 export type BatchInsertPriceInput =
   | Omit<RentalPriceDoc, BaseGeneratedFields | 'deleted'>
-  | Omit<SalePriceDoc, BaseGeneratedFields | 'deleted'>;
+  | Omit<SalePriceDoc, BaseGeneratedFields | 'deleted'>
+  | Omit<ServicePriceDoc, BaseGeneratedFields | 'deleted'>;
 
 export type UpdateRentalPriceInput = {
   name?: string;
   pricePerDayInCents?: number;
   pricePerWeekInCents?: number;
   pricePerMonthInCents?: number;
+  pricingSpec?: PricingSpec;
+  catalogRef?: PriceCatalogRef;
   pimProductId?: string;
   pimCategoryId?: string;
   pimCategoryName?: string;
@@ -83,6 +131,19 @@ export type UpdateSalePriceInput = {
   name?: string;
   unitCostInCents?: number;
   discounts?: Record<number, number>;
+  pricingSpec?: PricingSpec;
+  catalogRef?: PriceCatalogRef;
+  pimProductId?: string;
+  pimCategoryId?: string;
+  pimCategoryName?: string;
+  pimCategoryPath?: string;
+  updatedBy?: string;
+};
+
+export type UpdateServicePriceInput = {
+  name?: string;
+  pricingSpec?: PricingSpecUnit | PricingSpecTime;
+  catalogRef?: PriceCatalogRef;
   pimProductId?: string;
   pimCategoryId?: string;
   pimCategoryName?: string;
@@ -94,6 +155,8 @@ export type ListPricesQuery = {
   filter: {
     workspaceId?: string;
     pimCategoryId?: string;
+    catalogRefId?: string;
+    catalogRefKind?: CatalogProductKind;
     priceBookId?: string;
     priceType?: PriceType;
     businessContactId?: string;
@@ -197,9 +260,17 @@ export class PricesModel {
     return { ...fields, id: doc._id };
   }
 
+  private mapServicePrice(doc: ServicePriceDoc): ServicePrice {
+    const { _id, ...fields } = doc;
+    return { ...fields, id: doc._id };
+  }
+
   private mapPrice(doc: PriceDoc): Price {
     if (doc.priceType === 'RENTAL') {
       return this.mapRentalPrice(doc);
+    }
+    if (doc.priceType === 'SERVICE') {
+      return this.mapServicePrice(doc);
     }
     return this.mapSalePrice(doc);
   }
@@ -266,6 +337,37 @@ export class PricesModel {
     return this.mapSalePrice(doc);
   }
 
+  async createServicePrice(
+    input: CreateServicePriceInput,
+    session?: ClientSession,
+  ): Promise<ServicePrice> {
+    const now = new Date();
+    const result = await this.collection.insertOne(
+      {
+        ...input,
+        _id: generateId('PR', input.workspaceId),
+        name: input.name ?? '',
+        createdAt: now,
+        updatedAt: now,
+        updatedBy: input.createdBy,
+        deleted: false,
+        priceType: 'SERVICE',
+      },
+      { session },
+    );
+
+    const doc = await this.collection.findOne<ServicePriceDoc>(
+      {
+        _id: result.insertedId,
+      },
+      { session },
+    );
+    if (!doc) {
+      throw new Error('Service price not found');
+    }
+    return this.mapServicePrice(doc);
+  }
+
   async batchCreatePrices(
     prices: BatchInsertPriceInput[],
     session?: ClientSession,
@@ -300,11 +402,18 @@ export class PricesModel {
     const skip = page?.number ? (page.number - 1) * limit : 0;
 
     // Build MongoDB filter, handling name as a case-insensitive partial match
-    const { name, ...restFilter } = filter;
+    const { name, catalogRefId, catalogRefKind, ...restFilter } = filter;
     const mongoFilter: Filter<PriceDoc> = {
       ...restFilter,
       deleted: { $ne: true },
     };
+
+    if (catalogRefId) {
+      mongoFilter['catalogRef.id'] = catalogRefId;
+    }
+    if (catalogRefKind) {
+      mongoFilter['catalogRef.kind'] = catalogRefKind;
+    }
 
     // If name is provided, use regex for partial matching (case-insensitive)
     if (name) {
@@ -319,11 +428,18 @@ export class PricesModel {
 
   async countPrices(filter: ListPricesQuery['filter']): Promise<number> {
     // Build MongoDB filter, handling name as a case-insensitive partial match
-    const { name, ...restFilter } = filter;
+    const { name, catalogRefId, catalogRefKind, ...restFilter } = filter;
     const mongoFilter: Filter<PriceDoc> = {
       ...restFilter,
       deleted: { $ne: true },
     };
+
+    if (catalogRefId) {
+      mongoFilter['catalogRef.id'] = catalogRefId;
+    }
+    if (catalogRefKind) {
+      mongoFilter['catalogRef.kind'] = catalogRefKind;
+    }
 
     // If name is provided, use regex for partial matching (case-insensitive)
     if (name) {
@@ -407,6 +523,12 @@ export class PricesModel {
     if (input.pricePerMonthInCents !== undefined) {
       updateFields.pricePerMonthInCents = input.pricePerMonthInCents;
     }
+    if (input.pricingSpec !== undefined) {
+      updateFields.pricingSpec = input.pricingSpec;
+    }
+    if (input.catalogRef !== undefined) {
+      updateFields.catalogRef = input.catalogRef;
+    }
     if (input.pimProductId !== undefined) {
       updateFields.pimProductId = input.pimProductId;
     }
@@ -453,6 +575,12 @@ export class PricesModel {
     if (input.discounts !== undefined) {
       updateFields.discounts = input.discounts;
     }
+    if (input.pricingSpec !== undefined) {
+      updateFields.pricingSpec = input.pricingSpec;
+    }
+    if (input.catalogRef !== undefined) {
+      updateFields.catalogRef = input.catalogRef;
+    }
     if (input.pimProductId !== undefined) {
       updateFields.pimProductId = input.pimProductId;
     }
@@ -480,6 +608,52 @@ export class PricesModel {
     }
 
     return this.mapSalePrice(result as SalePriceDoc);
+  }
+
+  async updateServicePrice(
+    id: string,
+    input: UpdateServicePriceInput,
+  ): Promise<ServicePrice> {
+    const updateFields: any = {
+      updatedAt: new Date(),
+    };
+
+    if (input.name !== undefined) {
+      updateFields.name = input.name;
+    }
+    if (input.pricingSpec !== undefined) {
+      updateFields.pricingSpec = input.pricingSpec;
+    }
+    if (input.catalogRef !== undefined) {
+      updateFields.catalogRef = input.catalogRef;
+    }
+    if (input.pimProductId !== undefined) {
+      updateFields.pimProductId = input.pimProductId;
+    }
+    if (input.pimCategoryId !== undefined) {
+      updateFields.pimCategoryId = input.pimCategoryId;
+    }
+    if (input.pimCategoryName !== undefined) {
+      updateFields.pimCategoryName = input.pimCategoryName;
+    }
+    if (input.pimCategoryPath !== undefined) {
+      updateFields.pimCategoryPath = input.pimCategoryPath;
+    }
+    if (input.updatedBy !== undefined) {
+      updateFields.updatedBy = input.updatedBy;
+    }
+
+    const result = await this.collection.findOneAndUpdate(
+      { _id: id, priceType: 'SERVICE', deleted: { $ne: true } },
+      { $set: updateFields },
+      { returnDocument: 'after' },
+    );
+
+    if (!result) {
+      throw new Error('Service price not found');
+    }
+
+    return this.mapServicePrice(result as ServicePriceDoc);
   }
 }
 

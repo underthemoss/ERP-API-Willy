@@ -6,7 +6,11 @@ import {
   type CreateWorkspaceInput,
   type Workspace,
 } from './model';
-import { ANON_USER_AUTH_PAYLOAD, UserAuthPayload } from '../../authentication';
+import {
+  ANON_USER_AUTH_PAYLOAD,
+  SYSTEM_USER,
+  UserAuthPayload,
+} from '../../authentication';
 import { ERP_GLOBAL_PLATFORM_ID, type AuthZ } from '../../lib/authz';
 import {
   ERP_WORKSPACE_PERMISSIONS,
@@ -19,6 +23,7 @@ import {
 } from '../../lib/authz';
 import { type UsersService } from '../users';
 import { type EmailService } from '../email';
+import { type StudioFsService } from '../studio_fs';
 
 const relationToSubjectRelationMap: Record<
   ERP_WORKSPACE_RELATIONS,
@@ -48,6 +53,7 @@ export class WorkspaceService {
   private usersService: UsersService;
   private emailService: EmailService;
   private envConfig: EnvConfig;
+  private studioFsService: StudioFsService;
 
   constructor(config: {
     model: WorkspaceModel;
@@ -55,12 +61,14 @@ export class WorkspaceService {
     usersService: UsersService;
     emailService: EmailService;
     envConfig: EnvConfig;
+    studioFsService: StudioFsService;
   }) {
     this.model = config.model;
     this.authZ = config.authZ;
     this.usersService = config.usersService;
     this.emailService = config.emailService;
     this.envConfig = config.envConfig;
+    this.studioFsService = config.studioFsService;
   }
 
   createWorkspace = async (
@@ -121,6 +129,15 @@ export class WorkspaceService {
       console.error('Failed to create SpiceDB relationships:', error);
     }
 
+    try {
+      await this.studioFsService.ensureDefaultCatalog(
+        { workspaceId: workspace.id, name: `${workspace.name} Catalog` },
+        user,
+      );
+    } catch (error) {
+      console.error('Failed to create default studio catalog:', error);
+    }
+
     return workspace;
   };
 
@@ -131,6 +148,11 @@ export class WorkspaceService {
     // Validation
     if (!id || id.trim().length === 0) {
       throw new Error('Workspace ID is required');
+    }
+
+    // System user can access all workspaces.
+    if (user.id === SYSTEM_USER.id) {
+      return this.model.getWorkspaceById(id);
     }
 
     // Auth - check if user has read permission on the workspace
@@ -854,6 +876,7 @@ export const createWorkspaceService = async (config: {
   authZ: AuthZ;
   usersService: UsersService;
   emailService: EmailService;
+  studioFsService: StudioFsService;
 }) => {
   const model = createWorkspaceModel(config);
 
@@ -863,6 +886,7 @@ export const createWorkspaceService = async (config: {
     usersService: config.usersService,
     emailService: config.emailService,
     envConfig: config.envConfig,
+    studioFsService: config.studioFsService,
   });
 
   return workspaceService;

@@ -18,6 +18,29 @@ export const FulfilmentTypeEnum = enumType({
   members: ['RENTAL', 'SALE', 'SERVICE'],
 });
 
+export const ServiceFulfilmentTaskStatusEnum = enumType({
+  name: 'ServiceFulfilmentTaskStatus',
+  members: ['OPEN', 'DONE', 'SKIPPED'],
+});
+
+export const ServiceFulfilmentTask = objectType({
+  name: 'ServiceFulfilmentTask',
+  sourceType: {
+    module: require.resolve('../../services/fulfilment'),
+    export: 'ServiceFulfilmentTask',
+  },
+  definition(t) {
+    t.nonNull.string('id');
+    t.nonNull.string('title');
+    t.nonNull.list.nonNull.string('activityTagIds');
+    t.list.nonNull.string('contextTagIds');
+    t.string('notes');
+    t.nonNull.field('status', { type: ServiceFulfilmentTaskStatusEnum });
+    t.field('completedAt', { type: 'DateTime' });
+    t.string('completedBy');
+  },
+});
+
 // === Interface for common fields ===
 export const FulfilmentBase = interfaceType({
   name: 'FulfilmentBase',
@@ -211,6 +234,7 @@ export const ServiceFulfilment = objectType({
     t.implements(FulfilmentBase);
     t.field('serviceDate', { type: 'DateTime' });
     t.nonNull.int('unitCostInCents');
+    t.list.field('tasks', { type: ServiceFulfilmentTask });
   },
 });
 
@@ -300,6 +324,26 @@ export const CreateServiceFulfilmentInput = inputObjectType({
         'If salesOrderLineItemId is not provided, these fields are required',
     });
     t.nonNull.int('unitCostInCents');
+  },
+});
+
+export const CreateServiceFulfilmentFromLineItemInput = inputObjectType({
+  name: 'CreateServiceFulfilmentFromLineItemInput',
+  definition(t) {
+    t.nonNull.id('lineItemId');
+    t.field('serviceDate', { type: 'DateTime' });
+    t.id('workflowId');
+    t.id('workflowColumnId');
+    t.id('assignedToId');
+  },
+});
+
+export const UpdateServiceFulfilmentTaskStatusInput = inputObjectType({
+  name: 'UpdateServiceFulfilmentTaskStatusInput',
+  definition(t) {
+    t.nonNull.id('fulfilmentId');
+    t.nonNull.string('taskId');
+    t.nonNull.field('status', { type: ServiceFulfilmentTaskStatusEnum });
   },
 });
 
@@ -572,6 +616,25 @@ export const FulfilmentMutation = extendType({
       },
     });
 
+    t.field('createServiceFulfilmentFromLineItem', {
+      type: ServiceFulfilment,
+      args: {
+        input: nonNull(arg({ type: CreateServiceFulfilmentFromLineItemInput })),
+      },
+      async resolve(_, { input }, ctx) {
+        return ctx.services.fulfilmentService.createServiceFulfilmentFromLineItem(
+          {
+            lineItemId: input.lineItemId,
+            serviceDate: input.serviceDate ?? null,
+            workflowId: input.workflowId ?? null,
+            workflowColumnId: input.workflowColumnId ?? null,
+            assignedToId: input.assignedToId ?? null,
+          },
+          ctx.user,
+        );
+      },
+    });
+
     t.field('deleteFulfilment', {
       type: 'Boolean',
       args: {
@@ -579,6 +642,20 @@ export const FulfilmentMutation = extendType({
       },
       async resolve(_, { id }, ctx) {
         return ctx.services.fulfilmentService.deleteFulfilment(id, ctx.user);
+      },
+    });
+
+    t.field('updateServiceFulfilmentTaskStatus', {
+      type: ServiceFulfilment,
+      args: {
+        input: nonNull(arg({ type: UpdateServiceFulfilmentTaskStatusInput })),
+      },
+      async resolve(_, { input }, ctx) {
+        return ctx.services.fulfilmentService.updateServiceTaskStatus(
+          input.fulfilmentId,
+          { taskId: input.taskId, status: input.status as any },
+          ctx.user,
+        );
       },
     });
 

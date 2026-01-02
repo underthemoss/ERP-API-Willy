@@ -30,8 +30,16 @@ const imageGeneratorPlugin: FastifyPluginAsync<
 
   fastify.register(
     async (fastify) => {
-      // Add authentication to all routes in this context
-      fastify.addHook('preHandler', fastify.authenticate);
+      // Require authentication for all routes in this context.
+      // These endpoints are typically called via <img src>, which cannot send Authorization headers,
+      // so callers should ensure the auth cookie is set via /api/auth/set-cookie.
+      fastify.addHook('preHandler', async (request, reply) => {
+        await fastify.authenticate(request, reply);
+        if (reply.sent) return;
+        if (!request.user) {
+          return reply.code(401).send({ error: 'Not Authorized' });
+        }
+      });
 
       // Entity-specific image routes
       // GET /api/images/prices/:entityId?size=list|card|preview|full

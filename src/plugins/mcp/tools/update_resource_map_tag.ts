@@ -55,7 +55,10 @@ const locationSchema = z.object({
  * This is picked up by codegen to generate typed SDK methods.
  */
 gql`
-  mutation McpUpdateResourceMapTag($id: ID!, $input: UpdateResourceMapTagInput!) {
+  mutation McpUpdateResourceMapTag(
+    $id: ID!
+    $input: UpdateResourceMapTagInput!
+  ) {
     updateResourceMapTag(id: $id, input: $input) {
       id
       value

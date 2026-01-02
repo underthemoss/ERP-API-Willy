@@ -379,8 +379,22 @@ export const GlobalAttributesQuery = extendType({
       },
       resolve: (_root, { filter, page }, ctx) =>
         ctx.services.globalAttributesService.listAttributeTypes({
-          filter: filter ?? undefined,
-          page: page ?? undefined,
+          filter: filter
+            ? (Object.fromEntries(
+                Object.entries(filter).map(([key, value]) => [
+                  key,
+                  value === null ? undefined : value,
+                ]),
+              ) as any)
+            : undefined,
+          page: page
+            ? (Object.fromEntries(
+                Object.entries(page).map(([key, value]) => [
+                  key,
+                  value === null ? undefined : value,
+                ]),
+              ) as any)
+            : undefined,
         }),
     });
 
@@ -392,8 +406,22 @@ export const GlobalAttributesQuery = extendType({
       },
       resolve: (_root, { filter, page }, ctx) =>
         ctx.services.globalAttributesService.listAttributeValues({
-          filter: filter ?? undefined,
-          page: page ?? undefined,
+          filter: filter
+            ? (Object.fromEntries(
+                Object.entries(filter).map(([key, value]) => [
+                  key,
+                  value === null ? undefined : value,
+                ]),
+              ) as any)
+            : undefined,
+          page: page
+            ? (Object.fromEntries(
+                Object.entries(page).map(([key, value]) => [
+                  key,
+                  value === null ? undefined : value,
+                ]),
+              ) as any)
+            : undefined,
         }),
     });
 
@@ -405,8 +433,22 @@ export const GlobalAttributesQuery = extendType({
       },
       resolve: (_root, { filter, page }, ctx) =>
         ctx.services.globalAttributesService.listAttributeRelations({
-          filter: filter ?? undefined,
-          page: page ?? undefined,
+          filter: filter
+            ? (Object.fromEntries(
+                Object.entries(filter).map(([key, value]) => [
+                  key,
+                  value === null ? undefined : value,
+                ]),
+              ) as any)
+            : undefined,
+          page: page
+            ? (Object.fromEntries(
+                Object.entries(page).map(([key, value]) => [
+                  key,
+                  value === null ? undefined : value,
+                ]),
+              ) as any)
+            : undefined,
         }),
     });
 
@@ -418,8 +460,22 @@ export const GlobalAttributesQuery = extendType({
       },
       resolve: (_root, { filter, page }, ctx) =>
         ctx.services.globalAttributesService.listUnitDefinitions({
-          filter: filter ?? undefined,
-          page: page ?? undefined,
+          filter: filter
+            ? (Object.fromEntries(
+                Object.entries(filter).map(([key, value]) => [
+                  key,
+                  value === null ? undefined : value,
+                ]),
+              ) as any)
+            : undefined,
+          page: page
+            ? (Object.fromEntries(
+                Object.entries(page).map(([key, value]) => [
+                  key,
+                  value === null ? undefined : value,
+                ]),
+              ) as any)
+            : undefined,
         }),
     });
   },

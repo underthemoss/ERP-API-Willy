@@ -11,11 +11,6 @@ import {
   type IntakeFormSubmissionInput,
   type IntakeFormSubmissionDTO,
 } from './form-submission-model';
-import {
-  createIntakeFormSubmissionLineItemsModel,
-  type IntakeFormSubmissionLineItemsModel,
-  type IntakeFormSubmissionLineItemInput,
-} from './form-submission-line-items-model';
 import { UserAuthPayload, ANON_USER_AUTH_PAYLOAD } from '../../authentication';
 import {
   ERP_INTAKE_FORM_PERMISSIONS,
@@ -33,16 +28,34 @@ import { type EmailService } from '../email';
 import { type PriceEngineService } from '../price_engine';
 import { type PricesService } from '../prices';
 import { type UsersService } from '../users';
+import { type LineItem, LineItemsService } from '../line_items';
 
 // export IntakeFormDTO from model
 export { type IntakeFormDTO } from './form-model';
 export { type IntakeFormSubmissionDTO } from './form-submission-model';
-export { type IntakeFormSubmissionLineItemDTO } from './form-submission-line-items-model';
+
+type IntakeFormLineItemInput = {
+  startDate: Date;
+  description: string;
+  quantity: number;
+  durationInDays: number;
+  type: 'RENTAL' | 'PURCHASE';
+  pimCategoryId: string;
+  priceId?: string;
+  customPriceName?: string;
+  deliveryMethod: 'PICKUP' | 'DELIVERY';
+  deliveryLocation?: string;
+  deliveryNotes?: string;
+  rentalStartDate?: Date;
+  rentalEndDate?: Date;
+  salesOrderId?: string;
+  salesOrderLineItemId?: string;
+};
 
 export class IntakeFormService {
   private formModel: IntakeFormModel;
   private formSubmissionModel: IntakeFormSubmissionModel;
-  private lineItemsModel: IntakeFormSubmissionLineItemsModel;
+  private lineItemsService: LineItemsService;
   private authZ: AuthZ;
   private emailService: EmailService;
   private priceEngineService: PriceEngineService;
@@ -52,7 +65,7 @@ export class IntakeFormService {
   constructor(config: {
     formModel: IntakeFormModel;
     formSubmissionModel: IntakeFormSubmissionModel;
-    lineItemsModel: IntakeFormSubmissionLineItemsModel;
+    lineItemsService: LineItemsService;
     authZ: AuthZ;
     emailService: EmailService;
     priceEngineService: PriceEngineService;
@@ -61,7 +74,7 @@ export class IntakeFormService {
   }) {
     this.formModel = config.formModel;
     this.formSubmissionModel = config.formSubmissionModel;
-    this.lineItemsModel = config.lineItemsModel;
+    this.lineItemsService = config.lineItemsService;
     this.authZ = config.authZ;
     this.emailService = config.emailService;
     this.priceEngineService = config.priceEngineService;
@@ -1028,9 +1041,9 @@ export class IntakeFormService {
   // Line Item CRUD Operations
   createLineItem = async (
     submissionId: string,
-    input: IntakeFormSubmissionLineItemInput,
+    input: IntakeFormLineItemInput,
     user: UserAuthPayload = ANON_USER_AUTH_PAYLOAD,
-  ) => {
+  ): Promise<LineItem> => {
     // Check permission on the submission
     const hasPermission = await this.authZ.intakeFormSubmission.hasPermission({
       permission: ERP_INTAKE_FORM_SUBMISSION_SUBJECT_PERMISSIONS.USER_UPDATE,
@@ -1059,39 +1072,88 @@ export class IntakeFormService {
       );
     }
 
+    const startAt = input.rentalStartDate ?? input.startDate;
+    const endAt =
+      input.rentalEndDate ??
+      new Date(startAt.getTime() + input.durationInDays * 24 * 60 * 60 * 1000);
+
     // Calculate subtotal for the line item
-    const subtotalInCents = await this.calculateLineItemSubtotal(input, user);
+    const subtotalInCents = await this.calculateLineItemSubtotal(
+      {
+        ...input,
+        rentalStartDate: startAt,
+        rentalEndDate: endAt,
+      },
+      user,
+    );
+
+    const delivery =
+      input.deliveryMethod || input.deliveryLocation || input.deliveryNotes
+        ? {
+            method: input.deliveryMethod ?? null,
+            location: input.deliveryLocation ?? null,
+            notes: input.deliveryNotes ?? null,
+          }
+        : null;
 
     // Create the line item with calculated subtotal
-    const lineItem = await this.lineItemsModel.createLineItem(
-      submissionId,
-      submission.workspaceId,
-      input,
-      subtotalInCents,
-      user.id,
+    const lineItem = await this.lineItemsService.createLineItem(
+      {
+        workspaceId: submission.workspaceId,
+        documentRef: { type: 'INTAKE_SUBMISSION', id: submissionId },
+        type: input.type === 'PURCHASE' ? 'SALE' : 'RENTAL',
+        description: input.description,
+        quantity: input.quantity.toString(),
+        unitCode: null,
+        productRef: { kind: 'PIM_CATEGORY', productId: input.pimCategoryId },
+        timeWindow: { startAt, endAt },
+        placeRef: null,
+        constraints: null,
+        inputs: null,
+        pricingRef: input.priceId ? { priceId: input.priceId } : null,
+        pricingSpecSnapshot: null,
+        rateInCentsSnapshot: null,
+        subtotalInCents,
+        delivery,
+        deliveryChargeInCents: null,
+        notes: null,
+        targetSelectors: null,
+        intakeFormSubmissionLineItemId: null,
+        quoteRevisionLineItemId: null,
+        sourceLineItemId: null,
+        status: 'DRAFT',
+        customPriceName: input.customPriceName ?? null,
+      },
+      user,
     );
 
     // Recalculate submission total
-    await this.recalculateSubmissionTotal(submissionId);
+    await this.recalculateSubmissionTotal(submissionId, user);
 
     return lineItem;
   };
 
   updateLineItem = async (
     lineItemId: string,
-    updates: Partial<IntakeFormSubmissionLineItemInput>,
+    updates: Partial<IntakeFormLineItemInput>,
     user: UserAuthPayload = ANON_USER_AUTH_PAYLOAD,
-  ) => {
+  ): Promise<LineItem> => {
     // Get the line item to find the submission ID
-    const lineItem = await this.lineItemsModel.getLineItemById(lineItemId);
+    const lineItem = await this.lineItemsService.getLineItemById(
+      lineItemId,
+      user,
+    );
     if (!lineItem) {
       throw new Error('Line item not found');
+    }
+    if (lineItem.documentRef.type !== 'INTAKE_SUBMISSION') {
+      throw new Error('Line item does not belong to an intake form submission');
     }
 
     // Check permission on the submission
     const hasPermission = await this.authZ.intakeFormSubmission.hasPermission({
       permission: ERP_INTAKE_FORM_SUBMISSION_SUBJECT_PERMISSIONS.USER_UPDATE,
-      resourceId: lineItem.submissionId,
+      resourceId: lineItem.documentRef.id,
       subjectId: user.id,
     });
 
@@ -1102,7 +1164,7 @@ export class IntakeFormService {
     // Check if submission is already submitted
     const submission =
       await this.formSubmissionModel.getIntakeFormSubmissionById(
-        lineItem.submissionId,
+        lineItem.documentRef.id,
       );
     if (!submission) {
       throw new Error('Intake form submission not found');
@@ -1127,12 +1189,42 @@ export class IntakeFormService {
       (field) => field in updates && updates[field] !== undefined,
     );
 
+    const currentRequestType: 'RENTAL' | 'PURCHASE' =
+      lineItem.type === 'SALE' ? 'PURCHASE' : 'RENTAL';
+    const currentQuantity = Number(lineItem.quantity);
+    const currentStartAt = lineItem.timeWindow?.startAt ?? null;
+    const currentEndAt = lineItem.timeWindow?.endAt ?? null;
+    const currentDurationInDays =
+      currentStartAt && currentEndAt
+        ? Math.max(
+            1,
+            Math.round(
+              (currentEndAt.getTime() - currentStartAt.getTime()) /
+                (24 * 60 * 60 * 1000),
+            ),
+          )
+        : 1;
+
     // Calculate new subtotal if pricing fields changed
     let subtotalInCents: number | undefined;
     if (hasPricingChanges) {
       // Merge existing line item with updates for calculation
-      const mergedLineItem = {
-        ...lineItem,
+      const mergedLineItem: IntakeFormLineItemInput = {
+        startDate: currentStartAt ?? new Date(),
+        description: lineItem.description,
+        quantity: Number.isFinite(currentQuantity) ? currentQuantity : 1,
+        durationInDays: currentDurationInDays,
+        type: currentRequestType,
+        pimCategoryId: lineItem.productRef?.productId ?? '',
+        priceId: lineItem.pricingRef?.priceId ?? undefined,
+        customPriceName: lineItem.customPriceName ?? undefined,
+        deliveryMethod: (lineItem.delivery?.method ?? 'PICKUP') as
+          | 'PICKUP'
+          | 'DELIVERY',
+        deliveryLocation: lineItem.delivery?.location ?? undefined,
+        deliveryNotes: lineItem.delivery?.notes ?? undefined,
+        rentalStartDate: currentStartAt ?? undefined,
+        rentalEndDate: currentEndAt ?? undefined,
         ...updates,
       };
       subtotalInCents = await this.calculateLineItemSubtotal(
@@ -1141,11 +1233,85 @@ export class IntakeFormService {
       );
     }
 
-    const updated = await this.lineItemsModel.updateLineItem(
+    const nextType =
+      updates.type === undefined
+        ? lineItem.type
+        : updates.type === 'PURCHASE'
+          ? 'SALE'
+          : 'RENTAL';
+
+    const nextQuantity =
+      updates.quantity === undefined
+        ? lineItem.quantity
+        : updates.quantity.toString();
+
+    const nextProductRef =
+      updates.pimCategoryId === undefined
+        ? lineItem.productRef ?? null
+        : { kind: 'PIM_CATEGORY' as const, productId: updates.pimCategoryId };
+
+    const nextPricingRef =
+      updates.priceId === undefined
+        ? lineItem.pricingRef ?? null
+        : updates.priceId
+          ? { priceId: updates.priceId }
+          : null;
+
+    const nextDelivery =
+      updates.deliveryMethod === undefined &&
+      updates.deliveryLocation === undefined &&
+      updates.deliveryNotes === undefined
+        ? lineItem.delivery ?? null
+        : {
+            method: (updates.deliveryMethod ?? lineItem.delivery?.method) ?? null,
+            location:
+              (updates.deliveryLocation ?? lineItem.delivery?.location) ?? null,
+            notes: (updates.deliveryNotes ?? lineItem.delivery?.notes) ?? null,
+          };
+
+    const timeWindowPatch: any = {};
+    if (updates.rentalStartDate !== undefined) {
+      timeWindowPatch.startAt = updates.rentalStartDate;
+    }
+    if (updates.rentalEndDate !== undefined) {
+      timeWindowPatch.endAt = updates.rentalEndDate;
+    }
+    if (updates.startDate !== undefined) {
+      timeWindowPatch.startAt = updates.startDate;
+    }
+    if (updates.durationInDays !== undefined) {
+      const start = timeWindowPatch.startAt ?? lineItem.timeWindow?.startAt;
+      if (start) {
+        timeWindowPatch.endAt = new Date(
+          start.getTime() + updates.durationInDays * 24 * 60 * 60 * 1000,
+        );
+      }
+    }
+    const nextTimeWindow =
+      Object.keys(timeWindowPatch).length > 0
+        ? {
+            startAt:
+              timeWindowPatch.startAt ?? lineItem.timeWindow?.startAt ?? null,
+            endAt: timeWindowPatch.endAt ?? lineItem.timeWindow?.endAt ?? null,
+          }
+        : lineItem.timeWindow ?? null;
+
+    const updated = await this.lineItemsService.updateLineItem(
       lineItemId,
-      updates,
-      subtotalInCents,
-      user.id,
+      {
+        ...(updates.description !== undefined && { description: updates.description }),
+        type: nextType,
+        quantity: nextQuantity,
+        productRef: nextProductRef,
+        pricingRef: nextPricingRef,
+        timeWindow: nextTimeWindow,
+        delivery: nextDelivery,
+        ...(subtotalInCents !== undefined && { subtotalInCents }),
+        ...(updates.customPriceName !== undefined && {
+          customPriceName: updates.customPriceName ?? null,
+        }),
+      },
+      user,
     );
 
     if (!updated) {
@@ -1154,7 +1320,7 @@ export class IntakeFormService {
 
     // Recalculate submission total if subtotal changed
     if (hasPricingChanges) {
-      await this.recalculateSubmissionTotal(lineItem.submissionId);
+      await this.recalculateSubmissionTotal(lineItem.documentRef.id, user);
     }
 
     return updated;
@@ -1163,17 +1329,23 @@ export class IntakeFormService {
   deleteLineItem = async (
     lineItemId: string,
     user: UserAuthPayload = ANON_USER_AUTH_PAYLOAD,
-  ) => {
+  ): Promise<boolean> => {
     // Get the line item to find the submission ID
-    const lineItem = await this.lineItemsModel.getLineItemById(lineItemId);
+    const lineItem = await this.lineItemsService.getLineItemById(
+      lineItemId,
+      user,
+    );
     if (!lineItem) {
       throw new Error('Line item not found');
+    }
+    if (lineItem.documentRef.type !== 'INTAKE_SUBMISSION') {
+      throw new Error('Line item does not belong to an intake form submission');
     }
 
     // Check permission on the submission
     const hasPermission = await this.authZ.intakeFormSubmission.hasPermission({
       permission: ERP_INTAKE_FORM_SUBMISSION_SUBJECT_PERMISSIONS.USER_UPDATE,
-      resourceId: lineItem.submissionId,
+      resourceId: lineItem.documentRef.id,
       subjectId: user.id,
     });
 
@@ -1184,7 +1356,7 @@ export class IntakeFormService {
     // Check if submission is already submitted
     const submission =
       await this.formSubmissionModel.getIntakeFormSubmissionById(
-        lineItem.submissionId,
+        lineItem.documentRef.id,
       );
     if (!submission) {
       throw new Error('Intake form submission not found');
@@ -1196,48 +1368,33 @@ export class IntakeFormService {
       );
     }
 
-    const deleted = await this.lineItemsModel.deleteLineItem(
-      lineItemId,
-      user.id,
-    );
-
-    if (!deleted) {
-      throw new Error('Failed to delete line item');
-    }
+    await this.lineItemsService.softDeleteLineItem(lineItemId, user);
 
     // Recalculate submission total after deletion
-    await this.recalculateSubmissionTotal(lineItem.submissionId);
+    await this.recalculateSubmissionTotal(lineItem.documentRef.id, user);
 
-    return deleted;
+    return true;
   };
 
   getLineItemById = async (
     lineItemId: string,
     user: UserAuthPayload = ANON_USER_AUTH_PAYLOAD,
-  ) => {
-    const lineItem = await this.lineItemsModel.getLineItemById(lineItemId);
-    if (!lineItem) {
-      throw new Error('Line item not found');
+  ): Promise<LineItem> => {
+    const lineItem = await this.lineItemsService.getLineItemById(
+      lineItemId,
+      user,
+    );
+    if (!lineItem) throw new Error('Line item not found');
+    if (lineItem.documentRef.type !== 'INTAKE_SUBMISSION') {
+      throw new Error('Line item does not belong to an intake form submission');
     }
-
-    // Check permission on the submission
-    const hasPermission = await this.authZ.intakeFormSubmission.hasPermission({
-      permission: ERP_INTAKE_FORM_SUBMISSION_SUBJECT_PERMISSIONS.USER_READ,
-      resourceId: lineItem.submissionId,
-      subjectId: user.id,
-    });
-
-    if (!hasPermission) {
-      throw new Error('User does not have permission to read this line item');
-    }
-
     return lineItem;
   };
 
   getLineItemsBySubmissionId = async (
     submissionId: string,
     user: UserAuthPayload = ANON_USER_AUTH_PAYLOAD,
-  ) => {
+  ): Promise<LineItem[]> => {
     // Check permission on the submission
     const hasPermission = await this.authZ.intakeFormSubmission.hasPermission({
       permission: ERP_INTAKE_FORM_SUBMISSION_SUBJECT_PERMISSIONS.USER_READ,
@@ -1251,7 +1408,17 @@ export class IntakeFormService {
       );
     }
 
-    return this.lineItemsModel.getLineItemsBySubmissionId(submissionId);
+    const submission =
+      await this.formSubmissionModel.getIntakeFormSubmissionById(submissionId);
+    if (!submission) {
+      throw new Error('Intake form submission not found');
+    }
+
+    return this.lineItemsService.listLineItemsByDocumentRef(
+      submission.workspaceId,
+      { type: 'INTAKE_SUBMISSION', id: submissionId },
+      user,
+    );
   };
 
   /**
@@ -1264,6 +1431,7 @@ export class IntakeFormService {
       type: 'RENTAL' | 'PURCHASE';
       quantity: number;
       durationInDays: number;
+      startDate?: Date;
       rentalStartDate?: Date;
       rentalEndDate?: Date;
     },
@@ -1281,10 +1449,22 @@ export class IntakeFormService {
     }
 
     if (lineItem.type === 'RENTAL' && price.priceType === 'RENTAL') {
+      const startAt = lineItem.rentalStartDate ?? lineItem.startDate;
+      const endAt =
+        lineItem.rentalEndDate ??
+        (startAt
+          ? new Date(
+              startAt.getTime() +
+                lineItem.durationInDays * 24 * 60 * 60 * 1000,
+            )
+          : undefined);
+      if (!startAt || !endAt) {
+        return 0;
+      }
       // Use price engine for rental calculation
       const result = this.priceEngineService.calculateOptimalCost({
-        startDate: lineItem.rentalStartDate!,
-        endDate: lineItem.rentalEndDate!,
+        startDate: startAt,
+        endDate: endAt,
         pricePer1DayInCents: price.pricePerDayInCents,
         pricePer7DaysInCents: price.pricePerWeekInCents,
         pricePer28DaysInCents: price.pricePerMonthInCents,
@@ -1304,11 +1484,20 @@ export class IntakeFormService {
    */
   private async recalculateSubmissionTotal(
     submissionId: string,
+    user: UserAuthPayload,
   ): Promise<void> {
-    const total =
-      await this.lineItemsModel.getLineItemsSubtotalBySubmissionId(
-        submissionId,
-      );
+    const submission =
+      await this.formSubmissionModel.getIntakeFormSubmissionById(submissionId);
+    if (!submission) return;
+    const items = await this.lineItemsService.listLineItemsByDocumentRef(
+      submission.workspaceId,
+      { type: 'INTAKE_SUBMISSION', id: submissionId },
+      user,
+    );
+    const total = items.reduce(
+      (sum, item) => sum + (item.subtotalInCents ?? 0),
+      0,
+    );
     await this.formSubmissionModel.updateSubmissionTotal(submissionId, total);
   }
 }
@@ -1317,6 +1506,7 @@ export const createRequestFormService = async (config: {
   envConfig: EnvConfig;
   mongoClient: MongoClient;
   authZ: AuthZ;
+  lineItemsService: LineItemsService;
   emailService: EmailService;
   priceEngineService: PriceEngineService;
   pricesService: PricesService;
@@ -1324,12 +1514,11 @@ export const createRequestFormService = async (config: {
 }) => {
   const formModel = createIntakeFormModel(config);
   const formSubmissionModel = createIntakeFormSubmissionModel(config);
-  const lineItemsModel = createIntakeFormSubmissionLineItemsModel(config);
 
   const intakeFormService = new IntakeFormService({
     formModel,
     formSubmissionModel,
-    lineItemsModel,
+    lineItemsService: config.lineItemsService,
     authZ: config.authZ,
     emailService: config.emailService,
     priceEngineService: config.priceEngineService,

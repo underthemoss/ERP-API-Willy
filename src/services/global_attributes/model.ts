@@ -1,4 +1,4 @@
-import { type MongoClient, type Db, type Collection, Filter } from 'mongodb';
+import { type MongoClient, type Collection, Filter } from 'mongodb';
 import { generateId } from '../../lib/id-generator';
 import {
   type GlobalAttributeKind,
@@ -106,7 +106,10 @@ export type GlobalAttributeRelationDoc = BaseGlobalDoc & {
   confidence?: number;
 };
 
-export type GlobalAttributeRelation = Omit<GlobalAttributeRelationDoc, '_id'> & {
+export type GlobalAttributeRelation = Omit<
+  GlobalAttributeRelationDoc,
+  '_id'
+> & {
   id: string;
 };
 
@@ -115,6 +118,33 @@ export type ListGlobalAttributeRelationsQuery = {
     fromAttributeId?: string;
     toAttributeId?: string;
     relationType?: GlobalAttributeRelationType;
+  };
+  page?: {
+    size?: number;
+    number?: number;
+  };
+};
+
+export type GlobalAttributeParseRuleDoc = BaseGlobalDoc & {
+  raw: string;
+  rawKey: string;
+  attributeTypeId: string;
+  contextTagIds?: string[];
+  notes?: string;
+};
+
+export type GlobalAttributeParseRule = Omit<
+  GlobalAttributeParseRuleDoc,
+  '_id'
+> & {
+  id: string;
+};
+
+export type ListGlobalAttributeParseRulesQuery = {
+  filter?: {
+    attributeTypeId?: string;
+    auditStatus?: GlobalAttributeAuditStatus;
+    searchTerm?: string;
   };
   page?: {
     size?: number;
@@ -148,7 +178,10 @@ export type ListGlobalUnitsQuery = {
   };
 };
 
-const buildSearchFilter = (searchTerm: string | undefined, fields: string[]) => {
+const buildSearchFilter = (
+  searchTerm: string | undefined,
+  fields: string[],
+) => {
   if (!searchTerm) return undefined;
   const query = searchTerm.trim();
   if (!query) return undefined;
@@ -187,10 +220,7 @@ export class GlobalAttributeTypesModel {
   }
 
   async update(id: string, updates: Partial<GlobalAttributeTypeDoc>) {
-    await this.collection.updateOne(
-      { _id: id },
-      { $set: { ...updates } },
-    );
+    await this.collection.updateOne({ _id: id }, { $set: { ...updates } });
     const doc = await this.collection.findOne({ _id: id });
     return doc ? this.map(doc) : null;
   }
@@ -218,9 +248,7 @@ export class GlobalAttributeTypesModel {
       ...(filter.dimension ? { dimension: filter.dimension } : {}),
       ...(filter.status ? { status: filter.status } : {}),
       ...(filter.appliesTo ? { appliesTo: filter.appliesTo } : {}),
-      ...(filter.usageHint
-        ? { usageHints: { $in: [filter.usageHint] } }
-        : {}),
+      ...(filter.usageHint ? { usageHints: { $in: [filter.usageHint] } } : {}),
       ...(buildSearchFilter(filter.searchTerm, ['name', 'synonyms']) || {}),
     };
 
@@ -342,7 +370,9 @@ export class GlobalAttributeRelationsModel {
       _id: generateId('GAR', 'GLOBAL'),
     });
     const doc = await this.collection.findOne({ _id: result.insertedId });
-    if (!doc) throw new Error('Global attribute relation not found after insert');
+    if (!doc) {
+      throw new Error('Global attribute relation not found after insert');
+    }
     return this.map(doc);
   }
 
@@ -359,6 +389,77 @@ export class GlobalAttributeRelationsModel {
     const skip = page?.number ? (page.number - 1) * limit : 0;
     const items = await this.collection
       .find(mongoFilter, { limit, skip })
+      .toArray();
+    const total = await this.collection.countDocuments(mongoFilter);
+    return {
+      items: items.map((doc) => this.map(doc)),
+      total,
+      limit,
+      page: page?.number || 1,
+    };
+  }
+}
+
+export class GlobalAttributeParseRulesModel {
+  private collection: Collection<GlobalAttributeParseRuleDoc>;
+
+  constructor(config: { mongoClient: MongoClient; dbName: string }) {
+    const db = config.mongoClient.db(config.dbName);
+    this.collection = db.collection<GlobalAttributeParseRuleDoc>(
+      'global_attribute_parse_rules',
+    );
+  }
+
+  private map(doc: GlobalAttributeParseRuleDoc): GlobalAttributeParseRule {
+    const { _id, ...fields } = doc;
+    return { ...fields, id: _id };
+  }
+
+  async create(input: Omit<GlobalAttributeParseRuleDoc, '_id'>) {
+    const result = await this.collection.insertOne({
+      ...input,
+      _id: generateId('GAPR', 'GLOBAL'),
+    });
+    const doc = await this.collection.findOne({ _id: result.insertedId });
+    if (!doc) {
+      throw new Error('Global attribute parse rule not found after insert');
+    }
+    return this.map(doc);
+  }
+
+  async update(id: string, updates: Partial<GlobalAttributeParseRuleDoc>) {
+    await this.collection.updateOne({ _id: id }, { $set: { ...updates } });
+    const doc = await this.collection.findOne({ _id: id });
+    return doc ? this.map(doc) : null;
+  }
+
+  async getById(id: string) {
+    const doc = await this.collection.findOne({ _id: id });
+    return doc ? this.map(doc) : null;
+  }
+
+  async findByRawKey(rawKey: string) {
+    const normalized = rawKey.trim();
+    if (!normalized) return null;
+    const regex = { $regex: `^${escapeRegex(normalized)}$`, $options: 'i' };
+    const doc = await this.collection.findOne({ rawKey: regex });
+    return doc ? this.map(doc) : null;
+  }
+
+  async list(query: ListGlobalAttributeParseRulesQuery) {
+    const { filter = {}, page } = query;
+    const mongoFilter: Filter<GlobalAttributeParseRuleDoc> = {
+      ...(filter.attributeTypeId
+        ? { attributeTypeId: filter.attributeTypeId }
+        : {}),
+      ...(filter.auditStatus ? { auditStatus: filter.auditStatus } : {}),
+      ...(buildSearchFilter(filter.searchTerm, ['raw', 'rawKey']) || {}),
+    };
+
+    const limit = page?.size || 20;
+    const skip = page?.number ? (page.number - 1) * limit : 0;
+    const items = await this.collection
+      .find(mongoFilter, { limit, skip, sort: { rawKey: 1 } })
       .toArray();
     const total = await this.collection.countDocuments(mongoFilter);
     return {

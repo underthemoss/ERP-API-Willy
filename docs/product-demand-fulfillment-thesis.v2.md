@@ -173,7 +173,7 @@ A BOM lifecycle (DRAFT/ACTIVE/ARCHIVED) is best understood as **definition state
 - ProductRef: “Skid Steer Rental”
 - REQUIRED:
   - tags include: `skid_steer`, `rental_equipment`
-  - attribute: `operating_weight` between 6,000–8,000 lb (normalized)
+  - attribute: `weight` between 6,000–8,000 lb (context tag: operating)
 - PREFERRED:
   - brand.manufacturer in [“John Deere”]
   - attribute: `model_year` ≥ 2020

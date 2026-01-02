@@ -1,11 +1,12 @@
 # Agent Notes
 
 This repo is driven by design docs. Review these before implementation:
-- `docs/product-demand-fulfillment-thesis.md`
+- `docs/product-demand-fulfillment-thesis.v2.md`
 - `docs/product-demand-fulfillment-roadmap.md`
 - `docs/product-demand-fulfillment-model-audit.md`
 - `docs/service-material-assemblies.md`
-- `docs/global-attribute-library.md`
+- `docs/global-vocabulary.md`
+- `docs/archive/` (prior iterations)
 
 Process requirements:
 - Update `docs/product-demand-fulfillment-roadmap.md` after every meaningful change.

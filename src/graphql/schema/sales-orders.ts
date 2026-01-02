@@ -16,11 +16,6 @@ import {
 } from '../../services/sales_orders';
 import { LINEITEM_STATUS } from '../../services/sales_orders/sales-order-line-items-model';
 
-export const LineItemType = enumType({
-  name: 'LineItemType',
-  members: ['RENTAL', 'SALE'],
-});
-
 export const SalesOrderStatus = enumType({
   name: 'SalesOrderStatus',
   members: ['DRAFT', 'SUBMITTED'],
@@ -567,6 +562,21 @@ export const SalesOrder = objectType({
       },
     });
 
+    t.nonNull.list.nonNull.field('lineItems', {
+      type: 'LineItem',
+      description: 'Canonical line items for this sales order (source of truth).',
+      async resolve(parent, _args, ctx) {
+        if (!ctx.user) return [];
+        const workspaceId = parent.workspace_id;
+        if (!workspaceId) return [];
+        return ctx.services.lineItemsService.listLineItemsByDocumentRef(
+          workspaceId,
+          { type: 'SALES_ORDER', id: parent._id },
+          ctx.user,
+        );
+      },
+    });
+
     t.field('pricing', {
       type: 'SalesOrderPricing',
       description: 'Pricing summary for the sales order',
@@ -934,8 +944,10 @@ export const updateSaleSalesOrderLineItem = mutationField(
       );
 
       // First, fetch the line item to verify it's a SALE type
-      const lineItem =
-        await ctx.services.salesOrdersService.getLineItemById(id);
+      const lineItem = await ctx.services.salesOrdersService.getLineItemById(
+        id,
+        ctx.user,
+      );
       if (!lineItem) {
         throw new Error('Line item not found');
       }
@@ -1046,7 +1058,10 @@ export const getSalesOrderLineItemById = queryField(
     },
     resolve: async (_root, { id }, ctx) => {
       if (!id) return null;
-      const item = await ctx.services.salesOrdersService.getLineItemById(id);
+      const item = await ctx.services.salesOrdersService.getLineItemById(
+        id,
+        ctx.user,
+      );
 
       return item;
     },

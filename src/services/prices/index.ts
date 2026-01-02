@@ -4,10 +4,15 @@ import {
   type PricesModel,
   type CreateRentalPriceInput,
   type CreateSalePriceInput,
+  type CreateServicePriceInput,
   type UpdateRentalPriceInput,
   type UpdateSalePriceInput,
+  type UpdateServicePriceInput,
   type ListPricesQuery,
   type Price,
+  type PricingSpec,
+  type CatalogProductKind,
+  type PriceCatalogRef,
   PriceType,
 } from './prices-model';
 
@@ -34,8 +39,62 @@ import { PimCategoriesService } from '../pim_categories';
 import { PriceEngineService } from '../price_engine';
 
 // re-export DTOs
-export type { RentalPrice, SalePrice, Price, PriceType } from './prices-model';
+export type {
+  RentalPrice,
+  SalePrice,
+  ServicePrice,
+  Price,
+  PriceType,
+} from './prices-model';
 export type { PriceBook } from './price-book-model';
+
+const scalePricingSpec = (
+  pricingSpec: PricingSpec | undefined,
+  factor: number,
+): PricingSpec | undefined => {
+  if (!pricingSpec) {
+    return undefined;
+  }
+
+  if (pricingSpec.kind === 'UNIT' || pricingSpec.kind === 'TIME') {
+    return {
+      ...pricingSpec,
+      rateInCents: Math.round(pricingSpec.rateInCents * factor),
+    };
+  }
+
+  if (pricingSpec.kind === 'RENTAL_RATE_TABLE') {
+    return {
+      ...pricingSpec,
+      pricePerDayInCents: Math.round(pricingSpec.pricePerDayInCents * factor),
+      pricePerWeekInCents: Math.round(pricingSpec.pricePerWeekInCents * factor),
+      pricePerMonthInCents: Math.round(
+        pricingSpec.pricePerMonthInCents * factor,
+      ),
+    };
+  }
+
+  return pricingSpec;
+};
+
+const isCatalogProductKind = (value: string): value is CatalogProductKind =>
+  value === 'MATERIAL_PRODUCT' ||
+  value === 'SERVICE_PRODUCT' ||
+  value === 'ASSEMBLY_PRODUCT';
+
+const normalizeCatalogRef = (
+  kind: string | undefined,
+  id: string | undefined,
+): PriceCatalogRef | undefined => {
+  if (!kind || !id) {
+    return undefined;
+  }
+  const normalizedKind = kind.trim().toUpperCase();
+  if (!isCatalogProductKind(normalizedKind)) {
+    throw new Error(`Invalid catalogRefKind: ${kind}`);
+  }
+  return { kind: normalizedKind, id };
+};
 
 export class PricesService {
   private pricesModel: PricesModel;
@@ -136,6 +195,11 @@ export class PricesService {
 
         // create the cloned prices with fresh category data
         const clonedPrices = prices.map((parentPrice) => {
+          const {
+            pricingSpec: parentPricingSpec,
+            priceType: parentPriceType,
+            ...parentBase
+          } = parentPrice;
           // Get fresh category data if available
           const categoryData = parentPrice.pimCategoryId
             ? categoryMap.get(parentPrice.pimCategoryId)
@@ -149,8 +213,13 @@ export class PricesService {
           }
 
           //common fields
+          const scaledPricingSpec = scalePricingSpec(
+            parentPricingSpec,
+            parentPriceBookPercentageFactor,
+          );
+
           const newPrice = {
-            ...parentPrice,
+            ...parentBase,
             priceBookId: newPriceBook.id,
             parentPriceId: parentPrice.id,
             parentPriceIdPercentageFactor: parentPriceBookPercentageFactor,
@@ -162,9 +231,11 @@ export class PricesService {
             pimCategoryPath: categoryData?.path || parentPrice.pimCategoryPath,
           };
 
-          if (parentPrice.priceType === 'RENTAL') {
+          if (parentPriceType === 'RENTAL') {
             return {
               ...newPrice,
+              priceType: 'RENTAL' as const,
+              pricingSpec: scaledPricingSpec,
               pricePerDayInCents: Math.round(
                 parentPrice.pricePerDayInCents *
                   parentPriceBookPercentageFactor,
@@ -179,13 +250,33 @@ export class PricesService {
               ),
             };
           }
-          // sale price..
-          return {
-            ...newPrice,
-            unitCostInCents: Math.round(
-              parentPrice.unitCostInCents * parentPriceBookPercentageFactor,
-            ),
-          };
+          if (parentPriceType === 'SERVICE') {
+            if (
+              !scaledPricingSpec ||
+              scaledPricingSpec.kind === 'RENTAL_RATE_TABLE'
+            ) {
+              throw new Error(
+                'Service prices require UNIT or TIME pricingSpec',
+              );
+            }
+            return {
+              ...newPrice,
+              priceType: 'SERVICE' as const,
+              pricingSpec: scaledPricingSpec,
+            };
+          }
+          if (parentPriceType === 'SALE') {
+            return {
+              ...newPrice,
+              priceType: 'SALE' as const,
+              pricingSpec: scaledPricingSpec,
+              unitCostInCents: Math.round(
+                parentPrice.unitCostInCents * parentPriceBookPercentageFactor,
+              ),
+              discounts: parentPrice.discounts,
+            };
+          }
+          throw new Error(`Unsupported price type: ${parentPriceType}`);
         });
 
         const newPrices = await this.pricesModel.batchCreatePrices(
@@ -363,6 +454,15 @@ export class PricesService {
     input: Omit<CreateRentalPriceInput, 'createdBy'>,
     user: UserAuthPayload = ANON_USER_AUTH_PAYLOAD,
   ) {
+    if (!input.pimCategoryId && !input.catalogRef) {
+      throw new Error('pimCategoryId or catalogRef is required');
+    }
+    if (input.pricingSpec && input.pricingSpec.kind !== 'RENTAL_RATE_TABLE') {
+      throw new Error(
+        'Rental prices only support RENTAL_RATE_TABLE pricingSpec',
+      );
+    }
+
     let priceBook: PriceBook | null = null;
     if (input.priceBookId) {
       const hasPermission = await this.authZ.priceBook.hasPermission({
@@ -412,6 +512,13 @@ export class PricesService {
     input: Omit<CreateSalePriceInput, 'createdBy'>,
     user: UserAuthPayload = ANON_USER_AUTH_PAYLOAD,
   ) {
+    if (!input.pimCategoryId && !input.catalogRef) {
+      throw new Error('pimCategoryId or catalogRef is required');
+    }
+    if (input.pricingSpec && input.pricingSpec.kind !== 'UNIT') {
+      throw new Error('Sale prices only support UNIT pricingSpec');
+    }
+
     let priceBook: PriceBook | null = null;
     if (input.priceBookId) {
       const hasPermission = await this.authZ.priceBook.hasPermission({
@@ -441,6 +548,62 @@ export class PricesService {
 
     return this.pricesModel.withTransaction(async (session) => {
       const newPrice = await this.pricesModel.createSalePrice(
+        {
+          ...input,
+          createdBy: user.id,
+          businessContactId:
+            priceBook?.businessContactId || input.businessContactId,
+          projectId: priceBook?.projectId || input.projectId,
+          location: priceBook?.location || input.location,
+        },
+        session,
+      );
+
+      await this.authZ.priceBookPrice.writePriceBookPriceRelations(newPrice);
+      return newPrice;
+    });
+  }
+
+  async createServicePrice(
+    input: Omit<CreateServicePriceInput, 'createdBy'>,
+    user: UserAuthPayload = ANON_USER_AUTH_PAYLOAD,
+  ) {
+    if (!input.catalogRef) {
+      throw new Error('catalogRef is required for service prices');
+    }
+    if (!input.pricingSpec) {
+      throw new Error('pricingSpec is required for service prices');
+    }
+
+    let priceBook: PriceBook | null = null;
+    if (input.priceBookId) {
+      const hasPermission = await this.authZ.priceBook.hasPermission({
+        permission: ERP_PRICEBOOK_SUBJECT_PERMISSIONS.USER_UPDATE,
+        resourceId: input.priceBookId,
+        subjectId: user.id,
+      });
+      if (!hasPermission) {
+        throw new Error('Unauthorized to add price to this price book');
+      }
+
+      priceBook = await this.priceBookModel.getPriceBookById(input.priceBookId);
+      if (!priceBook) {
+        throw new Error('Price book not found');
+      }
+    } else {
+      const hasPermission = await this.authZ.workspace.hasPermission({
+        permission:
+          ERP_WORKSPACE_SUBJECT_PERMISSIONS.USER_CAN_MANAGE_PRICE_BOOKS,
+        resourceId: input.workspaceId,
+        subjectId: user.id,
+      });
+      if (!hasPermission) {
+        throw new Error('Unauthorized to create price in this workspace');
+      }
+    }
+
+    return this.pricesModel.withTransaction(async (session) => {
+      const newPrice = await this.pricesModel.createServicePrice(
         {
           ...input,
           createdBy: user.id,
@@ -717,6 +880,12 @@ export class PricesService {
     input: UpdateRentalPriceInput & { id: string },
     user: UserAuthPayload = ANON_USER_AUTH_PAYLOAD,
   ) {
+    if (input.pricingSpec && input.pricingSpec.kind !== 'RENTAL_RATE_TABLE') {
+      throw new Error(
+        'Rental prices only support RENTAL_RATE_TABLE pricingSpec',
+      );
+    }
+
     // First, get the existing price to verify ownership
     const existingPrices = await this.pricesModel.batchGetPriceByIds([
       input.id,
@@ -747,6 +916,8 @@ export class PricesService {
       pricePerDayInCents: input.pricePerDayInCents,
       pricePerWeekInCents: input.pricePerWeekInCents,
       pricePerMonthInCents: input.pricePerMonthInCents,
+      pricingSpec: input.pricingSpec,
+      catalogRef: input.catalogRef,
       pimProductId: input.pimProductId,
       pimCategoryId: input.pimCategoryId,
       pimCategoryName: input.pimCategoryName,
@@ -759,6 +930,10 @@ export class PricesService {
     input: UpdateSalePriceInput & { id: string },
     user: UserAuthPayload = ANON_USER_AUTH_PAYLOAD,
   ) {
+    if (input.pricingSpec && input.pricingSpec.kind !== 'UNIT') {
+      throw new Error('Sale prices only support UNIT pricingSpec');
+    }
+
     // First, get the existing price to verify ownership
     const existingPrices = await this.pricesModel.batchGetPriceByIds([
       input.id,
@@ -788,6 +963,48 @@ export class PricesService {
       name: input.name,
       unitCostInCents: input.unitCostInCents,
       discounts: input.discounts,
+      pricingSpec: input.pricingSpec,
+      catalogRef: input.catalogRef,
+      pimProductId: input.pimProductId,
+      pimCategoryId: input.pimCategoryId,
+      pimCategoryName: input.pimCategoryName,
+      pimCategoryPath: input.pimCategoryPath,
+      updatedBy: user.id,
+    });
+  }
+
+  async updateServicePrice(
+    input: UpdateServicePriceInput & { id: string },
+    user: UserAuthPayload = ANON_USER_AUTH_PAYLOAD,
+  ) {
+    // First, get the existing price to verify ownership
+    const existingPrices = await this.pricesModel.batchGetPriceByIds([
+      input.id,
+    ]);
+    const existingPrice = existingPrices[0];
+
+    if (!existingPrice) {
+      throw new Error('Price not found');
+    }
+
+    const hasPermission = await this.authZ.priceBookPrice.hasPermission({
+      permission: ERP_PRICEBOOK_PRICE_SUBJECT_PERMISSIONS.USER_UPDATE,
+      resourceId: input.id,
+      subjectId: user.id,
+    });
+
+    if (!hasPermission) {
+      throw new Error('Unauthorized to update this price');
+    }
+
+    if (existingPrice.priceType !== 'SERVICE') {
+      throw new Error('Price is not a service price');
+    }
+
+    return this.pricesModel.updateServicePrice(input.id, {
+      name: input.name,
+      pricingSpec: input.pricingSpec,
+      catalogRef: input.catalogRef,
       pimProductId: input.pimProductId,
       pimCategoryId: input.pimCategoryId,
       pimCategoryName: input.pimCategoryName,
@@ -839,6 +1056,14 @@ export class PricesService {
       'pricePerMonthInCents',
       'unitCostInCents',
       'discounts',
+      'catalogRefKind',
+      'catalogRefId',
+      'pricingSpecKind',
+      'pricingSpecUnitCode',
+      'pricingSpecRateInCents',
+      'pricingSpecPricePerDayInCents',
+      'pricingSpecPricePerWeekInCents',
+      'pricingSpecPricePerMonthInCents',
     ];
 
     // Convert prices to CSV rows
@@ -860,7 +1085,7 @@ export class PricesService {
           '', // unitCostInCents (empty for rental)
           '', // discounts (empty for rental)
         );
-      } else {
+      } else if (price.priceType === 'SALE') {
         row.push(
           '', // pricePerDayInCents (empty for sale)
           '', // pricePerWeekInCents (empty for sale)
@@ -868,7 +1093,36 @@ export class PricesService {
           price.unitCostInCents.toString(),
           JSON.stringify(price.discounts || {}),
         );
+      } else {
+        row.push(
+          '', // pricePerDayInCents (empty for service)
+          '', // pricePerWeekInCents (empty for service)
+          '', // pricePerMonthInCents (empty for service)
+          '', // unitCostInCents (empty for service)
+          '', // discounts (empty for service)
+        );
       }
+
+      row.push(
+        price.catalogRef?.kind || '',
+        price.catalogRef?.id || '',
+        price.pricingSpec?.kind || '',
+        price.pricingSpec && 'unitCode' in price.pricingSpec
+          ? price.pricingSpec.unitCode
+          : '',
+        price.pricingSpec && 'rateInCents' in price.pricingSpec
+          ? price.pricingSpec.rateInCents.toString()
+          : '',
+        price.pricingSpec && 'pricePerDayInCents' in price.pricingSpec
+          ? price.pricingSpec.pricePerDayInCents.toString()
+          : '',
+        price.pricingSpec && 'pricePerWeekInCents' in price.pricingSpec
+          ? price.pricingSpec.pricePerWeekInCents.toString()
+          : '',
+        price.pricingSpec && 'pricePerMonthInCents' in price.pricingSpec
+          ? price.pricingSpec.pricePerMonthInCents.toString()
+          : '',
+      );
 
       // Escape and quote fields that might contain commas or quotes
       return row
@@ -990,8 +1244,10 @@ export class PricesService {
         // Fetch category details from PIM if pimCategoryId is provided
         // Note: Since we're processing row by row, we still fetch individually here
         // For bulk imports, consider collecting all category IDs first and batch fetching
-        let pimCategoryName = priceData.pimCategoryName || '';
-        let pimCategoryPath = priceData.pimCategoryPath || '';
+        let pimCategoryName: string | undefined =
+          priceData.pimCategoryName || undefined;
+        let pimCategoryPath: string | undefined =
+          priceData.pimCategoryPath || undefined;
         if (priceData.pimCategoryId) {
           const category = await this.pimCategoriesService.getPimCategoryById(
             priceData.pimCategoryId,
@@ -1004,6 +1260,54 @@ export class PricesService {
             console.warn(
               `PIM category not found during import: ${priceData.pimCategoryId}, using fallback values`,
             );
+          }
+        }
+
+        const catalogRef = normalizeCatalogRef(
+          priceData.catalogRefKind,
+          priceData.catalogRefId,
+        );
+
+        let pricingSpec: PricingSpec | undefined;
+        if (
+          priceData.pricingSpecKind === 'UNIT' ||
+          priceData.pricingSpecKind === 'TIME'
+        ) {
+          if (
+            priceData.pricingSpecUnitCode &&
+            priceData.pricingSpecRateInCents !== undefined &&
+            priceData.pricingSpecRateInCents !== ''
+          ) {
+            pricingSpec = {
+              kind: priceData.pricingSpecKind,
+              unitCode: priceData.pricingSpecUnitCode,
+              rateInCents: parseInt(priceData.pricingSpecRateInCents, 10),
+            };
+          }
+        } else if (priceData.pricingSpecKind === 'RENTAL_RATE_TABLE') {
+          if (
+            priceData.pricingSpecPricePerDayInCents !== undefined &&
+            priceData.pricingSpecPricePerDayInCents !== '' &&
+            priceData.pricingSpecPricePerWeekInCents !== undefined &&
+            priceData.pricingSpecPricePerWeekInCents !== '' &&
+            priceData.pricingSpecPricePerMonthInCents !== undefined &&
+            priceData.pricingSpecPricePerMonthInCents !== ''
+          ) {
+            pricingSpec = {
+              kind: priceData.pricingSpecKind,
+              pricePerDayInCents: parseInt(
+                priceData.pricingSpecPricePerDayInCents,
+                10,
+              ),
+              pricePerWeekInCents: parseInt(
+                priceData.pricingSpecPricePerWeekInCents,
+                10,
+              ),
+              pricePerMonthInCents: parseInt(
+                priceData.pricingSpecPricePerMonthInCents,
+                10,
+              ),
+            };
           }
         }
 
@@ -1024,6 +1328,8 @@ export class PricesService {
               ),
               pimProductId: priceData.pimProductId || undefined,
               priceBookId,
+              catalogRef,
+              pricingSpec,
               // Use price book's location data instead of CSV data
               businessContactId: priceBook.businessContactId || undefined,
               projectId: priceBook.projectId || undefined,
@@ -1045,6 +1351,33 @@ export class PricesService {
                 : {},
               pimProductId: priceData.pimProductId || undefined,
               priceBookId,
+              catalogRef,
+              pricingSpec,
+              // Use price book's location data instead of CSV data
+              businessContactId: priceBook.businessContactId || undefined,
+              projectId: priceBook.projectId || undefined,
+              location: priceBook.location || undefined,
+            },
+            user,
+          );
+        } else if (priceData.priceType === 'SERVICE') {
+          if (!catalogRef) {
+            throw new Error('catalogRefKind and catalogRefId are required');
+          }
+          if (!pricingSpec || pricingSpec.kind === 'RENTAL_RATE_TABLE') {
+            throw new Error('Service prices require UNIT or TIME pricingSpec');
+          }
+          await this.createServicePrice(
+            {
+              workspaceId,
+              name: priceData.name,
+              pimCategoryId: priceData.pimCategoryId,
+              pimCategoryName,
+              pimCategoryPath,
+              pimProductId: priceData.pimProductId || undefined,
+              priceBookId,
+              catalogRef,
+              pricingSpec,
               // Use price book's location data instead of CSV data
               businessContactId: priceBook.businessContactId || undefined,
               projectId: priceBook.projectId || undefined,

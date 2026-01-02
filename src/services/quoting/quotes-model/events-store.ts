@@ -77,6 +77,7 @@ const updateQuoteSchema = quoteDocSchema
     currentRevisionId: true,
     validUntil: true,
     buyerUserId: true,
+    approvalConfirmation: true,
     signatureS3Key: true,
     buyerAcceptedFullLegalName: true,
   })

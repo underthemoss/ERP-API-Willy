@@ -1,5 +1,7 @@
 schema: ./src/graphql/schema/generated/schema.graphql
 documents: ./src/test/e2e/**/*.{ts,tsx,js,jsx}
+require:
+  - ./scripts/codegen-cpus.js
 generates:
   ./src/test/e2e/generated/graphql.ts:
     plugins:

@@ -471,6 +471,14 @@ export class BaseResourceWithCaching<
     subjectType: ResourceType;
   }) {
     const { resourceId, relation, subjectId, subjectType } = opts;
+
+    // The SYSTEM user is an internal-only actor used by backend workflows (e.g. quote acceptance
+    // projecting orders/line-items across workspaces). It must not be blocked by workspace-scoped
+    // permission checks that are intended for human users.
+    if (subjectType === 'erp/user' && subjectId === 'SYSTEM') {
+      return true;
+    }
+
     const resource = this.getObjectReference(resourceId);
     const startTime = performance.now();
 
@@ -576,6 +584,21 @@ export class BaseResourceWithCaching<
       subjectType: ResourceType;
     }[],
   ) {
+    // Fast-path for internal SYSTEM user checks.
+    if (
+      opts.length > 0 &&
+      opts.every(
+        (opt) => opt.subjectType === 'erp/user' && opt.subjectId === 'SYSTEM',
+      )
+    ) {
+      return opts.map((opt) => ({
+        subjectId: opt.subjectId,
+        resourceId: opt.resourceId,
+        error: undefined,
+        hasPermission: true,
+      }));
+    }
+
     const startTime = performance.now();
     const doPermissionCheck = (
       consistency?: Consistency,

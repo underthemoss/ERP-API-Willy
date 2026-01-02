@@ -17,6 +17,7 @@ import { listProjectsTool } from './list_projects';
 import { listContactsTool } from './list_contacts';
 import { listWorkspacesTool } from './list_workspaces';
 import { braveSearchTool } from './brave_search';
+import { fetchUrlTool, webFetchTool } from './web_fetch';
 import { updatePersonContactTool } from './update_person_contact';
 import { updateBusinessContactTool } from './update_business_contact';
 import { createPersonContactTool } from './create_person_contact';
@@ -39,6 +40,31 @@ import { getResourceMapEntryTool } from './get_resource_map_entry';
 import { listResourceMapEntriesByParentIdTool } from './list_resource_map_entries_by_parent_id';
 import { listResourceMapEntriesByTagTypeTool } from './list_resource_map_entries_by_tag_type';
 import { listResourceMapLocationTagsTool } from './list_resource_map_location_tags';
+import { studioFsListTool } from './studio_fs_list';
+import { studioFsReadTool } from './studio_fs_read';
+import { studioFsWriteTool } from './studio_fs_write';
+import { studioFsUploadTool } from './studio_fs_upload';
+import { studioFsRootsTool } from './studio_fs_roots';
+import { studioFsMkdirTool } from './studio_fs_mkdir';
+import { studioFsMoveTool } from './studio_fs_move';
+import { studioFsDeleteTool } from './studio_fs_delete';
+import { studioCatalogInitTool } from './studio_catalog_init';
+import { studioCatalogValidateTool } from './catalog_validate';
+import { studioCatalogPreviewTool } from './studio_catalog_preview';
+import { studioCatalogCompileTool } from './studio_catalog_compile';
+import { studioCatalogCreateProductTool } from './studio_catalog_create_product';
+import { listWorkspaceTagsTool } from './list_workspace_tags';
+import { upsertWorkspaceTagTool } from './upsert_workspace_tag';
+import { listWorkspaceAttributeTypesTool } from './list_workspace_attribute_types';
+import { upsertWorkspaceAttributeTypeTool } from './upsert_workspace_attribute_type';
+import { listWorkspaceUnitDefinitionsTool } from './list_workspace_unit_definitions';
+import { upsertWorkspaceUnitDefinitionTool } from './upsert_workspace_unit_definition';
+import { listWorkspaceAttributeValuesTool } from './list_workspace_attribute_values';
+import { upsertWorkspaceAttributeValueTool } from './upsert_workspace_attribute_value';
+import { resolveGlobalOrWorkspaceTagTool } from './resolve_global_or_workspace_tag';
+import { resolveGlobalOrWorkspaceAttributeTypeTool } from './resolve_global_or_workspace_attribute_type';
+import { resolveGlobalOrWorkspaceUnitDefinitionTool } from './resolve_global_or_workspace_unit_definition';
+import { resolveGlobalOrWorkspaceAttributeValueTool } from './resolve_global_or_workspace_attribute_value';
 import type { McpTool } from './types';
 
 export { createMcpTool, type McpTool } from './types';
@@ -56,6 +82,8 @@ export const mcpTools: McpTool[] = [
   listContactsTool,
   listWorkspacesTool,
   braveSearchTool,
+  webFetchTool,
+  fetchUrlTool,
   updatePersonContactTool,
   updateBusinessContactTool,
   createPersonContactTool,
@@ -75,7 +103,32 @@ export const mcpTools: McpTool[] = [
   listResourceMapEntriesByParentIdTool,
   listResourceMapEntriesByTagTypeTool,
   listResourceMapLocationTagsTool,
+  studioFsRootsTool,
+  studioFsListTool,
+  studioFsReadTool,
+  studioFsWriteTool,
+  studioFsUploadTool,
+  studioFsMkdirTool,
+  studioFsMoveTool,
+  studioFsDeleteTool,
+  studioCatalogInitTool,
+  studioCatalogCreateProductTool,
+  studioCatalogValidateTool,
+  studioCatalogPreviewTool,
+  studioCatalogCompileTool,
   createResourceMapTagTool,
   updateResourceMapTagTool,
   deleteResourceMapTagTool,
+  listWorkspaceTagsTool,
+  upsertWorkspaceTagTool,
+  listWorkspaceAttributeTypesTool,
+  upsertWorkspaceAttributeTypeTool,
+  listWorkspaceUnitDefinitionsTool,
+  upsertWorkspaceUnitDefinitionTool,
+  listWorkspaceAttributeValuesTool,
+  upsertWorkspaceAttributeValueTool,
+  resolveGlobalOrWorkspaceTagTool,
+  resolveGlobalOrWorkspaceAttributeTypeTool,
+  resolveGlobalOrWorkspaceUnitDefinitionTool,
+  resolveGlobalOrWorkspaceAttributeValueTool,
 ] as McpTool[];

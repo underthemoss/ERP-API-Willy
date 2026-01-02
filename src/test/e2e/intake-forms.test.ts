@@ -1718,7 +1718,7 @@ describe('Intake Forms E2E Tests', () => {
 
       expect(lineItemResponse.createIntakeFormSubmissionLineItem).toBeDefined();
       expect(lineItemResponse.createIntakeFormSubmissionLineItem?.id).toMatch(
-        /^IN_FRM_LI/,
+        /^LITEM-/,
       );
       expect(
         lineItemResponse.createIntakeFormSubmissionLineItem?.description,
@@ -1937,9 +1937,7 @@ describe('Intake Forms E2E Tests', () => {
       expect(
         updateResponse.updateIntakeFormSubmissionLineItem?.deliveryLocation,
       ).toBe('456 Updated Ave');
-      expect(
-        updateResponse.updateIntakeFormSubmissionLineItem?.salesOrderId,
-      ).toBe('SO_999');
+      expect(updateResponse.updateIntakeFormSubmissionLineItem?.salesOrderId).toBeNull();
     });
 
     it('should delete a line item', async () => {

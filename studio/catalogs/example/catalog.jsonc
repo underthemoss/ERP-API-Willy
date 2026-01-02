@@ -1,0 +1,74 @@
+{
+  "$schema": "../../catalog.schema.json",
+  "schemaVersion": "0.1.0",
+  "catalog": {
+    "id": "example",
+    "name": "Example Catalog (Studio Workspace)",
+    "description": "A tiny example catalog showing MATERIAL + SERVICE composed from Global Vocabulary atoms."
+  },
+  "sources": [],
+  "products": [
+    {
+      "id": "material.skid_steer_loader.generic",
+      "kind": "MATERIAL",
+      "name": "Skid Steer Loader — Generic",
+      "tags": ["equipment", "construction_equipment", "loader", "skid_steer"],
+      "physicalAttributes": [
+        {
+          "attributeType": "power",
+          "value": 73.0,
+          "unit": "KW",
+          "contextTags": ["gross", "rated"],
+          "evidence": {
+            "sourceType": "text",
+            "ref": "studio/catalogs/example/sources/deere-330p-tier.txt",
+            "quote": "Gross Rated Power: 73.0 kW"
+          }
+        },
+        {
+          "attributeType": "weight",
+          "value": 4508,
+          "unit": "KG",
+          "contextTags": ["operating"],
+          "evidence": {
+            "sourceType": "text",
+            "ref": "studio/catalogs/example/sources/deere-330p-tier.txt",
+            "quote": "Operating Weight: 4508 kg"
+          }
+        },
+        {
+          "attributeType": "volume",
+          "value": 96.5,
+          "unit": "L",
+          "contextTags": ["fuel", "tank"],
+          "evidence": {
+            "sourceType": "text",
+            "ref": "studio/catalogs/example/sources/deere-330p-tier.txt",
+            "quote": "Fuel tank: 96.5 L"
+          }
+        }
+      ],
+      "brandAttributes": [
+        {
+          "attributeType": "manufacturer",
+          "value": "John Deere",
+          "evidence": { "sourceType": "text", "ref": "page_title", "quote": "John Deere 330 P-Tier" }
+        },
+        { "attributeType": "model", "value": "330 P-Tier" }
+      ]
+    },
+    {
+      "id": "service.earthwork.rough_grading",
+      "kind": "SERVICE",
+      "name": "Earthwork — Rough Grading",
+      "tags": ["earthwork", "grading", "site_preparation"],
+      "activityTags": ["cut", "fill", "spread", "grade"],
+      "attributeSchema": [
+        { "attributeType": "area", "requirement": "REQUIRED", "defaultUnit": "FT2" },
+        { "attributeType": "depth", "requirement": "OPTIONAL", "defaultUnit": "IN" },
+        { "attributeType": "distance", "requirement": "OPTIONAL", "defaultUnit": "MI" },
+        { "attributeType": "duration", "requirement": "OPTIONAL", "defaultUnit": "HR" }
+      ]
+    }
+  ]
+}

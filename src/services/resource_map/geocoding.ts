@@ -1,5 +1,8 @@
 import { type EnvConfig } from '../../config';
-import { type ResourceMapAddress, type ResourceMapLatLng } from './location-types';
+import {
+  type ResourceMapAddress,
+  type ResourceMapLatLng,
+} from './location-types';
 
 type MapboxFeature = {
   center?: [number, number];

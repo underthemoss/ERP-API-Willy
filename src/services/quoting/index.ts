@@ -24,6 +24,8 @@ import { UserAuthPayload } from '../../authentication';
 import { EnvConfig } from '../../config';
 import { PriceEngineService } from '../price_engine';
 import { PricesService } from '../prices';
+import { LineItemsService } from '../line_items';
+import { type LineItemConstraint } from '../line_items/model';
 import {
   ERP_QUOTE_SUBJECT_PERMISSIONS,
   ERP_QUOTE_SUBJECT_RELATIONS,
@@ -58,6 +60,7 @@ export class QuotingService {
   private envConfig: EnvConfig;
   private priceEngineService: PriceEngineService;
   private pricesService: PricesService;
+  private lineItemsService: LineItemsService;
   private authZ: AuthZ;
 
   constructor(config: {
@@ -67,6 +70,7 @@ export class QuotingService {
     envConfig: EnvConfig;
     priceEngineService: PriceEngineService;
     pricesService: PricesService;
+    lineItemsService: LineItemsService;
     authZ: AuthZ;
   }) {
     this.quotesModel = config.quotesModel;
@@ -75,7 +79,169 @@ export class QuotingService {
     this.envConfig = config.envConfig;
     this.priceEngineService = config.priceEngineService;
     this.pricesService = config.pricesService;
+    this.lineItemsService = config.lineItemsService;
     this.authZ = config.authZ;
+  }
+
+  private mapQuoteLineItemConstraintsToCanonical(
+    constraints: Array<{ strength: string; payload?: unknown } | null> | null | undefined,
+  ): LineItemConstraint[] | null {
+    if (!constraints) return null;
+    const mapped: LineItemConstraint[] = [];
+    for (const constraint of constraints) {
+      if (!constraint?.payload) continue;
+      const strength = constraint.strength as
+        | 'REQUIRED'
+        | 'PREFERRED'
+        | 'EXCLUDED';
+      mapped.push({
+        kind: 'OTHER',
+        strength,
+        data: { note: JSON.stringify(constraint.payload) },
+      });
+    }
+    return mapped.length ? mapped : null;
+  }
+
+  private async syncQuoteRevisionLineItemsToCanonicalStore(
+    params: {
+      quoteId: string;
+      revisionId: string;
+      user: UserAuthPayload;
+    },
+  ) {
+    const quote = await this.quotesModel.getQuoteById(params.quoteId);
+    if (!quote) return;
+
+    // Ensure caller can read the quote (buyers may read; writers should have update).
+    await this.authZ.quote.hasPermissionOrThrow({
+      permission: ERP_QUOTE_SUBJECT_PERMISSIONS.USER_READ,
+      resourceId: params.quoteId,
+      subjectId: params.user.id,
+    });
+
+    const revision = await this.quoteRevisionsModel.getQuoteRevisionById(
+      params.revisionId,
+    );
+    if (!revision) return;
+
+    if (revision.quoteId !== params.quoteId) {
+      throw new Error('Quote revision does not belong to quote');
+    }
+
+    const workspaceId = quote.sellerWorkspaceId;
+
+    const existing = await this.lineItemsService.listLineItemsByDocumentRef(
+      workspaceId,
+      {
+        type: 'QUOTE_REVISION',
+        id: params.quoteId,
+        revisionId: params.revisionId,
+      },
+      params.user,
+    );
+    const existingByQuoteRevisionLineItemId = new Map(
+      existing
+        .filter((item) => item.quoteRevisionLineItemId)
+        .map((item) => [item.quoteRevisionLineItemId as string, item]),
+    );
+
+    const seenQuoteRevisionLineItemIds = new Set<string>();
+
+    for (const item of revision.lineItems) {
+      seenQuoteRevisionLineItemIds.add(item.id);
+      const mappedConstraints = this.mapQuoteLineItemConstraintsToCanonical(
+        item.constraints as any,
+      );
+
+      const productRef = item.productRef
+        ? {
+            kind: item.productRef.kind as any,
+            productId: item.productRef.productId,
+          }
+        : 'pimCategoryId' in item && item.pimCategoryId
+          ? { kind: 'PIM_CATEGORY' as const, productId: item.pimCategoryId }
+          : null;
+
+      const timeWindow =
+        item.type === 'RENTAL'
+          ? { startAt: item.rentalStartDate, endAt: item.rentalEndDate }
+          : item.timeWindow
+            ? {
+                startAt: item.timeWindow.startAt ?? null,
+                endAt: item.timeWindow.endAt ?? null,
+              }
+            : null;
+
+      const pricingRef =
+        (item.pricingRef as any) ??
+        (item.sellersPriceId ? { priceId: item.sellersPriceId } : null);
+
+      const delivery =
+        item.deliveryMethod || item.deliveryLocation || item.deliveryNotes
+          ? {
+              method: item.deliveryMethod ?? null,
+              location: item.deliveryLocation ?? null,
+              notes: item.deliveryNotes ?? null,
+            }
+          : null;
+
+      const baseUpdates = {
+        type: item.type as any,
+        description: item.description,
+        quantity: String(item.quantity),
+        unitCode: item.unitCode ?? null,
+        productRef,
+        timeWindow,
+        placeRef: item.placeRef ?? null,
+        constraints: mappedConstraints,
+        inputs: (item.inputs as any) ?? null,
+        pricingRef,
+        pricingSpecSnapshot: (item.pricingSpecSnapshot as any) ?? null,
+        rateInCentsSnapshot: (item.rateInCentsSnapshot as any) ?? null,
+        subtotalInCents: (item.subtotalInCents as any) ?? null,
+        delivery,
+        notes: item.notes ?? null,
+        targetSelectors:
+          item.type === 'SERVICE' ? item.targetSelectors ?? null : null,
+        quoteRevisionLineItemId: item.id,
+        intakeFormSubmissionLineItemId:
+          item.intakeFormSubmissionLineItemId ?? null,
+      };
+
+      const existingItem = existingByQuoteRevisionLineItemId.get(item.id) ?? null;
+      if (existingItem) {
+        await this.lineItemsService.updateLineItem(
+          existingItem.id,
+          {
+            ...baseUpdates,
+          },
+          params.user,
+        );
+      } else {
+        await this.lineItemsService.createLineItem(
+          {
+            workspaceId,
+            documentRef: {
+              type: 'QUOTE_REVISION',
+              id: params.quoteId,
+              revisionId: params.revisionId,
+            },
+            ...baseUpdates,
+          },
+          params.user,
+        );
+      }
+    }
+
+    const toDelete = existing.filter(
+      (item) =>
+        item.quoteRevisionLineItemId &&
+        !seenQuoteRevisionLineItemIds.has(item.quoteRevisionLineItemId),
+    );
+    for (const item of toDelete) {
+      await this.lineItemsService.softDeleteLineItem(item.id, params.user);
+    }
   }
 
   /**************************
@@ -235,7 +401,8 @@ export class QuotingService {
       user,
     );
 
-    return this.quoteRevisionsModel.withTransaction(async (session) => {
+    const revision = await this.quoteRevisionsModel.withTransaction(
+      async (session) => {
       const revision = await this.quoteRevisionsModel.createQuoteRevision(
         {
           ...input,
@@ -265,7 +432,16 @@ export class QuotingService {
       }
 
       return revision;
+      },
+    );
+
+    await this.syncQuoteRevisionLineItemsToCanonicalStore({
+      quoteId: input.quoteId,
+      revisionId: revision.id,
+      user,
     });
+
+    return revision;
   }
 
   async getQuoteRevisionById(id: string, user: UserAuthPayload) {
@@ -348,7 +524,8 @@ export class QuotingService {
       );
     }
 
-    return this.quoteRevisionsModel.withTransaction(async (session) => {
+    const updatedRevision = await this.quoteRevisionsModel.withTransaction(
+      async (session) => {
       const updatedRevision =
         await this.quoteRevisionsModel.updateQuoteRevision(
           id,
@@ -383,7 +560,18 @@ export class QuotingService {
       }
 
       return updatedRevision;
-    });
+      },
+    );
+
+    if (updatedRevision) {
+      await this.syncQuoteRevisionLineItemsToCanonicalStore({
+        quoteId: updatedRevision.quoteId,
+        revisionId: updatedRevision.id,
+        user,
+      });
+    }
+
+    return updatedRevision;
   }
 
   async sendQuote(
@@ -418,12 +606,42 @@ export class QuotingService {
     }
 
     // Validate all line items have prices (subtotalInCents > 0)
-    const hasInvalidLineItems = revision.lineItems.some(
-      (item) => !item.sellersPriceId,
+    const canonicalLineItems = await this.lineItemsService.listLineItemsByDocumentRef(
+      quote.sellerWorkspaceId,
+      { type: 'QUOTE_REVISION', id: quoteId, revisionId },
+      user,
     );
+
+    const isPriced = (item: {
+      pricingRef?: { priceId?: string | null } | null;
+      pricingSpecSnapshot?: unknown;
+      subtotalInCents?: number | null;
+    }) =>
+      Boolean(item.pricingRef?.priceId) ||
+      Boolean(item.pricingSpecSnapshot && item.subtotalInCents !== null && item.subtotalInCents !== undefined);
+
+    const hasInvalidLineItems =
+      canonicalLineItems.length > 0
+        ? canonicalLineItems.some((item) => !isPriced(item))
+        : revision.lineItems.some((item) => !item.sellersPriceId);
+
     if (hasInvalidLineItems) {
-      throw new Error(
-        'All line items must have valid prices before sending the quote',
+      throw new Error('All line items must have valid prices before sending the quote');
+    }
+
+    // Ensure any referenced prices are readable by the buyer via quote->price relations.
+    const priceIdsToAuthorize = new Set(
+      canonicalLineItems
+        .map((item) => item.pricingRef?.priceId)
+        .filter((priceId): priceId is string => Boolean(priceId)),
+    );
+    if (priceIdsToAuthorize.size > 0) {
+      await this.authZ.priceBookPrice.writeRelations(
+        Array.from(priceIdsToAuthorize).map((priceId) => ({
+          subjectId: quoteId,
+          relation: ERP_PRICEBOOK_PRICE_SUBJECT_RELATIONS.QUOTE_QUOTE,
+          resourceId: priceId,
+        })),
       );
     }
 
@@ -526,8 +744,12 @@ export class QuotingService {
       throw new Error('Current revision not found');
     }
 
-    // Validate revision status is SENT
-    if (revision.status !== 'SENT') {
+    const sellerAcceptingOnBehalfOfBuyer = !isBuyerUser && !hasBuyerWorkspacePermission;
+    const canAcceptDraftRevision =
+      revision.status === 'DRAFT' && sellerAcceptingOnBehalfOfBuyer && !!approvalConfirmation;
+
+    // Validate revision status is SENT (or seller-confirmed DRAFT for off-platform approvals)
+    if (revision.status !== 'SENT' && !canAcceptDraftRevision) {
       throw new Error(
         `Cannot accept quote with revision status: ${revision.status}`,
       );
@@ -540,6 +762,17 @@ export class QuotingService {
 
     // Use transaction to perform all operations atomically
     return this.quotesModel.withTransaction(async (session) => {
+      // If the seller is accepting a DRAFT revision on behalf of an off-platform buyer,
+      // promote the revision to SENT so the accepted contract has a stable, non-draft marker.
+      if (canAcceptDraftRevision) {
+        await this.quoteRevisionsModel.updateQuoteRevision(
+          revision.id,
+          { status: 'SENT' },
+          user.id,
+          session,
+        );
+      }
+
       // 1. Update quote status to ACCEPTED (with approval confirmation and signature if provided)
       const updatedQuote = await this.quotesModel.updateQuote(
         quoteId,
@@ -774,15 +1007,32 @@ export class QuotingService {
    ************************/
   /**
    * Calculate subtotal for a line item by fetching price from catalog.
-   * Returns 0 if no priceId is provided (unpriced line item).
+   * Returns subtotal plus optional pricing snapshots; subtotal is 0 if no priceId
+   * is provided (unpriced line item).
    */
   private async calculateLineItemSubtotal(
     lineItem: any, // QuoteRevisionLineItem with optional sellersPriceId
     user: UserAuthPayload,
-  ): Promise<number> {
+  ): Promise<{
+    subtotalInCents: number;
+    unitCodeOverride?: string;
+    pricingSpecSnapshot?:
+      | {
+          kind: 'UNIT' | 'TIME';
+          unitCode: string;
+          rateInCents: number;
+        }
+      | {
+          kind: 'RENTAL_RATE_TABLE';
+          pricePerDayInCents: number;
+          pricePerWeekInCents: number;
+          pricePerMonthInCents: number;
+        };
+    rateInCentsSnapshot?: number;
+  }> {
     // If no priceId provided, return 0 (unpriced line item)
     if (!lineItem.sellersPriceId) {
-      return 0;
+      return { subtotalInCents: 0 };
     }
 
     // Fetch the price from the catalog
@@ -802,20 +1052,51 @@ export class QuotingService {
             `Expected RENTAL price for RENTAL line item, got ${price.priceType}`,
           );
         }
-        return this.calculateRentalSubtotal(lineItem, price);
+        return {
+          subtotalInCents: this.calculateRentalSubtotal(lineItem, price),
+          pricingSpecSnapshot: {
+            kind: 'RENTAL_RATE_TABLE',
+            pricePerDayInCents: price.pricePerDayInCents,
+            pricePerWeekInCents: price.pricePerWeekInCents,
+            pricePerMonthInCents: price.pricePerMonthInCents,
+          },
+        };
       case 'SERVICE':
-        // Service prices don't exist in the price catalog currently
-        // For now, we'll throw an error - this should be handled differently
-        throw new Error(
-          'SERVICE line items are not yet supported with price references',
-        );
+        if (price.priceType !== 'SERVICE') {
+          throw new Error(
+            `Expected SERVICE price for SERVICE line item, got ${price.priceType}`,
+          );
+        }
+        if (
+          price.pricingSpec?.kind === 'UNIT' ||
+          price.pricingSpec?.kind === 'TIME'
+        ) {
+          // Service unitCode is derived from the selected price (not user-editable).
+          // We return it so the stored quote revision line item stays consistent and
+          // downstream consumers don't hit mismatches.
+          if (!price.pricingSpec.unitCode) {
+            throw new Error('Service price pricingSpec is missing unitCode');
+          }
+        }
+        return {
+          subtotalInCents: this.calculateServiceSubtotal(lineItem, price),
+          unitCodeOverride:
+            price.pricingSpec?.kind === 'UNIT' || price.pricingSpec?.kind === 'TIME'
+              ? price.pricingSpec.unitCode
+              : undefined,
+          pricingSpecSnapshot: price.pricingSpec,
+          rateInCentsSnapshot: price.pricingSpec?.rateInCents,
+        };
       case 'SALE':
         if (price.priceType !== 'SALE') {
           throw new Error(
             `Expected SALE price for SALE line item, got ${price.priceType}`,
           );
         }
-        return this.calculateSaleSubtotal(lineItem, price);
+        return {
+          subtotalInCents: this.calculateSaleSubtotal(lineItem, price),
+          rateInCentsSnapshot: price.unitCostInCents,
+        };
       default:
         throw new Error(`Unknown line item type: ${(lineItem as any).type}`);
     }
@@ -851,8 +1132,19 @@ export class QuotingService {
     },
     price: any, // ServicePrice from catalog (not implemented yet)
   ): number {
-    // Service prices don't exist in the system yet
-    throw new Error('SERVICE pricing not implemented');
+    if (!price.pricingSpec) {
+      throw new Error('Service price is missing pricingSpec');
+    }
+
+    const pricingSpec = price.pricingSpec;
+
+    if (pricingSpec.kind === 'UNIT' || pricingSpec.kind === 'TIME') {
+      return Math.round(pricingSpec.rateInCents * service.quantity);
+    }
+
+    throw new Error(
+      `Unsupported pricingSpec kind for service price: ${pricingSpec.kind}`,
+    );
   }
 
   /**
@@ -879,10 +1171,20 @@ export class QuotingService {
     user: UserAuthPayload,
   ): Promise<(T & { subtotalInCents: number })[]> {
     return Promise.all(
-      lineItems.map(async (item) => ({
-        ...item,
-        subtotalInCents: await this.calculateLineItemSubtotal(item, user),
-      })),
+      lineItems.map(async (item) => {
+        const result = await this.calculateLineItemSubtotal(item, user);
+        return {
+          ...item,
+          ...(result.unitCodeOverride ? { unitCode: result.unitCodeOverride } : {}),
+          subtotalInCents: result.subtotalInCents,
+          ...(result.pricingSpecSnapshot
+            ? { pricingSpecSnapshot: result.pricingSpecSnapshot }
+            : {}),
+          ...(result.rateInCentsSnapshot !== undefined
+            ? { rateInCentsSnapshot: result.rateInCentsSnapshot }
+            : {}),
+        };
+      }),
     );
   }
 }
@@ -892,6 +1194,7 @@ export const createQuotingService = (config: {
   mongoClient: MongoClient;
   priceEngineService: PriceEngineService;
   pricesService: PricesService;
+  lineItemsService: LineItemsService;
   authZ: AuthZ;
 }) => {
   const quotesModel = createQuotesModel(config);
@@ -904,6 +1207,7 @@ export const createQuotingService = (config: {
     envConfig: config.envConfig,
     priceEngineService: config.priceEngineService,
     pricesService: config.pricesService,
+    lineItemsService: config.lineItemsService,
     authZ: config.authZ,
   });
 

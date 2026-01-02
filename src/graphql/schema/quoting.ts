@@ -27,8 +27,15 @@ import type {
   RFQSaleLineItem as RFQSaleLineItemType,
 } from '../../services/quoting';
 import { dropNullishKeys } from '../utils';
-import { RentalSalesOrderLineItemDoc } from '../../services/sales_orders';
-import { RentalPurchaseOrderLineItemDoc } from '../../services/purchase_orders';
+import {
+  RentalSalesOrderLineItemDoc,
+  SaleSalesOrderLineItemDoc,
+} from '../../services/sales_orders';
+import {
+  RentalPurchaseOrderLineItemDoc,
+  SalePurchaseOrderLineItemDoc,
+} from '../../services/purchase_orders';
+import { LineItemPlaceRef, LineItemPlaceRefInput } from './line-items';
 
 // Enums
 export const QuoteStatus = enumType({
@@ -55,6 +62,228 @@ export const QuoteLineItemDeliveryMethod = enumType({
   name: 'QuoteLineItemDeliveryMethod',
   members: ['PICKUP', 'DELIVERY'],
 });
+
+export const QuoteLineItemProductKind = enumType({
+  name: 'QuoteLineItemProductKind',
+  members: ['MATERIAL_PRODUCT', 'SERVICE_PRODUCT', 'ASSEMBLY_PRODUCT'],
+});
+
+export const QuoteLineItemConstraintStrength = enumType({
+  name: 'QuoteLineItemConstraintStrength',
+  members: ['REQUIRED', 'PREFERRED', 'EXCLUDED'],
+});
+
+export const QuoteLineItemPricingType = enumType({
+  name: 'QuoteLineItemPricingType',
+  members: ['RENTAL', 'SALE', 'SERVICE'],
+});
+
+export const ServiceTargetSelectorKind = enumType({
+  name: 'ServiceTargetSelectorKind',
+  members: [
+    { name: 'TAGS', value: 'tags' },
+    { name: 'PRODUCT', value: 'product' },
+    { name: 'LINE_ITEM', value: 'line_item' },
+  ],
+});
+
+const LINE_ITEM_PLACE_KINDS = [
+  'JOBSITE',
+  'BRANCH',
+  'YARD',
+  'ADDRESS',
+  'GEOFENCE',
+  'OTHER',
+] as const;
+const LINE_ITEM_PLACE_KIND_SET = new Set<string>(LINE_ITEM_PLACE_KINDS);
+type LineItemPlaceKind = (typeof LINE_ITEM_PLACE_KINDS)[number];
+type LineItemPlaceRefValue = { kind: LineItemPlaceKind; id: string };
+
+const normalizeQuoteLineItemPlaceRef = (
+  placeRef: unknown,
+): LineItemPlaceRefValue | null => {
+  if (placeRef === null || placeRef === undefined) return null;
+  if (typeof placeRef === 'string') {
+    const trimmed = placeRef.trim();
+    if (!trimmed) return null;
+    return { kind: 'OTHER', id: trimmed };
+  }
+  if (typeof placeRef !== 'object') return null;
+  const value = placeRef as { kind?: unknown; id?: unknown };
+  if (typeof value.id !== 'string') return null;
+  const id = value.id.trim();
+  if (!id) return null;
+  const kind =
+    typeof value.kind === 'string' && LINE_ITEM_PLACE_KIND_SET.has(value.kind)
+      ? (value.kind as LineItemPlaceKind)
+      : 'OTHER';
+  return { kind, id };
+};
+
+const normalizeQuoteLineItemPlaceRefInput = (
+  placeRef: unknown,
+): LineItemPlaceRefValue | undefined =>
+  normalizeQuoteLineItemPlaceRef(placeRef) ?? undefined;
+
+export const QuoteLineItemProductRef = objectType({
+  name: 'QuoteLineItemProductRef',
+  definition(t) {
+    t.nonNull.field('kind', { type: QuoteLineItemProductKind });
+    t.nonNull.string('productId');
+  },
+});
+
+export const QuoteLineItemProductRefInput = inputObjectType({
+  name: 'QuoteLineItemProductRefInput',
+  definition(t) {
+    t.nonNull.field('kind', { type: QuoteLineItemProductKind });
+    t.nonNull.string('productId');
+  },
+});
+
+export const QuoteLineItemTimeWindow = objectType({
+  name: 'QuoteLineItemTimeWindow',
+  definition(t) {
+    t.field('startAt', { type: 'DateTime' });
+    t.field('endAt', { type: 'DateTime' });
+  },
+});
+
+export const QuoteLineItemTimeWindowInput = inputObjectType({
+  name: 'QuoteLineItemTimeWindowInput',
+  definition(t) {
+    t.field('startAt', { type: 'DateTime' });
+    t.field('endAt', { type: 'DateTime' });
+  },
+});
+
+export const QuoteLineItemConstraint = objectType({
+  name: 'QuoteLineItemConstraint',
+  definition(t) {
+    t.nonNull.field('strength', { type: QuoteLineItemConstraintStrength });
+    t.field('payload', { type: 'JSONObject' });
+  },
+});
+
+export const QuoteLineItemConstraintInput = inputObjectType({
+  name: 'QuoteLineItemConstraintInput',
+  definition(t) {
+    t.nonNull.field('strength', { type: QuoteLineItemConstraintStrength });
+    t.field('payload', { type: 'JSONObject' });
+  },
+});
+
+export const QuoteLineItemPricingRef = objectType({
+  name: 'QuoteLineItemPricingRef',
+  definition(t) {
+    t.string('priceId');
+    t.field('priceType', { type: QuoteLineItemPricingType });
+    t.string('priceBookId');
+  },
+});
+
+export const QuoteLineItemPricingRefInput = inputObjectType({
+  name: 'QuoteLineItemPricingRefInput',
+  definition(t) {
+    t.string('priceId');
+    t.field('priceType', { type: QuoteLineItemPricingType });
+    t.string('priceBookId');
+  },
+});
+
+export const QuoteLineItemInputValue = objectType({
+  name: 'QuoteLineItemInputValue',
+  definition(t) {
+    t.nonNull.string('attributeTypeId');
+    t.nonNull.field('value', { type: 'JSONObject' });
+    t.string('unitCode');
+    t.list.nonNull.string('contextTags');
+  },
+});
+
+export const QuoteLineItemInputValueInput = inputObjectType({
+  name: 'QuoteLineItemInputValueInput',
+  definition(t) {
+    t.nonNull.string('attributeTypeId');
+    t.nonNull.field('value', { type: 'JSONObject' });
+    t.string('unitCode');
+    t.list.nonNull.string('contextTags');
+  },
+});
+
+export const ServiceTargetSelector = objectType({
+  name: 'ServiceTargetSelector',
+  definition(t) {
+    t.nonNull.field('kind', { type: ServiceTargetSelectorKind });
+    t.list.nonNull.string('tagIds');
+    t.string('targetProductId');
+    t.list.nonNull.string('targetLineItemIds');
+  },
+});
+
+export const ServiceTargetSelectorInput = inputObjectType({
+  name: 'ServiceTargetSelectorInput',
+  definition(t) {
+    t.nonNull.field('kind', { type: ServiceTargetSelectorKind });
+    t.list.nonNull.string('tagIds');
+    t.string('targetProductId');
+    t.list.nonNull.string('targetLineItemIds');
+  },
+});
+
+const addQuoteLineItemCommonFields = (t: any) => {
+  t.field('productRef', { type: QuoteLineItemProductRef });
+  t.string('unitCode');
+  t.field('timeWindow', { type: QuoteLineItemTimeWindow });
+  t.field('placeRef', {
+    type: LineItemPlaceRef,
+    resolve: (lineItem: { placeRef?: unknown }) =>
+      normalizeQuoteLineItemPlaceRef(lineItem.placeRef),
+  });
+  t.list.field('constraints', { type: QuoteLineItemConstraint });
+  t.list.field('inputs', { type: QuoteLineItemInputValue });
+  t.field('pricingRef', { type: QuoteLineItemPricingRef });
+  t.field('pricingSpecSnapshot', { type: 'PricingSpec' });
+  t.int('rateInCentsSnapshot');
+  t.string('notes');
+};
+
+const addRFQLineItemCommonFields = (t: any) => {
+  t.field('productRef', { type: QuoteLineItemProductRef });
+  t.string('unitCode');
+  t.field('timeWindow', { type: QuoteLineItemTimeWindow });
+  t.field('placeRef', {
+    type: LineItemPlaceRef,
+    resolve: (lineItem: { placeRef?: unknown }) =>
+      normalizeQuoteLineItemPlaceRef(lineItem.placeRef),
+  });
+  t.list.field('constraints', { type: QuoteLineItemConstraint });
+  t.list.field('inputs', { type: QuoteLineItemInputValue });
+  t.string('notes');
+};
+
+const addQuoteLineItemCommonInputFields = (t: any) => {
+  t.field('productRef', { type: QuoteLineItemProductRefInput });
+  t.string('unitCode');
+  t.field('timeWindow', { type: QuoteLineItemTimeWindowInput });
+  t.field('placeRef', { type: LineItemPlaceRefInput });
+  t.list.field('constraints', { type: QuoteLineItemConstraintInput });
+  t.list.field('inputs', { type: QuoteLineItemInputValueInput });
+  t.field('pricingRef', { type: QuoteLineItemPricingRefInput });
+  t.field('pricingSpecSnapshot', { type: 'PricingSpecInput' });
+  t.int('rateInCentsSnapshot');
+  t.string('notes');
+};
+
+const addRFQLineItemCommonInputFields = (t: any) => {
+  t.field('productRef', { type: QuoteLineItemProductRefInput });
+  t.string('unitCode');
+  t.field('timeWindow', { type: QuoteLineItemTimeWindowInput });
+  t.field('placeRef', { type: LineItemPlaceRefInput });
+  t.list.field('constraints', { type: QuoteLineItemConstraintInput });
+  t.list.field('inputs', { type: QuoteLineItemInputValueInput });
+  t.string('notes');
+};
 
 // Quote Object Type
 export const Quote = objectType({
@@ -104,6 +333,10 @@ export const Quote = objectType({
     t.field('validUntil', { type: 'DateTime' });
 
     // Signature and acceptance data
+    t.string('approvalConfirmation', {
+      description:
+        'Seller-provided confirmation when accepting on behalf of the buyer (e.g., "Approved by phone on 2025-01-03")',
+    });
     t.string('buyerAcceptedFullLegalName', {
       description:
         "Buyer's full legal name as provided when accepting the quote",
@@ -233,6 +466,8 @@ export const QuoteRevisionServiceLineItem = objectType({
     t.field('deliveryMethod', { type: QuoteLineItemDeliveryMethod });
     t.string('deliveryLocation');
     t.string('deliveryNotes');
+    addQuoteLineItemCommonFields(t);
+    t.list.field('targetSelectors', { type: ServiceTargetSelector });
     t.field('price', {
       type: 'Price',
       async resolve(lineItem, _args, ctx) {
@@ -267,7 +502,7 @@ export const QuoteRevisionRentalLineItem = objectType({
     t.nonNull.int('quantity');
     t.nonNull.int('subtotalInCents');
     t.nonNull.field('type', { type: QuoteLineItemType });
-    t.nonNull.string('pimCategoryId');
+    t.string('pimCategoryId');
     t.nonNull.field('rentalStartDate', { type: 'DateTime' });
     t.nonNull.field('rentalEndDate', { type: 'DateTime' });
     t.id('sellersPriceId');
@@ -277,6 +512,7 @@ export const QuoteRevisionRentalLineItem = objectType({
     t.field('deliveryMethod', { type: QuoteLineItemDeliveryMethod });
     t.string('deliveryLocation');
     t.string('deliveryNotes');
+    addQuoteLineItemCommonFields(t);
 
     t.field('price', {
       type: 'Price',
@@ -322,7 +558,7 @@ export const QuoteRevisionSaleLineItem = objectType({
     t.nonNull.int('quantity');
     t.nonNull.int('subtotalInCents');
     t.nonNull.field('type', { type: QuoteLineItemType });
-    t.nonNull.string('pimCategoryId');
+    t.string('pimCategoryId');
     t.id('sellersPriceId');
     // Tracking field
     t.string('intakeFormSubmissionLineItemId');
@@ -330,6 +566,7 @@ export const QuoteRevisionSaleLineItem = objectType({
     t.field('deliveryMethod', { type: QuoteLineItemDeliveryMethod });
     t.string('deliveryLocation');
     t.string('deliveryNotes');
+    addQuoteLineItemCommonFields(t);
 
     t.field('price', {
       type: 'Price',
@@ -392,6 +629,8 @@ export const RFQServiceLineItem = objectType({
     t.nonNull.string('description');
     t.nonNull.int('quantity');
     t.nonNull.field('type', { type: QuoteLineItemType });
+    addRFQLineItemCommonFields(t);
+    t.list.field('targetSelectors', { type: ServiceTargetSelector });
   },
 });
 
@@ -406,9 +645,10 @@ export const RFQRentalLineItem = objectType({
     t.nonNull.string('description');
     t.nonNull.int('quantity');
     t.nonNull.field('type', { type: QuoteLineItemType });
-    t.nonNull.string('pimCategoryId');
+    t.string('pimCategoryId');
     t.nonNull.field('rentalStartDate', { type: 'DateTime' });
     t.nonNull.field('rentalEndDate', { type: 'DateTime' });
+    addRFQLineItemCommonFields(t);
 
     t.field('pimCategory', {
       type: 'PimCategory',
@@ -433,7 +673,8 @@ export const RFQSaleLineItem = objectType({
     t.nonNull.string('description');
     t.nonNull.int('quantity');
     t.nonNull.field('type', { type: QuoteLineItemType });
-    t.nonNull.string('pimCategoryId');
+    t.string('pimCategoryId');
+    addRFQLineItemCommonFields(t);
 
     t.field('pimCategory', {
       type: 'PimCategory',
@@ -485,6 +726,25 @@ export const QuoteRevision = objectType({
       type: QuoteRevisionLineItem,
       resolve(revision) {
         return revision.lineItems || [];
+      },
+    });
+
+    t.nonNull.list.nonNull.field('canonicalLineItems', {
+      type: 'LineItem',
+      description:
+        'Canonical line items stored in the unified line_items collection for this quote revision.',
+      async resolve(revision, _args, ctx) {
+        if (!ctx.user) return [];
+        const quote = await ctx.services.quotingService.getQuoteById(
+          revision.quoteId,
+          ctx.user,
+        );
+        if (!quote) return [];
+        return ctx.services.lineItemsService.listLineItemsByDocumentRef(
+          quote.sellerWorkspaceId,
+          { type: 'QUOTE_REVISION', id: revision.quoteId, revisionId: revision.id },
+          ctx.user,
+        );
       },
     });
 
@@ -605,6 +865,10 @@ export const QuoteRevisionLineItemInput = inputObjectType({
     t.field('deliveryMethod', { type: QuoteLineItemDeliveryMethod });
     t.string('deliveryLocation');
     t.string('deliveryNotes');
+
+    // Extensible line item fields
+    addQuoteLineItemCommonInputFields(t);
+    t.list.field('targetSelectors', { type: ServiceTargetSelectorInput });
   },
 });
 
@@ -622,6 +886,10 @@ export const RFQLineItemInput = inputObjectType({
     t.string('pimCategoryId');
     t.field('rentalStartDate', { type: 'DateTime' });
     t.field('rentalEndDate', { type: 'DateTime' });
+
+    // Extensible line item fields
+    addRFQLineItemCommonInputFields(t);
+    t.list.field('targetSelectors', { type: ServiceTargetSelectorInput });
   },
 });
 
@@ -821,14 +1089,43 @@ export const CreateQuoteFromIntakeFormSubmissionInput = inputObjectType({
 function mapQuoteRevisionLineItem(input: any): QuoteRevisionLineItemType {
   const { type } = input;
 
+  const timeWindow = dropNullishKeys({
+    startAt: input.timeWindow?.startAt
+      ? new Date(input.timeWindow.startAt)
+      : undefined,
+    endAt: input.timeWindow?.endAt
+      ? new Date(input.timeWindow.endAt)
+      : undefined,
+  });
+
+  const resolvedSellersPriceId =
+    input.sellersPriceId ?? input.pricingRef?.priceId ?? undefined;
+  const resolvedPricingRef =
+    input.pricingRef ??
+    (resolvedSellersPriceId ? { priceId: resolvedSellersPriceId } : undefined);
+
   // Common optional fields for all line item types
   // Use dropNullishKeys to remove null/undefined values entirely (Zod .optional() doesn't accept null)
   const commonFields = dropNullishKeys({
-    sellersPriceId: input.sellersPriceId,
+    sellersPriceId: resolvedSellersPriceId,
     intakeFormSubmissionLineItemId: input.intakeFormSubmissionLineItemId,
     deliveryMethod: input.deliveryMethod,
     deliveryLocation: input.deliveryLocation,
     deliveryNotes: input.deliveryNotes,
+    productRef: input.productRef
+      ? {
+          kind: input.productRef.kind,
+          productId: input.productRef.productId,
+        }
+      : undefined,
+    unitCode: input.unitCode,
+    placeRef: normalizeQuoteLineItemPlaceRefInput(input.placeRef),
+    constraints: input.constraints,
+    inputs: input.inputs,
+    pricingRef: resolvedPricingRef,
+    pricingSpecSnapshot: input.pricingSpecSnapshot,
+    rateInCentsSnapshot: input.rateInCentsSnapshot,
+    notes: input.notes,
   });
 
   if (type === 'SERVICE') {
@@ -837,37 +1134,54 @@ function mapQuoteRevisionLineItem(input: any): QuoteRevisionLineItemType {
       id: input.id,
       description: input.description,
       quantity: input.quantity ?? 1,
+      timeWindow: Object.keys(timeWindow).length ? timeWindow : undefined,
+      targetSelectors: input.targetSelectors,
       ...commonFields,
       // subtotalInCents calculated in service layer (0 if no priceId)
     }) as QuoteRevisionServiceLineItemType;
   }
 
   if (type === 'RENTAL') {
-    if (!input.pimCategoryId) {
-      throw new Error('RENTAL line items require a pimCategoryId');
+    if (input.targetSelectors?.length) {
+      throw new Error('targetSelectors are only valid for SERVICE line items');
     }
-    if (!input.rentalStartDate) {
-      throw new Error('RENTAL line items require a rentalStartDate');
+    const rentalStartDate = input.rentalStartDate
+      ? new Date(input.rentalStartDate)
+      : timeWindow.startAt;
+    const rentalEndDate = input.rentalEndDate
+      ? new Date(input.rentalEndDate)
+      : timeWindow.endAt;
+    if (!rentalStartDate) {
+      throw new Error(
+        'RENTAL line items require a rentalStartDate or timeWindow.startAt',
+      );
     }
-    if (!input.rentalEndDate) {
-      throw new Error('RENTAL line items require a rentalEndDate');
+    if (!rentalEndDate) {
+      throw new Error(
+        'RENTAL line items require a rentalEndDate or timeWindow.endAt',
+      );
     }
+    const rentalTimeWindow =
+      Object.keys(timeWindow).length > 0
+        ? timeWindow
+        : { startAt: rentalStartDate, endAt: rentalEndDate };
     return dropNullishKeys({
       type: 'RENTAL',
       id: input.id,
       description: input.description,
       quantity: input.quantity ?? 1,
       pimCategoryId: input.pimCategoryId,
-      rentalStartDate: new Date(input.rentalStartDate),
-      rentalEndDate: new Date(input.rentalEndDate),
+      rentalStartDate,
+      rentalEndDate,
+      timeWindow: rentalTimeWindow,
       ...commonFields,
       // subtotalInCents calculated in service layer (0 if no priceId)
     }) as QuoteRevisionRentalLineItemType;
   }
 
   if (type === 'SALE') {
-    if (!input.pimCategoryId) {
-      throw new Error('SALE line items require a pimCategoryId');
+    if (input.targetSelectors?.length) {
+      throw new Error('targetSelectors are only valid for SERVICE line items');
     }
     return dropNullishKeys({
       type: 'SALE',
@@ -875,6 +1189,7 @@ function mapQuoteRevisionLineItem(input: any): QuoteRevisionLineItemType {
       description: input.description,
       quantity: input.quantity ?? 1,
       pimCategoryId: input.pimCategoryId,
+      timeWindow: Object.keys(timeWindow).length ? timeWindow : undefined,
       ...commonFields,
       // subtotalInCents calculated in service layer (0 if no priceId)
     }) as QuoteRevisionSaleLineItemType;
@@ -888,39 +1203,81 @@ function mapRFQLineItem(
 ): RFQLineItemUnion {
   const { type } = input;
 
+  const timeWindow = dropNullishKeys({
+    startAt: input.timeWindow?.startAt
+      ? new Date(input.timeWindow.startAt)
+      : undefined,
+    endAt: input.timeWindow?.endAt
+      ? new Date(input.timeWindow.endAt)
+      : undefined,
+  });
+
+  const commonFields = dropNullishKeys({
+    productRef: input.productRef
+      ? {
+          kind: input.productRef.kind,
+          productId: input.productRef.productId,
+        }
+      : undefined,
+    unitCode: input.unitCode,
+    placeRef: normalizeQuoteLineItemPlaceRefInput(input.placeRef),
+    constraints: input.constraints,
+    inputs: input.inputs,
+    notes: input.notes,
+  });
+
   if (type === 'SERVICE') {
     return {
       type: 'SERVICE',
       id: input.id ?? undefined,
       description: input.description,
       quantity: input.quantity ?? 1,
+      timeWindow: Object.keys(timeWindow).length ? timeWindow : undefined,
+      targetSelectors: input.targetSelectors,
+      ...commonFields,
     } as RFQServiceLineItemType;
   }
 
   if (type === 'RENTAL') {
-    if (!input.pimCategoryId) {
-      throw new Error('RENTAL line items require a pimCategoryId');
+    if (input.targetSelectors?.length) {
+      throw new Error('targetSelectors are only valid for SERVICE line items');
     }
-    if (!input.rentalStartDate) {
-      throw new Error('RENTAL line items require a rentalStartDate');
+    const rentalStartDate = input.rentalStartDate
+      ? new Date(input.rentalStartDate)
+      : timeWindow.startAt;
+    const rentalEndDate = input.rentalEndDate
+      ? new Date(input.rentalEndDate)
+      : timeWindow.endAt;
+    if (!rentalStartDate) {
+      throw new Error(
+        'RENTAL line items require a rentalStartDate or timeWindow.startAt',
+      );
     }
-    if (!input.rentalEndDate) {
-      throw new Error('RENTAL line items require a rentalEndDate');
+    if (!rentalEndDate) {
+      throw new Error(
+        'RENTAL line items require a rentalEndDate or timeWindow.endAt',
+      );
     }
+    const rentalTimeWindow =
+      Object.keys(timeWindow).length > 0
+        ? timeWindow
+        : { startAt: rentalStartDate, endAt: rentalEndDate };
     return {
       type: 'RENTAL',
       id: input.id ?? undefined,
       description: input.description,
       quantity: input.quantity ?? 1,
       pimCategoryId: input.pimCategoryId,
-      rentalStartDate: new Date(input.rentalStartDate),
-      rentalEndDate: new Date(input.rentalEndDate),
+      rentalStartDate,
+      rentalEndDate,
+      timeWindow: rentalTimeWindow,
+      ...commonFields,
     } as RFQRentalLineItemType;
   }
 
   if (type === 'SALE') {
-    if (!input.pimCategoryId) {
-      throw new Error('SALE line items require a pimCategoryId');
+    if (input.targetSelectors?.length) {
+      throw new Error('targetSelectors are only valid for SERVICE line items');
     }
     return {
       type: 'SALE',
@@ -928,6 +1285,8 @@ function mapRFQLineItem(
       description: input.description,
       quantity: input.quantity ?? 1,
       pimCategoryId: input.pimCategoryId,
+      timeWindow: Object.keys(timeWindow).length ? timeWindow : undefined,
+      ...commonFields,
     } as RFQSaleLineItemType;
   }
 
@@ -1520,11 +1879,87 @@ export const QuotingMutation = extendType({
           throw new Error('Current revision not found');
         }
 
-        // Create Sales Order from quote line items (only rental items for now)
-        // TODO support SALE and SERVICE line items in SO/PO creation
-        const rentalLineItemsForSO = revision.lineItems.filter(
-          (item) => item.type === 'RENTAL',
-        );
+        const canonicalQuoteRevisionLineItems =
+          await ctx.services.lineItemsService.listLineItemsByDocumentRef(
+            quote.sellerWorkspaceId,
+            { type: 'QUOTE_REVISION', id: quote.id, revisionId: revision.id },
+            ctx.user,
+          );
+
+        const parseQuantity = (value: unknown, fallback: number) => {
+          if (typeof value === 'number' && Number.isFinite(value)) return value;
+          if (typeof value === 'string') {
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : fallback;
+          }
+          return fallback;
+        };
+
+        const usingCanonicalQuoteRevisionLineItems =
+          canonicalQuoteRevisionLineItems.length > 0;
+
+        const serviceSalesOrderLineItemIds: string[] = [];
+        const quoteRevisionLineItemIdToSalesOrderLineItemId = new Map<
+          string,
+          string
+        >();
+        const quoteCanonicalLineItemIdToSalesOrderLineItemId = new Map<
+          string,
+          string
+        >();
+        const serviceTargetSelectorRemapQueue: Array<{
+          salesOrderLineItemId: string;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          targetSelectors: any[] | null | undefined;
+        }> = [];
+
+        const remapTargetSelectorsForSalesOrder = (
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          selectors: any[] | null | undefined,
+        ) => {
+          if (!Array.isArray(selectors) || selectors.length === 0) {
+            return null;
+          }
+
+          const remapped = selectors
+            .map((selector) => {
+              if (!selector || typeof selector !== 'object') return null;
+              if (selector.kind !== 'line_item') return selector;
+
+              const ids = Array.isArray(selector.targetLineItemIds)
+                ? selector.targetLineItemIds
+                : [];
+              const nextIds: string[] = [];
+              const missing: string[] = [];
+
+              for (const id of ids) {
+                if (typeof id !== 'string' || !id.trim()) continue;
+                const mapped =
+                  quoteRevisionLineItemIdToSalesOrderLineItemId.get(id) ??
+                  quoteCanonicalLineItemIdToSalesOrderLineItemId.get(id) ??
+                  null;
+                if (!mapped) {
+                  missing.push(id);
+                  continue;
+                }
+                nextIds.push(mapped);
+              }
+
+              if (missing.length > 0) {
+                logger.error(
+                  { quoteId: quote.id, missingTargetLineItemIds: missing },
+                  'Failed to remap targetSelectors.kind=line_item during quote acceptance',
+                );
+              }
+
+              const uniqueIds = Array.from(new Set(nextIds));
+              if (uniqueIds.length === 0) return null;
+              return { kind: 'line_item', targetLineItemIds: uniqueIds };
+            })
+            .filter((value) => value !== null);
+
+          return remapped.length > 0 ? remapped : null;
+        };
 
         // Generate sales order number
         const salesOrderNumber =
@@ -1554,34 +1989,258 @@ export const QuotingMutation = extendType({
           );
 
         // Create line items individually via dedicated service method
-        for (const item of rentalLineItemsForSO) {
-          await ctx.services.salesOrdersService.createSalesOrderLineItem(
-            {
-              sales_order_id: salesOrder._id,
-              quote_revision_line_item_id: item.id,
-              intake_form_submission_line_item_id:
-                item.intakeFormSubmissionLineItemId,
-              lineitem_type: 'RENTAL',
-              so_pim_id: item.pimCategoryId,
-              so_quantity: 1, // Always 1 for rental items
-              price_id: item.sellersPriceId,
-              delivery_date: item.rentalStartDate,
-              off_rent_date: item.rentalEndDate,
-              delivery_method: item.deliveryMethod,
-              delivery_location: item.deliveryLocation,
-              deliveryNotes: item.deliveryNotes,
-            } as RentalSalesOrderLineItemDoc,
+        if (usingCanonicalQuoteRevisionLineItems) {
+          for (const item of canonicalQuoteRevisionLineItems) {
+            const quoteRevisionLineItemId =
+              item.quoteRevisionLineItemId ?? item.id;
+
+            if (item.type === 'SERVICE') {
+              const createdServiceLineItem =
+                await ctx.services.lineItemsService.createLineItem(
+                  {
+                    workspaceId: quote.sellerWorkspaceId,
+                    documentRef: { type: 'SALES_ORDER', id: salesOrder._id },
+                    type: 'SERVICE',
+                    description: item.description,
+                    quantity: item.quantity,
+                    unitCode: item.unitCode ?? null,
+                    productRef: item.productRef ?? null,
+                    scopeTasks: item.scopeTasks ?? null,
+                    timeWindow: item.timeWindow ?? null,
+                    placeRef: item.placeRef ?? null,
+                    constraints: item.constraints ?? null,
+                    inputs: item.inputs ?? null,
+                    pricingRef: item.pricingRef ?? null,
+                    pricingSpecSnapshot: item.pricingSpecSnapshot ?? null,
+                    rateInCentsSnapshot: item.rateInCentsSnapshot ?? null,
+                    subtotalInCents: item.subtotalInCents ?? null,
+                    delivery: item.delivery ?? null,
+                    deliveryChargeInCents: item.deliveryChargeInCents ?? null,
+                    customPriceName: item.customPriceName ?? null,
+                    notes: item.notes ?? null,
+                    targetSelectors: item.targetSelectors ?? null,
+                    intakeFormSubmissionLineItemId:
+                      item.intakeFormSubmissionLineItemId ?? null,
+                    quoteRevisionLineItemId,
+                    sourceLineItemId: item.id,
+                    status: null,
+                  },
+                  ctx.systemUser,
+                );
+
+              quoteRevisionLineItemIdToSalesOrderLineItemId.set(
+                quoteRevisionLineItemId,
+                createdServiceLineItem.id,
+              );
+              quoteCanonicalLineItemIdToSalesOrderLineItemId.set(
+                item.id,
+                createdServiceLineItem.id,
+              );
+              serviceTargetSelectorRemapQueue.push({
+                salesOrderLineItemId: createdServiceLineItem.id,
+                targetSelectors: item.targetSelectors ?? null,
+              });
+              serviceSalesOrderLineItemIds.push(createdServiceLineItem.id);
+              continue;
+            }
+
+            if (item.type !== 'RENTAL' && item.type !== 'SALE') continue;
+
+            const created =
+              await ctx.services.salesOrdersService.createSalesOrderLineItem(
+                item.type === 'RENTAL'
+                  ? ({
+                      sales_order_id: salesOrder._id,
+                      quote_revision_line_item_id: quoteRevisionLineItemId,
+                      intake_form_submission_line_item_id:
+                        item.intakeFormSubmissionLineItemId ?? undefined,
+                      lineitem_type: 'RENTAL',
+                      so_pim_id: item.productRef?.productId ?? undefined,
+                      so_quantity: 1, // legacy invariant: rentals are 1 per line
+                      price_id: item.pricingRef?.priceId ?? undefined,
+                      delivery_date: item.timeWindow?.startAt ?? undefined,
+                      off_rent_date: item.timeWindow?.endAt ?? undefined,
+                      delivery_method: item.delivery?.method ?? undefined,
+                      delivery_location: item.delivery?.location ?? undefined,
+                      deliveryNotes: item.delivery?.notes ?? undefined,
+                    } as RentalSalesOrderLineItemDoc)
+                  : ({
+                      sales_order_id: salesOrder._id,
+                      quote_revision_line_item_id: quoteRevisionLineItemId,
+                      intake_form_submission_line_item_id:
+                        item.intakeFormSubmissionLineItemId ?? undefined,
+                      lineitem_type: 'SALE',
+                      so_pim_id: item.productRef?.productId ?? undefined,
+                      so_quantity: parseQuantity(item.quantity, 1),
+                      price_id: item.pricingRef?.priceId ?? undefined,
+                      delivery_date: item.timeWindow?.startAt ?? undefined,
+                      delivery_method: item.delivery?.method ?? undefined,
+                      delivery_location: item.delivery?.location ?? undefined,
+                      deliveryNotes: item.delivery?.notes ?? undefined,
+                      delivery_charge_in_cents:
+                        item.deliveryChargeInCents ?? undefined,
+                    } as SaleSalesOrderLineItemDoc),
+                ctx.systemUser,
+              );
+
+            quoteRevisionLineItemIdToSalesOrderLineItemId.set(
+              quoteRevisionLineItemId,
+              created._id,
+            );
+            quoteCanonicalLineItemIdToSalesOrderLineItemId.set(item.id, created._id);
+
+            await ctx.services.lineItemsService.updateLineItem(
+              created._id,
+              {
+                sourceLineItemId: item.id,
+                productRef: item.productRef ?? null,
+                pricingRef: item.pricingRef ?? null,
+                pricingSpecSnapshot: item.pricingSpecSnapshot ?? null,
+                rateInCentsSnapshot: item.rateInCentsSnapshot ?? null,
+                subtotalInCents: item.subtotalInCents ?? null,
+                deliveryChargeInCents: item.deliveryChargeInCents ?? null,
+                customPriceName: item.customPriceName ?? null,
+              },
+              ctx.systemUser,
+              );
+          }
+        } else {
+          for (const item of revision.lineItems) {
+            if (item.type === 'SERVICE') {
+              const pricingRef =
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ((item as any).pricingRef as any) ??
+                ('sellersPriceId' in item && item.sellersPriceId
+                  ? { priceId: item.sellersPriceId }
+                  : null);
+
+              const createdServiceLineItem =
+                await ctx.services.lineItemsService.createLineItem(
+                  {
+                    workspaceId: quote.sellerWorkspaceId,
+                    documentRef: { type: 'SALES_ORDER', id: salesOrder._id },
+                    type: 'SERVICE',
+                    description: item.description,
+                    quantity: String(parseQuantity(item.quantity, 1)),
+                    unitCode: item.unitCode ?? null,
+                    productRef: item.productRef
+                      ? {
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          kind: item.productRef.kind as any,
+                          productId: item.productRef.productId,
+                        }
+                      : null,
+                    timeWindow: item.timeWindow
+                      ? {
+                          startAt: item.timeWindow.startAt ?? null,
+                          endAt: item.timeWindow.endAt ?? null,
+                        }
+                      : null,
+                    placeRef: item.placeRef ?? null,
+                    // legacy quote constraints are not canonical; omit here and rely on canonical mirrors
+                    constraints: null,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    inputs: ((item as any).inputs as any) ?? null,
+                    pricingRef,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    pricingSpecSnapshot: ((item as any).pricingSpecSnapshot as any) ?? null,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    rateInCentsSnapshot: ((item as any).rateInCentsSnapshot as any) ?? null,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    subtotalInCents: ((item as any).subtotalInCents as any) ?? null,
+                    delivery:
+                      item.deliveryMethod || item.deliveryLocation || item.deliveryNotes
+                        ? {
+                            method: item.deliveryMethod ?? null,
+                            location: item.deliveryLocation ?? null,
+                            notes: item.deliveryNotes ?? null,
+                          }
+                        : null,
+                    notes: item.notes ?? null,
+                    targetSelectors:
+                      'targetSelectors' in item ? (item.targetSelectors as any) : null,
+                    intakeFormSubmissionLineItemId:
+                      item.intakeFormSubmissionLineItemId ?? null,
+                    quoteRevisionLineItemId: item.id,
+                    sourceLineItemId: item.id,
+                    status: null,
+                  },
+                  ctx.systemUser,
+                );
+
+              quoteRevisionLineItemIdToSalesOrderLineItemId.set(
+                item.id,
+                createdServiceLineItem.id,
+              );
+              serviceTargetSelectorRemapQueue.push({
+                salesOrderLineItemId: createdServiceLineItem.id,
+                targetSelectors:
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  ('targetSelectors' in item ? (item.targetSelectors as any) : null) ??
+                  null,
+              });
+              serviceSalesOrderLineItemIds.push(createdServiceLineItem.id);
+              continue;
+            }
+
+            if (item.type !== 'RENTAL' && item.type !== 'SALE') continue;
+
+            const created =
+              await ctx.services.salesOrdersService.createSalesOrderLineItem(
+              item.type === 'RENTAL'
+                ? ({
+                    sales_order_id: salesOrder._id,
+                    quote_revision_line_item_id: item.id,
+                    intake_form_submission_line_item_id:
+                      item.intakeFormSubmissionLineItemId,
+                    lineitem_type: 'RENTAL',
+                    so_pim_id: item.pimCategoryId ?? item.productRef?.productId,
+                    so_quantity: 1, // Always 1 for rental items
+                    price_id: item.sellersPriceId,
+                    delivery_date: item.rentalStartDate,
+                    off_rent_date: item.rentalEndDate,
+                    delivery_method: item.deliveryMethod,
+                    delivery_location: item.deliveryLocation,
+                    deliveryNotes: item.deliveryNotes,
+                  } as RentalSalesOrderLineItemDoc)
+                : ({
+                    sales_order_id: salesOrder._id,
+                    quote_revision_line_item_id: item.id,
+                    intake_form_submission_line_item_id:
+                      item.intakeFormSubmissionLineItemId,
+                    lineitem_type: 'SALE',
+                    so_pim_id: item.pimCategoryId ?? item.productRef?.productId,
+                    so_quantity: item.quantity,
+                    price_id: item.sellersPriceId,
+                    delivery_method: item.deliveryMethod,
+                    delivery_location: item.deliveryLocation,
+                    deliveryNotes: item.deliveryNotes,
+                    delivery_date: item.timeWindow?.startAt,
+                  } as SaleSalesOrderLineItemDoc),
+              ctx.systemUser,
+            );
+
+            quoteRevisionLineItemIdToSalesOrderLineItemId.set(item.id, created._id);
+          }
+        }
+
+        // Remap service targetSelectors.kind=line_item from quote-revision line item IDs
+        // into sales-order line item IDs so relationships survive acceptance.
+        for (const entry of serviceTargetSelectorRemapQueue) {
+          if (!Array.isArray(entry.targetSelectors) || entry.targetSelectors.length === 0) {
+            continue;
+          }
+          const remapped = remapTargetSelectorsForSalesOrder(entry.targetSelectors);
+          await ctx.services.lineItemsService.updateLineItem(
+            entry.salesOrderLineItemId,
+            { targetSelectors: remapped },
             ctx.systemUser,
           );
         }
 
-        // Create Purchase Order if buyerWorkspaceId exists (only rental items for now)
+        // Create Purchase Order if buyerWorkspaceId exists
         let purchaseOrder = null;
         if (quote.buyerWorkspaceId) {
-          const rentalLineItemsForPO = revision.lineItems.filter(
-            (item) => item.type === 'RENTAL',
-          );
-
           // Generate purchase order number
           const purchaseOrderNumber =
             await ctx.services.referenceNumberService.generateReferenceNumberForEntity(
@@ -1611,25 +2270,105 @@ export const QuotingMutation = extendType({
             );
 
           // Create line items individually via dedicated service method
-          for (const item of rentalLineItemsForPO) {
-            await ctx.services.purchaseOrdersService.createPurchaseOrderLineItem(
-              {
-                purchase_order_id: purchaseOrder._id,
-                quote_revision_line_item_id: item.id,
-                intake_form_submission_line_item_id:
-                  item.intakeFormSubmissionLineItemId,
-                lineitem_type: 'RENTAL',
-                po_pim_id: item.pimCategoryId,
-                po_quantity: 1, // Always 1 for rental items
-                price_id: item.sellersPriceId,
-                delivery_date: item.rentalStartDate,
-                off_rent_date: item.rentalEndDate,
-                delivery_method: item.deliveryMethod,
-                delivery_location: item.deliveryLocation,
-                deliveryNotes: item.deliveryNotes,
-              } as RentalPurchaseOrderLineItemDoc,
-              ctx.systemUser,
-            );
+          if (usingCanonicalQuoteRevisionLineItems) {
+            for (const item of canonicalQuoteRevisionLineItems) {
+              if (item.type !== 'RENTAL' && item.type !== 'SALE') continue;
+
+              const quoteRevisionLineItemId =
+                item.quoteRevisionLineItemId ?? item.id;
+
+              const created =
+                await ctx.services.purchaseOrdersService.createPurchaseOrderLineItem(
+                  item.type === 'RENTAL'
+                    ? ({
+                        purchase_order_id: purchaseOrder._id,
+                        quote_revision_line_item_id: quoteRevisionLineItemId,
+                        intake_form_submission_line_item_id:
+                          item.intakeFormSubmissionLineItemId ?? undefined,
+                        lineitem_type: 'RENTAL',
+                        po_pim_id: item.productRef?.productId ?? undefined,
+                        po_quantity: 1, // legacy invariant: rentals are 1 per line
+                        price_id: item.pricingRef?.priceId ?? undefined,
+                        delivery_date: item.timeWindow?.startAt ?? undefined,
+                        off_rent_date: item.timeWindow?.endAt ?? undefined,
+                        delivery_method: item.delivery?.method ?? undefined,
+                        delivery_location: item.delivery?.location ?? undefined,
+                        deliveryNotes: item.delivery?.notes ?? undefined,
+                      } as RentalPurchaseOrderLineItemDoc)
+                    : ({
+                        purchase_order_id: purchaseOrder._id,
+                        quote_revision_line_item_id: quoteRevisionLineItemId,
+                        intake_form_submission_line_item_id:
+                          item.intakeFormSubmissionLineItemId ?? undefined,
+                        lineitem_type: 'SALE',
+                        po_pim_id: item.productRef?.productId ?? undefined,
+                        po_quantity: parseQuantity(item.quantity, 1),
+                        price_id: item.pricingRef?.priceId ?? undefined,
+                        delivery_date: item.timeWindow?.startAt ?? undefined,
+                        delivery_method: item.delivery?.method ?? undefined,
+                        delivery_location: item.delivery?.location ?? undefined,
+                        deliveryNotes: item.delivery?.notes ?? undefined,
+                        delivery_charge_in_cents:
+                          item.deliveryChargeInCents ?? undefined,
+                      } as SalePurchaseOrderLineItemDoc),
+                  ctx.systemUser,
+                );
+
+              await ctx.services.lineItemsService.updateLineItem(
+                created._id,
+                {
+                  sourceLineItemId: item.id,
+                  productRef: item.productRef ?? null,
+                  pricingRef: item.pricingRef ?? null,
+                  pricingSpecSnapshot: item.pricingSpecSnapshot ?? null,
+                  rateInCentsSnapshot: item.rateInCentsSnapshot ?? null,
+                  subtotalInCents: item.subtotalInCents ?? null,
+                  deliveryChargeInCents: item.deliveryChargeInCents ?? null,
+                  customPriceName: item.customPriceName ?? null,
+                },
+                ctx.systemUser,
+              );
+            }
+          } else {
+            for (const item of revision.lineItems) {
+              if (item.type !== 'RENTAL' && item.type !== 'SALE') continue;
+
+              await ctx.services.purchaseOrdersService.createPurchaseOrderLineItem(
+                item.type === 'RENTAL'
+                  ? ({
+                      purchase_order_id: purchaseOrder._id,
+                      quote_revision_line_item_id: item.id,
+                      intake_form_submission_line_item_id:
+                        item.intakeFormSubmissionLineItemId,
+                      lineitem_type: 'RENTAL',
+                      po_pim_id:
+                        item.pimCategoryId ?? item.productRef?.productId,
+                      po_quantity: 1, // Always 1 for rental items
+                      price_id: item.sellersPriceId,
+                      delivery_date: item.rentalStartDate,
+                      off_rent_date: item.rentalEndDate,
+                      delivery_method: item.deliveryMethod,
+                      delivery_location: item.deliveryLocation,
+                      deliveryNotes: item.deliveryNotes,
+                    } as RentalPurchaseOrderLineItemDoc)
+                  : ({
+                      purchase_order_id: purchaseOrder._id,
+                      quote_revision_line_item_id: item.id,
+                      intake_form_submission_line_item_id:
+                        item.intakeFormSubmissionLineItemId,
+                      lineitem_type: 'SALE',
+                      po_pim_id:
+                        item.pimCategoryId ?? item.productRef?.productId,
+                      po_quantity: item.quantity,
+                      price_id: item.sellersPriceId,
+                      delivery_method: item.deliveryMethod,
+                      delivery_location: item.deliveryLocation,
+                      deliveryNotes: item.deliveryNotes,
+                      delivery_date: item.timeWindow?.startAt,
+                    } as SalePurchaseOrderLineItemDoc),
+                ctx.systemUser,
+              );
+            }
           }
         }
 
@@ -1699,14 +2438,34 @@ export const QuotingMutation = extendType({
           input.buyerAcceptedFullLegalName ?? undefined,
         );
 
-        // Generate PDF and send confirmation emails
-        try {
-          // Get seller's workspace for branding
-          const sellersWorkspace =
-            await ctx.services.workspaceService.getWorkspaceById(
-              quote.sellerWorkspaceId,
-              ctx.user,
+        // Best-effort: materialize service fulfilments for scheduled service line items.
+        // If a service line item has no schedule/pricing snapshot yet, the seller can create
+        // fulfilment manually later via createServiceFulfilmentFromLineItem.
+        for (const lineItemId of serviceSalesOrderLineItemIds) {
+          try {
+            await ctx.services.fulfilmentService.createServiceFulfilmentFromLineItem(
+              { lineItemId },
+              ctx.systemUser,
             );
+          } catch (error) {
+            logger.error(
+              { error, lineItemId, quoteId: quote.id },
+              'Failed to create service fulfilment from accepted quote line item',
+            );
+          }
+        }
+
+        // Generate PDF and send confirmation emails
+        // When a seller accepts on behalf of an off-platform buyer (approvalConfirmation),
+        // do not send notifications to the buyer from the platform.
+        if (!input.approvalConfirmation) {
+          try {
+            // Get seller's workspace for branding
+            const sellersWorkspace =
+              await ctx.services.workspaceService.getWorkspaceById(
+                quote.sellerWorkspaceId,
+                ctx.user,
+              );
 
           if (!sellersWorkspace) {
             throw new Error('Sellers workspace not found');
@@ -1836,7 +2595,7 @@ export const QuotingMutation = extendType({
             workspaceId: sellersWorkspace.id,
             user: ctx.user,
           });
-        } catch (error) {
+          } catch (error) {
           // Log error but don't fail the mutation - quote is already accepted
           logger.error(
             {
@@ -1845,6 +2604,7 @@ export const QuotingMutation = extendType({
             },
             'Failed to send quote acceptance notifications',
           );
+          }
         }
 
         return { quote: acceptedQuote, salesOrder, purchaseOrder };
@@ -2092,35 +2852,37 @@ export const QuotingMutation = extendType({
         // 5. Map intake form line items to quote revision line items
         // Filter out any line items that can't be converted (skip SERVICE types from intake)
         const quoteLineItems = lineItems
-          .filter((item) => item.type === 'RENTAL' || item.type === 'PURCHASE')
+          .filter((item: any) => item.type === 'RENTAL' || item.type === 'SALE')
           .map((item) => {
-            // Map PURCHASE to SALE type
-            const type = item.type === 'PURCHASE' ? 'SALE' : item.type;
+            const type = item.type as 'RENTAL' | 'SALE';
+            const parsedQuantity = Number(item.quantity);
+            const quantity = Number.isFinite(parsedQuantity)
+              ? parsedQuantity
+              : 1;
 
             const baseFields = {
-              type: type as 'RENTAL' | 'SALE',
+              type,
               description: item.description,
-              quantity: item.quantity,
-              pimCategoryId: item.pimCategoryId,
-              sellersPriceId: item.priceId ?? undefined, // May be undefined
+              quantity,
+              pimCategoryId: item.productRef?.productId,
+              sellersPriceId: item.pricingRef?.priceId ?? undefined, // May be undefined
               intakeFormSubmissionLineItemId: item.id,
-              deliveryMethod: item.deliveryMethod ?? undefined,
-              deliveryLocation: item.deliveryLocation ?? undefined,
-              deliveryNotes: item.deliveryNotes ?? undefined,
+              deliveryMethod: item.delivery?.method ?? undefined,
+              deliveryLocation: item.delivery?.location ?? undefined,
+              deliveryNotes: item.delivery?.notes ?? undefined,
             };
 
             if (type === 'RENTAL') {
+              const startAt = item.timeWindow?.startAt
+                ? new Date(item.timeWindow.startAt)
+                : new Date();
+              const endAt = item.timeWindow?.endAt
+                ? new Date(item.timeWindow.endAt)
+                : startAt;
               return {
                 ...baseFields,
-                rentalStartDate: item.rentalStartDate
-                  ? new Date(item.rentalStartDate)
-                  : new Date(item.startDate),
-                rentalEndDate: item.rentalEndDate
-                  ? new Date(item.rentalEndDate)
-                  : new Date(
-                      new Date(item.startDate).getTime() +
-                        item.durationInDays * 24 * 60 * 60 * 1000,
-                    ),
+                rentalStartDate: startAt,
+                rentalEndDate: endAt,
               } as QuoteRevisionRentalLineItemType;
             }
 

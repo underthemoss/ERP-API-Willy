@@ -1,11 +1,13 @@
 import { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
 import rateLimit from '@fastify/rate-limit';
+import { type StudioConversationsService } from '../../services/studio_conversations';
 import { chatHandler } from './handlers/chat';
 import { fetchUrlHandler, closeBrowser } from './handlers/fetch-url';
 
 export interface AgentPluginOptions {
   openaiApiKey?: string;
+  studioConversationsService: StudioConversationsService;
 }
 
 /**
@@ -18,7 +20,7 @@ const agentPlugin: FastifyPluginAsync<AgentPluginOptions> = async (
   fastify,
   opts,
 ) => {
-  const { openaiApiKey } = opts;
+  const { openaiApiKey, studioConversationsService } = opts;
 
   if (!openaiApiKey) {
     fastify.log.warn(
@@ -51,7 +53,10 @@ const agentPlugin: FastifyPluginAsync<AgentPluginOptions> = async (
       });
 
       // POST /api/agent/chat - Chat completion with optional streaming
-      fastify.post('/chat', chatHandler(openaiApiKey));
+      fastify.post(
+        '/chat',
+        chatHandler(openaiApiKey, studioConversationsService),
+      );
 
       // POST /api/agent/fetch-url - Fetch and extract content from URLs
       fastify.post('/fetch-url', fetchUrlHandler());

@@ -52,17 +52,39 @@ gql`
   query ListPrices($filter: ListPricesFilter!, $page: ListPricesPage!) {
     listPrices(filter: $filter, page: $page) {
       items {
+        __typename
         ... on RentalPrice {
           id
-          priceBookId
-          pimCategoryId
-          pricePerDayInCents
+          pricingSpec {
+            kind
+            unitCode
+            rateInCents
+            pricePerDayInCents
+            pricePerWeekInCents
+            pricePerMonthInCents
+          }
         }
         ... on SalePrice {
           id
-          priceBookId
-          pimCategoryId
-          unitCostInCents
+          pricingSpec {
+            kind
+            unitCode
+            rateInCents
+            pricePerDayInCents
+            pricePerWeekInCents
+            pricePerMonthInCents
+          }
+        }
+        ... on ServicePrice {
+          id
+          pricingSpec {
+            kind
+            unitCode
+            rateInCents
+            pricePerDayInCents
+            pricePerWeekInCents
+            pricePerMonthInCents
+          }
         }
       }
       page {

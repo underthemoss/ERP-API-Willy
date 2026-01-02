@@ -10,13 +10,106 @@ import { v4 as uuidv4 } from 'uuid';
 export const revisionStatusSchema = z.enum(['DRAFT', 'SENT']);
 
 const quoteLineItemType = z.enum(['RENTAL', 'SALE', 'SERVICE']);
+const quoteLineItemProductKindSchema = z.enum([
+  'MATERIAL_PRODUCT',
+  'SERVICE_PRODUCT',
+  'ASSEMBLY_PRODUCT',
+]);
+const quoteLineItemProductRefSchema = z.object({
+  kind: quoteLineItemProductKindSchema,
+  productId: z.string(),
+});
+const quoteLineItemTimeWindowSchema = z.object({
+  startAt: z.date().optional(),
+  endAt: z.date().optional(),
+});
+const quoteLineItemPlaceKindSchema = z.enum([
+  'JOBSITE',
+  'BRANCH',
+  'YARD',
+  'ADDRESS',
+  'GEOFENCE',
+  'OTHER',
+]);
+const quoteLineItemPlaceRefSchema = z.object({
+  kind: quoteLineItemPlaceKindSchema,
+  id: z.string(),
+});
+const normalizeQuoteLineItemPlaceRefInput = (value: unknown) => {
+  if (value === null || value === undefined) return undefined;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    return { kind: 'OTHER', id: trimmed };
+  }
+  return value;
+};
+const quoteLineItemPlaceRefInputSchema = z
+  .preprocess(normalizeQuoteLineItemPlaceRefInput, quoteLineItemPlaceRefSchema)
+  .optional();
+const quoteLineItemConstraintStrengthSchema = z.enum([
+  'REQUIRED',
+  'PREFERRED',
+  'EXCLUDED',
+]);
+const quoteLineItemConstraintSchema = z
+  .object({
+    strength: quoteLineItemConstraintStrengthSchema,
+  })
+  .passthrough();
+const quoteLineItemPricingRefSchema = z
+  .object({
+    priceId: z.string().optional(),
+    priceBookId: z.string().optional(),
+    priceType: z.enum(['RENTAL', 'SALE', 'SERVICE']).optional(),
+  })
+  .passthrough();
+const quoteLineItemInputValueSchema = z.object({
+  attributeTypeId: z.string(),
+  value: z.union([z.string(), z.number(), z.boolean()]),
+  unitCode: z.string().optional(),
+  contextTags: z.array(z.string()).optional(),
+});
+const quoteLineItemPricingSpecSnapshotSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('UNIT'),
+    unitCode: z.string(),
+    rateInCents: z.number().int().nonnegative(),
+  }),
+  z.object({
+    kind: z.literal('TIME'),
+    unitCode: z.string(),
+    rateInCents: z.number().int().nonnegative(),
+  }),
+  z.object({
+    kind: z.literal('RENTAL_RATE_TABLE'),
+    pricePerDayInCents: z.number().int().nonnegative(),
+    pricePerWeekInCents: z.number().int().nonnegative(),
+    pricePerMonthInCents: z.number().int().nonnegative(),
+  }),
+]);
+const serviceTargetSelectorSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('tags'),
+    tagIds: z.array(z.string()).min(1),
+  }),
+  z.object({
+    kind: z.literal('product'),
+    targetProductId: z.string(),
+  }),
+  z.object({
+    kind: z.literal('line_item'),
+    targetLineItemIds: z.array(z.string()).min(1),
+  }),
+]);
 
 // Delivery method enum
 const deliveryMethodSchema = z.enum(['PICKUP', 'DELIVERY']);
 
 // 1) common stuff that *every* line item has (Quote references seller's price catalog)
-// Input schema (no id - will be generated)
+// Input schema (id is optional; when provided it is preserved for stable identity)
 const baseLineItemInputSchema = z.object({
+  id: z.string().optional(),
   description: z.string(),
   quantity: z.number().positive().default(1),
   sellersPriceId: z.string().optional(), // Reference to seller's price catalog (optional - required before sending)
@@ -27,21 +120,33 @@ const baseLineItemInputSchema = z.object({
   deliveryMethod: deliveryMethodSchema.optional(),
   deliveryLocation: z.string().optional(),
   deliveryNotes: z.string().optional(),
+  // Extensible line item fields
+  productRef: quoteLineItemProductRefSchema.optional(),
+  unitCode: z.string().optional(),
+  timeWindow: quoteLineItemTimeWindowSchema.optional(),
+  placeRef: quoteLineItemPlaceRefInputSchema,
+  constraints: z.array(quoteLineItemConstraintSchema).optional(),
+  inputs: z.array(quoteLineItemInputValueSchema).optional(),
+  pricingRef: quoteLineItemPricingRefSchema.optional(),
+  pricingSpecSnapshot: quoteLineItemPricingSpecSnapshotSchema.optional(),
+  rateInCentsSnapshot: z.number().int().nonnegative().optional(),
+  notes: z.string().optional(),
 });
 
 // Stored schema (with id)
 const baseLineItemSchema = baseLineItemInputSchema.extend({
-  id: z.string().uuid(), // Generated v4 UUID for line item traceability
+  id: z.string(), // Stable line item id (uuid v4 today; may evolve)
 });
 
 // 2) service line - input (no id)
 const serviceLineItemInputSchema = baseLineItemInputSchema.extend({
   type: z.literal(quoteLineItemType.Values.SERVICE),
+  targetSelectors: z.array(serviceTargetSelectorSchema).optional(),
 });
 
 // 3) rental line - input (no id)
 const rentalLineItemInputSchema = baseLineItemInputSchema.extend({
-  pimCategoryId: z.string(),
+  pimCategoryId: z.string().optional(),
   type: z.literal(quoteLineItemType.Values.RENTAL),
   rentalStartDate: z.date(),
   rentalEndDate: z.date(),
@@ -49,7 +154,7 @@ const rentalLineItemInputSchema = baseLineItemInputSchema.extend({
 
 // 4) sale line - input (no id)
 const saleLineItemInputSchema = baseLineItemInputSchema.extend({
-  pimCategoryId: z.string(),
+  pimCategoryId: z.string().optional(),
   type: z.literal(quoteLineItemType.Values.SALE),
 });
 
@@ -63,11 +168,12 @@ export const revisionLineItemInputSchema = z.discriminatedUnion('type', [
 // 5) service line - stored (with id)
 const serviceLineItemSchema = baseLineItemSchema.extend({
   type: z.literal(quoteLineItemType.Values.SERVICE),
+  targetSelectors: z.array(serviceTargetSelectorSchema).optional(),
 });
 
 // 6) rental line - stored (with id)
 const rentalLineItemSchema = baseLineItemSchema.extend({
-  pimCategoryId: z.string(),
+  pimCategoryId: z.string().optional(),
   type: z.literal(quoteLineItemType.Values.RENTAL),
   rentalStartDate: z.date(),
   rentalEndDate: z.date(),
@@ -75,7 +181,7 @@ const rentalLineItemSchema = baseLineItemSchema.extend({
 
 // 7) sale line - stored (with id)
 const saleLineItemSchema = baseLineItemSchema.extend({
-  pimCategoryId: z.string(),
+  pimCategoryId: z.string().optional(),
   type: z.literal(quoteLineItemType.Values.SALE),
 });
 
@@ -154,7 +260,7 @@ const quoteRevisionReducer: QuoteRevisionReducer = (state, event) => {
     // Generate IDs for all line items using explicit type narrowing
     const lineItemsWithIds: QuoteRevisionLineItem[] =
       event.payload.lineItems.map((item) => {
-        const id = uuidv4();
+        const id = item.id ?? uuidv4();
         switch (item.type) {
           case 'SERVICE':
             return {
@@ -190,7 +296,7 @@ const quoteRevisionReducer: QuoteRevisionReducer = (state, event) => {
     const lineItemsWithIds: QuoteRevisionLineItem[] | undefined = event.payload
       .lineItems
       ? event.payload.lineItems.map((item) => {
-          const id = uuidv4();
+          const id = item.id ?? uuidv4();
           switch (item.type) {
             case 'SERVICE':
               return {

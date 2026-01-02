@@ -4,7 +4,7 @@ import { getOrCreateDevJWTKeys } from './lib/dev-jwt-keys';
 
 // defaults should be what you want to use in production
 const EnvSchema = Type.Object({
-  PORT: Type.Number({ default: 5000 }),
+  PORT: Type.Number({ default: 5001 }),
   GRAPHIQL_ENABLED: Type.Boolean({ default: true }), // TODO introspection key
   GENERATE_NEXUS_ARTIFACTS: Type.Boolean({ default: false }),
   MONGO_CONNECTION_STRING: Type.Required(Type.String()),

@@ -7,11 +7,10 @@ import {
 import { UserAuthPayload } from '../../authentication';
 import {
   SalesOrderLineItemDoc,
-  SalesOrderLineItemsModel,
-  createSalesOrderLineItemsModel,
   RentalSalesOrderLineItemDoc,
   SaleSalesOrderLineItemDoc,
 } from './sales-order-line-items-model';
+import { LineItem, LineItemsService, CreateLineItemInput } from '../line_items';
 // service dependencies
 import { type PriceEngineService } from '../price_engine';
 import { Price, PricesService } from '../prices';
@@ -24,6 +23,36 @@ import {
   ERP_INTAKE_FORM_SUBMISSION_SUBJECT_PERMISSIONS,
 } from '../../lib/authz/spicedb-generated-types';
 
+const hasOwnProperty = <T extends object>(obj: T, key: string) =>
+  Object.prototype.hasOwnProperty.call(obj, key);
+
+const parseDateValue = (value?: string | Date | null) => {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatQuantityString = (value?: number | null) => {
+  if (value === undefined || value === null) return '1';
+  return Number.isFinite(value) ? value.toString() : '1';
+};
+
+const parseQuantityNumber = (value?: string | number | null) => {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined;
+  }
+  if (typeof value === 'string') {
+    if (!value.trim()) return undefined;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+};
+
+const isSalesLineItemType = (value: string): value is 'RENTAL' | 'SALE' =>
+  value === 'RENTAL' || value === 'SALE';
+
 // re-export types for external use
 export type {
   SalesOrderDoc,
@@ -35,22 +64,211 @@ export type {
 export class SalesOrdersService {
   private model: SalesOrdersModel;
   private priceEngineService: PriceEngineService;
-  private lineItemModel: SalesOrderLineItemsModel;
+  private lineItemsService: LineItemsService;
   private pricesService: PricesService;
   private authZ: AuthZ;
 
   constructor(config: {
     model: SalesOrdersModel;
-    lineItemModel: SalesOrderLineItemsModel;
+    lineItemsService: LineItemsService;
     priceEngineService: PriceEngineService;
     pricesService: PricesService;
     authZ: AuthZ;
   }) {
     this.model = config.model;
-    this.lineItemModel = config.lineItemModel;
+    this.lineItemsService = config.lineItemsService;
     this.priceEngineService = config.priceEngineService;
     this.pricesService = config.pricesService;
     this.authZ = config.authZ;
+  }
+
+  private mapLineItemToSalesOrderLineItemDoc(
+    item: LineItem,
+  ): SalesOrderLineItemDoc | null {
+    if (item.documentRef.type !== 'SALES_ORDER') return null;
+    if (!isSalesLineItemType(item.type)) return null;
+
+    const baseFields = {
+      _id: item.id,
+      sales_order_id: item.documentRef.id,
+      intake_form_submission_line_item_id:
+        item.intakeFormSubmissionLineItemId ?? undefined,
+      quote_revision_line_item_id: item.quoteRevisionLineItemId ?? undefined,
+      so_pim_id: item.productRef?.productId ?? undefined,
+      so_quantity: parseQuantityNumber(item.quantity),
+      created_at: item.createdAt,
+      created_by: item.createdBy,
+      updated_at: item.updatedAt,
+      updated_by: item.updatedBy,
+      lineitem_type: item.type,
+      price_id: item.pricingRef?.priceId ?? undefined,
+      lineitem_status: item.status ?? undefined,
+      deleted_at: item.deletedAt ?? undefined,
+      deliveryNotes: item.delivery?.notes ?? undefined,
+      delivery_location: item.delivery?.location ?? undefined,
+      delivery_charge_in_cents: item.deliveryChargeInCents ?? undefined,
+      delivery_date: item.timeWindow?.startAt ?? undefined,
+      delivery_method: item.delivery?.method ?? undefined,
+    };
+
+    if (item.type === 'RENTAL') {
+      return {
+        ...baseFields,
+        off_rent_date: item.timeWindow?.endAt ?? undefined,
+      } as RentalSalesOrderLineItemDoc;
+    }
+
+    return baseFields as SaleSalesOrderLineItemDoc;
+  }
+
+  private buildLegacyLineItemDescription(input: {
+    lineitem_type: 'RENTAL' | 'SALE';
+    so_pim_id?: string;
+  }) {
+    if (input.so_pim_id) {
+      return `PIM ${input.so_pim_id}`;
+    }
+    return `${input.lineitem_type} line item`;
+  }
+
+  private mapLegacySalesOrderLineItemInputToLineItemInput(
+    input: Omit<
+      SalesOrderLineItemDoc,
+      '_id' | 'created_by' | 'created_at' | 'updated_at' | 'updated_by'
+    >,
+    workspaceId: string,
+  ): CreateLineItemInput {
+    const startAt = parseDateValue(input.delivery_date);
+    const endAt =
+      input.lineitem_type === 'RENTAL'
+        ? parseDateValue((input as RentalSalesOrderLineItemDoc).off_rent_date)
+        : null;
+
+    const delivery =
+      input.delivery_method || input.delivery_location || input.deliveryNotes
+        ? {
+            method: input.delivery_method ?? null,
+            location: input.delivery_location ?? null,
+            notes: input.deliveryNotes ?? null,
+          }
+        : null;
+
+    return {
+      workspaceId,
+      documentRef: { type: 'SALES_ORDER', id: input.sales_order_id },
+      type: input.lineitem_type,
+      description: this.buildLegacyLineItemDescription({
+        lineitem_type: input.lineitem_type,
+        so_pim_id: input.so_pim_id,
+      }),
+      quantity: formatQuantityString(input.so_quantity),
+      unitCode: null,
+      productRef: input.so_pim_id
+        ? { kind: 'PIM_PRODUCT', productId: input.so_pim_id }
+        : null,
+      timeWindow: startAt || endAt ? { startAt, endAt } : null,
+      placeRef: null,
+      constraints: null,
+      pricingRef: input.price_id ? { priceId: input.price_id } : null,
+      subtotalInCents: null,
+      delivery,
+      deliveryChargeInCents: input.delivery_charge_in_cents ?? null,
+      notes: null,
+      targetSelectors: null,
+      intakeFormSubmissionLineItemId:
+        input.intake_form_submission_line_item_id ?? null,
+      quoteRevisionLineItemId: input.quote_revision_line_item_id ?? null,
+      status: input.lineitem_status ?? null,
+    };
+  }
+
+  private mapLegacySalesOrderLineItemPatchToLineItemUpdates(
+    patch: Partial<
+      Omit<SalesOrderLineItemDoc, '_id' | 'created_by' | 'created_at'>
+    >,
+    existing: LineItem,
+  ) {
+    const updates: Partial<
+      Omit<LineItem, 'id' | 'workspaceId' | 'documentRef'>
+    > = {};
+
+    if (hasOwnProperty(patch, 'lineitem_type')) {
+      if (!patch.lineitem_type) {
+        throw new Error('lineitem_type cannot be cleared');
+      }
+      if (!isSalesLineItemType(patch.lineitem_type)) {
+        throw new Error('Unsupported sales order line item type');
+      }
+      updates.type = patch.lineitem_type;
+    }
+
+    if (hasOwnProperty(patch, 'so_quantity') && patch.so_quantity !== null) {
+      updates.quantity = formatQuantityString(patch.so_quantity);
+    }
+
+    if (hasOwnProperty(patch, 'so_pim_id')) {
+      updates.productRef = patch.so_pim_id
+        ? { kind: 'PIM_PRODUCT', productId: patch.so_pim_id }
+        : null;
+    }
+
+    if (hasOwnProperty(patch, 'price_id')) {
+      updates.pricingRef = patch.price_id ? { priceId: patch.price_id } : null;
+    }
+
+    if (hasOwnProperty(patch, 'lineitem_status')) {
+      updates.status = patch.lineitem_status ?? null;
+    }
+
+    if (hasOwnProperty(patch, 'delivery_charge_in_cents')) {
+      updates.deliveryChargeInCents = patch.delivery_charge_in_cents ?? null;
+    }
+
+    if (
+      hasOwnProperty(patch, 'delivery_date') ||
+      hasOwnProperty(patch, 'off_rent_date')
+    ) {
+      const rentalPatch = patch as Partial<RentalSalesOrderLineItemDoc>;
+      const nextTimeWindow = {
+        ...(existing.timeWindow ?? {}),
+      };
+      if (hasOwnProperty(patch, 'delivery_date')) {
+        nextTimeWindow.startAt = parseDateValue(patch.delivery_date);
+      }
+      if (hasOwnProperty(patch, 'off_rent_date')) {
+        if (existing.type !== 'RENTAL') {
+          throw new Error('off_rent_date is only valid for rental line items');
+        }
+        nextTimeWindow.endAt = parseDateValue(rentalPatch.off_rent_date);
+      }
+      updates.timeWindow =
+        nextTimeWindow.startAt || nextTimeWindow.endAt ? nextTimeWindow : null;
+    }
+
+    if (
+      hasOwnProperty(patch, 'delivery_method') ||
+      hasOwnProperty(patch, 'delivery_location') ||
+      hasOwnProperty(patch, 'deliveryNotes')
+    ) {
+      const nextDelivery = {
+        ...(existing.delivery ?? {}),
+      };
+      if (hasOwnProperty(patch, 'delivery_method')) {
+        nextDelivery.method = patch.delivery_method ?? null;
+      }
+      if (hasOwnProperty(patch, 'delivery_location')) {
+        nextDelivery.location = patch.delivery_location ?? null;
+      }
+      if (hasOwnProperty(patch, 'deliveryNotes')) {
+        nextDelivery.notes = patch.deliveryNotes ?? null;
+      }
+      updates.delivery =
+        nextDelivery.method || nextDelivery.location || nextDelivery.notes
+          ? nextDelivery
+          : null;
+    }
+
+    return updates;
   }
 
   /**
@@ -128,14 +346,10 @@ export class SalesOrdersService {
     if (!user) {
       return ids.map(() => null);
     }
-    // Fetch all sales orders with the given orderIds
-    const docs = await this.lineItemModel.getLineItemsByIds(ids);
-    const docsByOrderLineItemId: Record<string, SalesOrderLineItemDoc> = {};
-    for (const doc of docs) {
-      docsByOrderLineItemId[doc._id] = doc;
-    }
-    // Return in the same order as input, null for missing/unauthorized
-    return ids.map((id) => docsByOrderLineItemId[id] ?? null);
+    const items = await this.lineItemsService.batchGetLineItemsByIds(ids, user);
+    return items.map((item) =>
+      item ? this.mapLineItemToSalesOrderLineItemDoc(item) : null,
+    );
   }
 
   async batchGetSalesOrdersByIntakeFormSubmissionIds(
@@ -187,19 +401,22 @@ export class SalesOrdersService {
       return lineItemIds.map(() => null);
     }
 
-    // Fetch line items by intake form submission line item IDs
     const lineItems =
-      await this.lineItemModel.getSalesOrderLineItemsByIntakeFormSubmissionLineItemIds(
+      await this.lineItemsService.listLineItemsByIntakeFormSubmissionLineItemIds(
         Array.from(lineItemIds),
+        user,
       );
+    const salesOrderLineItems = lineItems.filter(
+      (item) => item.documentRef.type === 'SALES_ORDER',
+    );
 
-    if (!lineItems.length) {
+    if (!salesOrderLineItems.length) {
       return lineItemIds.map(() => null);
     }
 
     // Get unique sales order IDs to check permissions on parent sales orders
     const salesOrderIds = [
-      ...new Set(lineItems.map((li) => li.sales_order_id)),
+      ...new Set(salesOrderLineItems.map((li) => li.documentRef.id)),
     ];
     const salesOrders = await this.model.getSalesOrdersByIds(salesOrderIds);
 
@@ -223,9 +440,10 @@ export class SalesOrdersService {
     }
 
     // Filter line items to only those whose parent sales order is accessible
-    const allowedLineItems = lineItems.filter((li) =>
-      allowedSalesOrderIds.has(li.sales_order_id),
-    );
+    const allowedLineItems = salesOrderLineItems
+      .filter((li) => allowedSalesOrderIds.has(li.documentRef.id))
+      .map((li) => this.mapLineItemToSalesOrderLineItemDoc(li))
+      .filter((li): li is SalesOrderLineItemDoc => Boolean(li));
 
     // Return in the same order as input, null for missing/unauthorized
     return lineItemIds.map(
@@ -378,9 +596,22 @@ export class SalesOrdersService {
     if (!user) {
       throw new Error('User context is required to get sales order line items');
     }
-    return this.lineItemModel.getLineItemsBySalesOrderIdAndCompanyId(
-      salesOrderId,
+    const [salesOrder] = await this.batchGetSalesOrdersById(
+      [salesOrderId],
+      user,
     );
+    if (!salesOrder) {
+      throw new Error('Sales order not found or access denied');
+    }
+    const items = await this.lineItemsService.listLineItemsByDocumentRef(
+      salesOrder.workspace_id,
+      { type: 'SALES_ORDER', id: salesOrderId },
+      user,
+    );
+    return items
+      .map((item) => this.mapLineItemToSalesOrderLineItemDoc(item))
+      .filter((item): item is SalesOrderLineItemDoc => Boolean(item))
+      .filter((item) => item.lineitem_status !== 'DRAFT');
   }
 
   async createSalesOrderLineItem(
@@ -407,15 +638,30 @@ export class SalesOrdersService {
       }
     }
 
-    const now = new Date();
-    const lineItem: Omit<SalesOrderLineItemDoc, '_id'> = {
-      ...input,
-      created_at: now,
-      created_by: user.id,
-      updated_at: now,
-      updated_by: user.id,
-    };
-    return this.lineItemModel.createLineItem(lineItem);
+    if (!isSalesLineItemType(input.lineitem_type)) {
+      throw new Error('Unsupported sales order line item type');
+    }
+
+    const salesOrder = await this.model.getSalesOrderByIdAnyStatus(
+      input.sales_order_id,
+    );
+    if (!salesOrder) {
+      throw new Error('Sales order not found');
+    }
+
+    const lineItem = await this.lineItemsService.createLineItem(
+      this.mapLegacySalesOrderLineItemInputToLineItemInput(
+        input,
+        salesOrder.workspace_id,
+      ),
+      user,
+    );
+
+    const mapped = this.mapLineItemToSalesOrderLineItemDoc(lineItem);
+    if (!mapped) {
+      throw new Error('Failed to map created line item');
+    }
+    return mapped;
   }
 
   async patchSalesOrderLineItem(
@@ -431,16 +677,16 @@ export class SalesOrdersService {
       );
     }
 
-    // Fetch existing line item to check if it's rental
-    const [existingLineItem] = await this.lineItemModel.getLineItemsByIds([id]);
-    if (!existingLineItem) {
+    const existing = await this.lineItemsService.getLineItemById(id, user);
+    if (!existing || existing.documentRef.type !== 'SALES_ORDER') {
       throw new Error('Line item not found');
     }
 
     // Validate rental line item quantity must be exactly 1
     if (
-      existingLineItem.lineitem_type === 'RENTAL' &&
-      patch.so_quantity !== undefined
+      existing.type === 'RENTAL' &&
+      patch.so_quantity !== undefined &&
+      patch.so_quantity !== null
     ) {
       if (patch.so_quantity !== 1) {
         throw new Error(
@@ -450,14 +696,17 @@ export class SalesOrdersService {
       }
     }
 
-    const now = new Date();
-    await this.lineItemModel.patchLineItem(id, {
-      ...patch,
-      updated_at: now,
-      updated_by: user.id,
-    });
-    const [updated] = await this.lineItemModel.getLineItemsByIds([id]);
-    return updated ?? null;
+    const updates = this.mapLegacySalesOrderLineItemPatchToLineItemUpdates(
+      patch,
+      existing,
+    );
+    const updated = await this.lineItemsService.updateLineItem(
+      id,
+      updates,
+      user,
+    );
+    if (!updated) return null;
+    return this.mapLineItemToSalesOrderLineItemDoc(updated);
   }
 
   async patchRentalSalesOrderLineItem(
@@ -472,19 +721,28 @@ export class SalesOrdersService {
         'User context is required to patch rental sales order line item',
       );
     }
-    const [lineItem] = await this.lineItemModel.getLineItemsByIds([id]);
-    if (!lineItem) {
+    const lineItem = await this.lineItemsService.getLineItemById(id, user);
+    if (!lineItem || lineItem.documentRef.type !== 'SALES_ORDER') {
       throw new Error('Line item not found');
     }
-    if (lineItem.lineitem_type !== 'RENTAL') {
+    if (lineItem.type !== 'RENTAL') {
       throw new Error('Line item is not of type RENTAL');
     }
     return this.patchSalesOrderLineItem(id, patch, user);
   }
 
-  async getLineItemById(id: string): Promise<SalesOrderLineItemDoc | null> {
-    const [item] = await this.lineItemModel.getLineItemsByIds([id]);
-    return item ?? null;
+  async getLineItemById(
+    id: string,
+    user?: UserAuthPayload,
+  ): Promise<SalesOrderLineItemDoc | null> {
+    if (!user) {
+      throw new Error('User context is required to get sales order line item');
+    }
+    const item = await this.lineItemsService.getLineItemById(id, user);
+    if (!item || item.documentRef.type !== 'SALES_ORDER') {
+      return null;
+    }
+    return this.mapLineItemToSalesOrderLineItemDoc(item);
   }
 
   async softDeleteSalesOrderLineItem(
@@ -496,15 +754,12 @@ export class SalesOrdersService {
         'User context is required to soft delete sales order line item',
       );
     }
-    // Fetch the line item (including soft-deleted ones)
-    const lineItem = await this.lineItemModel.getLineItemByIdAnyStatus(id);
-    if (!lineItem) {
+    const existing = await this.lineItemsService.getLineItemById(id, user);
+    if (!existing || existing.documentRef.type !== 'SALES_ORDER') {
       throw new Error('Line item not found');
     }
-    await this.lineItemModel.softDeleteLineItem(id, user.id);
-    // Fetch the item again, including soft-deleted ones
-    const item = await this.lineItemModel.getLineItemByIdAnyStatus(id);
-    return item ?? null;
+    const deleted = await this.lineItemsService.softDeleteLineItem(id, user);
+    return deleted ? this.mapLineItemToSalesOrderLineItemDoc(deleted) : null;
   }
 
   private getApplicableRentalRates(
@@ -633,7 +888,10 @@ export class SalesOrdersService {
     | ReturnType<typeof this.getPriceForSalesItemLineItem>
     | null
   > {
-    const [item] = await this.lineItemModel.getLineItemsByIds([id]);
+    const lineItem = await this.lineItemsService.getLineItemById(id, user);
+    if (!lineItem) return null;
+    const item = this.mapLineItemToSalesOrderLineItemDoc(lineItem);
+    if (!item) return null;
 
     const [price] = item.price_id
       ? await this.pricesService.batchGetPricesByIds([item.price_id], user)
@@ -751,15 +1009,15 @@ export const createSalesOrdersService = async (config: {
   mongoClient: MongoClient;
   priceEngineService: PriceEngineService;
   pricesService: PricesService;
+  lineItemsService: LineItemsService;
   authZ: AuthZ;
 }) => {
   const model = createSalesOrdersModel(config);
-  const lineItemModel = createSalesOrderLineItemsModel(config);
   const salesOrdersService = new SalesOrdersService({
     model,
-    lineItemModel,
     priceEngineService: config.priceEngineService,
     pricesService: config.pricesService,
+    lineItemsService: config.lineItemsService,
     authZ: config.authZ,
   });
   return salesOrdersService;

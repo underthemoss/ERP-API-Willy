@@ -15,6 +15,19 @@ import {
 export type SalesOrderType = 'RENTAL' | 'SALE' | 'SERVICE';
 type BaseGeneratedFields = '_id' | 'createdAt' | 'updatedAt';
 
+export type ServiceFulfilmentTaskStatus = 'OPEN' | 'DONE' | 'SKIPPED';
+
+export type ServiceFulfilmentTask = {
+  id: string;
+  title: string;
+  activityTagIds: string[];
+  contextTagIds?: string[];
+  notes?: string;
+  status: ServiceFulfilmentTaskStatus;
+  completedAt?: Date;
+  completedBy?: string;
+};
+
 export type BaseFulfilmentDoc<T = SalesOrderType> = {
   _id: string;
   workspace_id: string;
@@ -42,13 +55,17 @@ export type BaseFulfilmentDoc<T = SalesOrderType> = {
   // price fields - denormalized for filtering
   priceId?: string;
   priceName?: string; // optional, if this is a specific price
-  pimCategoryId: string;
-  pimCategoryPath: string;
-  pimCategoryName: string;
+  pimCategoryId?: string;
+  pimCategoryPath?: string;
+  pimCategoryName?: string;
   pimProductId?: string; // if this price is for a specific product
 };
 
 export type RentalFulfilmentDoc = BaseFulfilmentDoc<'RENTAL'> & {
+  pimCategoryId: string;
+  pimCategoryPath: string;
+  pimCategoryName: string;
+  pimProductId?: string; // if this price is for a specific product
   inventoryId?: string;
   pricePerDayInCents: number;
   pricePerWeekInCents: number;
@@ -63,6 +80,10 @@ export type RentalFulfilmentDoc = BaseFulfilmentDoc<'RENTAL'> & {
 
 export type SaleFulfilmentDoc = BaseFulfilmentDoc<'SALE'> & {
   // TODO: tracking inventory items for bulk sales.
+  pimCategoryId: string;
+  pimCategoryPath: string;
+  pimCategoryName: string;
+  pimProductId?: string; // if this price is for a specific product
   unitCostInCents: number;
   quantity: number;
 };
@@ -70,6 +91,7 @@ export type SaleFulfilmentDoc = BaseFulfilmentDoc<'SALE'> & {
 export type ServiceFulfilmentDoc = BaseFulfilmentDoc<'SERVICE'> & {
   unitCostInCents: number;
   serviceDate?: Date;
+  tasks?: ServiceFulfilmentTask[];
 };
 
 export type FulfilmentDoc =
@@ -609,6 +631,24 @@ export class FulfilmentModel {
       {
         type: 'UPDATE_ASSIGNEE',
         assignToId: assignTo,
+      },
+      { principalId: userId },
+    );
+    if (!state) throw new Error('Unexpected error');
+    return this.mapFulfilment(state);
+  }
+
+  async updateServiceTaskStatus(
+    id: string,
+    params: { taskId: string; status: ServiceFulfilmentTaskStatus },
+    userId: string,
+  ): Promise<Fulfilment | null> {
+    const { state } = await this.eventStore.applyEvent(
+      id,
+      {
+        type: 'UPDATE_SERVICE_TASK_STATUS',
+        taskId: params.taskId,
+        status: params.status,
       },
       { principalId: userId },
     );

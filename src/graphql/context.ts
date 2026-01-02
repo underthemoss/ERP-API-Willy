@@ -41,6 +41,11 @@ import { type QuotingService } from '../services/quoting';
 import { type AuthZ } from '../lib/authz';
 import { type JWTService } from '../services/jwt';
 import { type GlobalAttributesService } from '../services/global_attributes';
+import { type GlobalTagsService } from '../services/global_tags';
+import { type WorkspaceVocabularyService } from '../services/workspace_vocabulary';
+import { type StudioConversationsService } from '../services/studio_conversations';
+import { type StudioFsService } from '../services/studio_fs';
+import { type LineItemsService } from '../services/line_items';
 
 export type CreateContextConfig = {
   envConfig: EnvConfig;
@@ -61,6 +66,7 @@ export type CreateContextConfig = {
     pimCategoriesService: PimCategoriesService;
     projectsService: ProjectsService;
     salesOrdersService: SalesOrdersService;
+    lineItemsService: LineItemsService;
     purchaseOrdersService: PurchaseOrdersService;
     assetSchedulesService: AssetSchedulesService;
     pulseService: Pulse;
@@ -87,6 +93,10 @@ export type CreateContextConfig = {
     quotingService: QuotingService;
     jwtService: JWTService;
     globalAttributesService: GlobalAttributesService;
+    globalTagsService: GlobalTagsService;
+    workspaceVocabularyService: WorkspaceVocabularyService;
+    studioConversationsService: StudioConversationsService;
+    studioFsService: StudioFsService;
   };
 };
 

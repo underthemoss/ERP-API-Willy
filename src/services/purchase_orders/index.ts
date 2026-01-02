@@ -7,11 +7,10 @@ import {
 import { UserAuthPayload } from '../../authentication';
 import {
   PurchaseOrderLineItemDoc,
-  PurchaseOrderLineItemsModel,
-  createPurchaseOrderLineItemsModel,
   RentalPurchaseOrderLineItemDoc,
   SalePurchaseOrderLineItemDoc,
 } from './purchase-order-line-items-model';
+import { LineItem, LineItemsService, CreateLineItemInput } from '../line_items';
 // service dependencies
 import { type PriceEngineService } from '../price_engine';
 import { Price, PricesService } from '../prices';
@@ -28,6 +27,36 @@ import {
   ERP_WORKSPACE_SUBJECT_PERMISSIONS,
 } from '../../lib/authz/spicedb-generated-types';
 
+const hasOwnProperty = <T extends object>(obj: T, key: string) =>
+  Object.prototype.hasOwnProperty.call(obj, key);
+
+const parseDateValue = (value?: string | Date | null) => {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatQuantityString = (value?: number | null) => {
+  if (value === undefined || value === null) return '1';
+  return Number.isFinite(value) ? value.toString() : '1';
+};
+
+const parseQuantityNumber = (value?: string | number | null) => {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined;
+  }
+  if (typeof value === 'string') {
+    if (!value.trim()) return undefined;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+};
+
+const isPurchaseLineItemType = (value: string): value is 'RENTAL' | 'SALE' =>
+  value === 'RENTAL' || value === 'SALE';
+
 // re-export types for external use
 export type {
   PurchaseOrderDoc,
@@ -39,7 +68,7 @@ export type {
 export class PurchaseOrdersService {
   private model: PurchaseOrdersModel;
   private priceEngineService: PriceEngineService;
-  private lineItemModel: PurchaseOrderLineItemsModel;
+  private lineItemsService: LineItemsService;
   private pricesService: PricesService;
   private inventoryService: InventoryService;
   private pimProductsService: PimProductsService;
@@ -50,7 +79,7 @@ export class PurchaseOrdersService {
 
   constructor(config: {
     model: PurchaseOrdersModel;
-    lineItemModel: PurchaseOrderLineItemsModel;
+    lineItemsService: LineItemsService;
     priceEngineService: PriceEngineService;
     pricesService: PricesService;
     inventoryService: InventoryService;
@@ -61,7 +90,7 @@ export class PurchaseOrdersService {
     authZ: AuthZ;
   }) {
     this.model = config.model;
-    this.lineItemModel = config.lineItemModel;
+    this.lineItemsService = config.lineItemsService;
     this.priceEngineService = config.priceEngineService;
     this.pricesService = config.pricesService;
     this.inventoryService = config.inventoryService;
@@ -70,6 +99,197 @@ export class PurchaseOrdersService {
     this.fulfilmentService = config.fulfilmentService;
     this.mongoClient = config.mongoClient;
     this.authZ = config.authZ;
+  }
+
+  private mapLineItemToPurchaseOrderLineItemDoc(
+    item: LineItem,
+  ): PurchaseOrderLineItemDoc | null {
+    if (item.documentRef.type !== 'PURCHASE_ORDER') return null;
+    if (!isPurchaseLineItemType(item.type)) return null;
+
+    const baseFields = {
+      _id: item.id,
+      purchase_order_id: item.documentRef.id,
+      intake_form_submission_line_item_id:
+        item.intakeFormSubmissionLineItemId ?? undefined,
+      quote_revision_line_item_id: item.quoteRevisionLineItemId ?? undefined,
+      po_pim_id: item.productRef?.productId ?? undefined,
+      po_quantity: parseQuantityNumber(item.quantity),
+      created_at: item.createdAt,
+      created_by: item.createdBy,
+      updated_at: item.updatedAt,
+      updated_by: item.updatedBy,
+      lineitem_type: item.type,
+      price_id: item.pricingRef?.priceId ?? undefined,
+      lineitem_status: item.status ?? undefined,
+      deleted_at: item.deletedAt ?? undefined,
+      deliveryNotes: item.delivery?.notes ?? undefined,
+      delivery_location: item.delivery?.location ?? undefined,
+      delivery_charge_in_cents: item.deliveryChargeInCents ?? undefined,
+      delivery_date: item.timeWindow?.startAt ?? undefined,
+      delivery_method: item.delivery?.method ?? undefined,
+    };
+
+    if (item.type === 'RENTAL') {
+      return {
+        ...baseFields,
+        off_rent_date: item.timeWindow?.endAt ?? undefined,
+      } as RentalPurchaseOrderLineItemDoc;
+    }
+
+    return baseFields as SalePurchaseOrderLineItemDoc;
+  }
+
+  private buildLegacyLineItemDescription(input: {
+    lineitem_type: 'RENTAL' | 'SALE';
+    po_pim_id?: string;
+  }) {
+    if (input.po_pim_id) {
+      return `PIM ${input.po_pim_id}`;
+    }
+    return `${input.lineitem_type} line item`;
+  }
+
+  private mapLegacyPurchaseOrderLineItemInputToLineItemInput(
+    input: Omit<
+      PurchaseOrderLineItemDoc,
+      '_id' | 'created_by' | 'created_at' | 'updated_at' | 'updated_by'
+    >,
+    workspaceId: string,
+  ): CreateLineItemInput {
+    const startAt = parseDateValue(input.delivery_date);
+    const endAt =
+      input.lineitem_type === 'RENTAL'
+        ? parseDateValue(
+            (input as RentalPurchaseOrderLineItemDoc).off_rent_date,
+          )
+        : null;
+
+    const delivery =
+      input.delivery_method || input.delivery_location || input.deliveryNotes
+        ? {
+            method: input.delivery_method ?? null,
+            location: input.delivery_location ?? null,
+            notes: input.deliveryNotes ?? null,
+          }
+        : null;
+
+    return {
+      workspaceId,
+      documentRef: { type: 'PURCHASE_ORDER', id: input.purchase_order_id },
+      type: input.lineitem_type,
+      description: this.buildLegacyLineItemDescription({
+        lineitem_type: input.lineitem_type,
+        po_pim_id: input.po_pim_id,
+      }),
+      quantity: formatQuantityString(input.po_quantity),
+      unitCode: null,
+      productRef: input.po_pim_id
+        ? { kind: 'PIM_PRODUCT', productId: input.po_pim_id }
+        : null,
+      timeWindow: startAt || endAt ? { startAt, endAt } : null,
+      placeRef: null,
+      constraints: null,
+      pricingRef: input.price_id ? { priceId: input.price_id } : null,
+      subtotalInCents: null,
+      delivery,
+      deliveryChargeInCents: input.delivery_charge_in_cents ?? null,
+      notes: null,
+      targetSelectors: null,
+      intakeFormSubmissionLineItemId:
+        input.intake_form_submission_line_item_id ?? null,
+      quoteRevisionLineItemId: input.quote_revision_line_item_id ?? null,
+      status: input.lineitem_status ?? null,
+    };
+  }
+
+  private mapLegacyPurchaseOrderLineItemPatchToLineItemUpdates(
+    patch: Partial<
+      Omit<PurchaseOrderLineItemDoc, '_id' | 'created_by' | 'created_at'>
+    >,
+    existing: LineItem,
+  ) {
+    const updates: Partial<
+      Omit<LineItem, 'id' | 'workspaceId' | 'documentRef'>
+    > = {};
+
+    if (hasOwnProperty(patch, 'lineitem_type')) {
+      if (!patch.lineitem_type) {
+        throw new Error('lineitem_type cannot be cleared');
+      }
+      if (!isPurchaseLineItemType(patch.lineitem_type)) {
+        throw new Error('Unsupported purchase order line item type');
+      }
+      updates.type = patch.lineitem_type;
+    }
+
+    if (hasOwnProperty(patch, 'po_quantity') && patch.po_quantity !== null) {
+      updates.quantity = formatQuantityString(patch.po_quantity);
+    }
+
+    if (hasOwnProperty(patch, 'po_pim_id')) {
+      updates.productRef = patch.po_pim_id
+        ? { kind: 'PIM_PRODUCT', productId: patch.po_pim_id }
+        : null;
+    }
+
+    if (hasOwnProperty(patch, 'price_id')) {
+      updates.pricingRef = patch.price_id ? { priceId: patch.price_id } : null;
+    }
+
+    if (hasOwnProperty(patch, 'lineitem_status')) {
+      updates.status = patch.lineitem_status ?? null;
+    }
+
+    if (hasOwnProperty(patch, 'delivery_charge_in_cents')) {
+      updates.deliveryChargeInCents = patch.delivery_charge_in_cents ?? null;
+    }
+
+    if (
+      hasOwnProperty(patch, 'delivery_date') ||
+      hasOwnProperty(patch, 'off_rent_date')
+    ) {
+      const rentalPatch = patch as Partial<RentalPurchaseOrderLineItemDoc>;
+      const nextTimeWindow = {
+        ...(existing.timeWindow ?? {}),
+      };
+      if (hasOwnProperty(patch, 'delivery_date')) {
+        nextTimeWindow.startAt = parseDateValue(patch.delivery_date);
+      }
+      if (hasOwnProperty(patch, 'off_rent_date')) {
+        if (existing.type !== 'RENTAL') {
+          throw new Error('off_rent_date is only valid for rental line items');
+        }
+        nextTimeWindow.endAt = parseDateValue(rentalPatch.off_rent_date);
+      }
+      updates.timeWindow =
+        nextTimeWindow.startAt || nextTimeWindow.endAt ? nextTimeWindow : null;
+    }
+
+    if (
+      hasOwnProperty(patch, 'delivery_method') ||
+      hasOwnProperty(patch, 'delivery_location') ||
+      hasOwnProperty(patch, 'deliveryNotes')
+    ) {
+      const nextDelivery = {
+        ...(existing.delivery ?? {}),
+      };
+      if (hasOwnProperty(patch, 'delivery_method')) {
+        nextDelivery.method = patch.delivery_method ?? null;
+      }
+      if (hasOwnProperty(patch, 'delivery_location')) {
+        nextDelivery.location = patch.delivery_location ?? null;
+      }
+      if (hasOwnProperty(patch, 'deliveryNotes')) {
+        nextDelivery.notes = patch.deliveryNotes ?? null;
+      }
+      updates.delivery =
+        nextDelivery.method || nextDelivery.location || nextDelivery.notes
+          ? nextDelivery
+          : null;
+    }
+
+    return updates;
   }
 
   /**
@@ -150,14 +370,10 @@ export class PurchaseOrdersService {
     if (!user) {
       return ids.map(() => null);
     }
-    // Fetch all purchase order line items with the given ids
-    const docs = await this.lineItemModel.getLineItemsByIds(ids);
-    const docsByOrderLineItemId: Record<string, PurchaseOrderLineItemDoc> = {};
-    for (const doc of docs) {
-      docsByOrderLineItemId[doc._id] = doc;
-    }
-    // Return in the same order as input, null for missing/unauthorized
-    return ids.map((id) => docsByOrderLineItemId[id] ?? null);
+    const items = await this.lineItemsService.batchGetLineItemsByIds(ids, user);
+    return items.map((item) =>
+      item ? this.mapLineItemToPurchaseOrderLineItemDoc(item) : null,
+    );
   }
 
   async createPurchaseOrder(
@@ -280,9 +496,22 @@ export class PurchaseOrdersService {
         'User context is required to get purchase order line items',
       );
     }
-    return this.lineItemModel.getLineItemsByPurchaseOrderIdAndCompanyId(
-      purchaseOrderId,
+    const [purchaseOrder] = await this.batchGetPurchaseOrdersById(
+      [purchaseOrderId],
+      user,
     );
+    if (!purchaseOrder) {
+      throw new Error('Purchase order not found or access denied');
+    }
+    const items = await this.lineItemsService.listLineItemsByDocumentRef(
+      purchaseOrder.workspace_id,
+      { type: 'PURCHASE_ORDER', id: purchaseOrderId },
+      user,
+    );
+    return items
+      .map((item) => this.mapLineItemToPurchaseOrderLineItemDoc(item))
+      .filter((item): item is PurchaseOrderLineItemDoc => Boolean(item))
+      .filter((item) => item.lineitem_status !== 'DRAFT');
   }
 
   async createPurchaseOrderLineItem(
@@ -294,7 +523,7 @@ export class PurchaseOrdersService {
   ) {
     if (!user) {
       throw new Error(
-        'User context is required to create sales order line item',
+        'User context is required to create purchase order line item',
       );
     }
 
@@ -309,15 +538,30 @@ export class PurchaseOrdersService {
       }
     }
 
-    const now = new Date();
-    const lineItem: Omit<PurchaseOrderLineItemDoc, '_id'> = {
-      ...input,
-      created_at: now,
-      created_by: user.id,
-      updated_at: now,
-      updated_by: user.id,
-    };
-    return this.lineItemModel.createLineItem(lineItem);
+    if (!isPurchaseLineItemType(input.lineitem_type)) {
+      throw new Error('Unsupported purchase order line item type');
+    }
+
+    const purchaseOrder = await this.model.getPurchaseOrderByIdAnyStatus(
+      input.purchase_order_id,
+    );
+    if (!purchaseOrder) {
+      throw new Error('Purchase order not found');
+    }
+
+    const lineItem = await this.lineItemsService.createLineItem(
+      this.mapLegacyPurchaseOrderLineItemInputToLineItemInput(
+        input,
+        purchaseOrder.workspace_id,
+      ),
+      user,
+    );
+
+    const mapped = this.mapLineItemToPurchaseOrderLineItemDoc(lineItem);
+    if (!mapped) {
+      throw new Error('Failed to map created line item');
+    }
+    return mapped;
   }
 
   async patchPurchaseOrderLineItem(
@@ -333,16 +577,16 @@ export class PurchaseOrdersService {
       );
     }
 
-    // Fetch existing line item to check if it's rental
-    const [existingLineItem] = await this.lineItemModel.getLineItemsByIds([id]);
-    if (!existingLineItem) {
+    const existing = await this.lineItemsService.getLineItemById(id, user);
+    if (!existing || existing.documentRef.type !== 'PURCHASE_ORDER') {
       throw new Error('Line item not found');
     }
 
     // Validate rental line item quantity must be exactly 1
     if (
-      existingLineItem.lineitem_type === 'RENTAL' &&
-      patch.po_quantity !== undefined
+      existing.type === 'RENTAL' &&
+      patch.po_quantity !== undefined &&
+      patch.po_quantity !== null
     ) {
       if (patch.po_quantity !== 1) {
         throw new Error(
@@ -352,14 +596,17 @@ export class PurchaseOrdersService {
       }
     }
 
-    const now = new Date();
-    await this.lineItemModel.patchLineItem(id, {
-      ...patch,
-      updated_at: now,
-      updated_by: user.id,
-    });
-    const [updated] = await this.lineItemModel.getLineItemsByIds([id]);
-    return updated ?? null;
+    const updates = this.mapLegacyPurchaseOrderLineItemPatchToLineItemUpdates(
+      patch,
+      existing,
+    );
+    const updated = await this.lineItemsService.updateLineItem(
+      id,
+      updates,
+      user,
+    );
+    if (!updated) return null;
+    return this.mapLineItemToPurchaseOrderLineItemDoc(updated);
   }
 
   async patchRentalPurchaseOrderLineItem(
@@ -374,19 +621,30 @@ export class PurchaseOrdersService {
         'User context is required to patch rental purchase order line item',
       );
     }
-    const [lineItem] = await this.lineItemModel.getLineItemsByIds([id]);
-    if (!lineItem) {
+    const lineItem = await this.lineItemsService.getLineItemById(id, user);
+    if (!lineItem || lineItem.documentRef.type !== 'PURCHASE_ORDER') {
       throw new Error('Line item not found');
     }
-    if (lineItem.lineitem_type !== 'RENTAL') {
+    if (lineItem.type !== 'RENTAL') {
       throw new Error('Line item is not of type RENTAL');
     }
     return this.patchPurchaseOrderLineItem(id, patch, user);
   }
 
-  async getLineItemById(id: string): Promise<PurchaseOrderLineItemDoc | null> {
-    const [item] = await this.lineItemModel.getLineItemsByIds([id]);
-    return item ?? null;
+  async getLineItemById(
+    id: string,
+    user?: UserAuthPayload,
+  ): Promise<PurchaseOrderLineItemDoc | null> {
+    if (!user) {
+      throw new Error(
+        'User context is required to get purchase order line item',
+      );
+    }
+    const item = await this.lineItemsService.getLineItemById(id, user);
+    if (!item || item.documentRef.type !== 'PURCHASE_ORDER') {
+      return null;
+    }
+    return this.mapLineItemToPurchaseOrderLineItemDoc(item);
   }
 
   async softDeletePurchaseOrderLineItem(
@@ -398,9 +656,8 @@ export class PurchaseOrdersService {
         'User context is required to soft delete purchase order line item',
       );
     }
-    // Fetch the line item (including soft-deleted ones)
-    const lineItem = await this.lineItemModel.getLineItemByIdAnyStatus(id);
-    if (!lineItem) {
+    const existing = await this.lineItemsService.getLineItemById(id, user);
+    if (!existing || existing.documentRef.type !== 'PURCHASE_ORDER') {
       throw new Error('Line item not found');
     }
 
@@ -410,10 +667,8 @@ export class PurchaseOrdersService {
       subjectId: user.id,
     });
 
-    await this.lineItemModel.softDeleteLineItem(id, user.id);
-    // Fetch the item again, including soft-deleted ones
-    const item = await this.lineItemModel.getLineItemByIdAnyStatus(id);
-    return item ?? null;
+    const deleted = await this.lineItemsService.softDeleteLineItem(id, user);
+    return deleted ? this.mapLineItemToPurchaseOrderLineItemDoc(deleted) : null;
   }
 
   private getApplicableRentalRates(
@@ -542,7 +797,10 @@ export class PurchaseOrdersService {
     | ReturnType<typeof this.getPriceForSalesItemLineItem>
     | null
   > {
-    const [item] = await this.lineItemModel.getLineItemsByIds([id]);
+    const lineItem = await this.lineItemsService.getLineItemById(id, user);
+    if (!lineItem) return null;
+    const item = this.mapLineItemToPurchaseOrderLineItemDoc(lineItem);
+    if (!item) return null;
 
     const [price] = item.price_id
       ? await this.pricesService.batchGetPricesByIds([item.price_id], user)
@@ -642,14 +900,22 @@ export class PurchaseOrdersService {
 
         // Get all line items for this purchase order
         const lineItems =
-          await this.lineItemModel.getLineItemsByPurchaseOrderId(id);
+          await this.lineItemsService.listLineItemsByDocumentRef(
+            purchaseOrder.workspace_id,
+            { type: 'PURCHASE_ORDER', id },
+            user,
+          );
+        const purchaseOrderLineItems = lineItems
+          .map((item) => this.mapLineItemToPurchaseOrderLineItemDoc(item))
+          .filter((item): item is PurchaseOrderLineItemDoc => Boolean(item))
+          .filter((item) => item.lineitem_status !== 'DRAFT');
 
         logger.info(
-          `Creating on_order inventory for ${lineItems.length} line items in PO ${id}`,
+          `Creating on_order inventory for ${purchaseOrderLineItems.length} line items in PO ${id}`,
         );
 
         // Create inventory records for each line item
-        for (const lineItem of lineItems) {
+        for (const lineItem of purchaseOrderLineItems) {
           const quantity = lineItem.po_quantity || 1;
 
           // Determine if this is a PIM product or category
@@ -823,20 +1089,20 @@ export const createPurchaseOrdersService = async (config: {
   pimProductsService: PimProductsService;
   pimCategoriesService: PimCategoriesService;
   fulfilmentService: FulfilmentService;
+  lineItemsService: LineItemsService;
   authZ: AuthZ;
 }) => {
   const model = createPurchaseOrdersModel(config);
-  const lineItemModel = createPurchaseOrderLineItemsModel(config);
   const purchaseOrdersService = new PurchaseOrdersService({
     model,
     authZ: config.authZ,
-    lineItemModel,
     priceEngineService: config.priceEngineService,
     pricesService: config.pricesService,
     inventoryService: config.inventoryService,
     pimProductsService: config.pimProductsService,
     pimCategoriesService: config.pimCategoriesService,
     fulfilmentService: config.fulfilmentService,
+    lineItemsService: config.lineItemsService,
     mongoClient: config.mongoClient,
   });
   return purchaseOrdersService;

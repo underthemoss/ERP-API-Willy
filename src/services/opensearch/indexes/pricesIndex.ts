@@ -30,6 +30,7 @@ export class PricesIndex extends BaseIndex {
         'workspaceId',
         'name',
         'priceType',
+        'catalogRef',
         'pimCategoryId',
         'pimCategoryPath',
         'pimCategoryName',
@@ -43,6 +44,7 @@ export class PricesIndex extends BaseIndex {
         'pricePerMonthInCents',
         'unitCostInCents',
         'discounts',
+        'pricingSpec',
         'parentPriceId',
         'parentPriceIdPercentageFactor',
         'createdBy',
@@ -83,6 +85,16 @@ export class PricesIndex extends BaseIndex {
         {
           attribute: 'priceType',
           field: 'priceType.keyword',
+          type: 'string',
+        },
+        {
+          attribute: 'catalogRefKind',
+          field: 'catalogRef.kind.keyword',
+          type: 'string',
+        },
+        {
+          attribute: 'catalogRefId',
+          field: 'catalogRef.id.keyword',
           type: 'string',
         },
         {

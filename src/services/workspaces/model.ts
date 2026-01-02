@@ -48,7 +48,9 @@ type WithNullUnsets<T extends Record<string, unknown>> = {
 };
 
 export type UpdateWorkspaceInput = Partial<
-  WithNullUnsets<Omit<WorkspaceDoc, GeneratedFields | 'createdAt' | 'createdBy'>>
+  WithNullUnsets<
+    Omit<WorkspaceDoc, GeneratedFields | 'createdAt' | 'createdBy'>
+  >
 > & {
   updatedBy: string;
 };

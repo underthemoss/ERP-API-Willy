@@ -13,19 +13,23 @@ import type { PimCategory } from "./../../../services/pim_categories/index"
 import type { PriceBook } from "./../../../services/prices/index"
 import type { ProjectDoc } from "./../../../services/projects/index"
 import type { RentalSalesOrderLineItemDoc, SaleSalesOrderLineItemDoc, SalesOrderDoc } from "./../../../services/sales_orders/index"
+import type { LineItemConstraint } from "./../../../services/line_items/model"
 import type { RentalPurchaseOrderLineItemDoc, SalePurchaseOrderLineItemDoc, PurchaseOrderDoc } from "./../../../services/purchase_orders/index"
 import type { RESOURCE_TYPES } from "./../../../lib/authz/index"
 import type { FileDoc } from "./../../../services/file_service/index"
-import type { Fulfilment, RentalFulfilment, SaleFulfilment, ServiceFulfilment } from "./../../../services/fulfilment/index"
+import type { ServiceFulfilmentTask, Fulfilment, RentalFulfilment, SaleFulfilment, ServiceFulfilment } from "./../../../services/fulfilment/index"
 import type { TaxLineItem, Invoice } from "./../../../services/invoices/model"
 import type { Charge } from "./../../../services/charges/index"
 import type { Inventory, InventoryGroupedByCategory } from "./../../../services/inventory/model"
 import type { FulfilmentReservation } from "./../../../services/inventory/index"
-import type { IntakeFormDTO, IntakeFormSubmissionLineItemDTO, IntakeFormSubmissionDTO } from "./../../../services/intake-forms/index"
+import type { IntakeFormDTO, IntakeFormSubmissionDTO } from "./../../../services/intake-forms/index"
+import type { LineItem } from "./../../../services/line_items/index"
 import type { SearchUserStateFavorite, SearchUserStateRecent, SearchUserState } from "./../../../services/search/search-user-state-model"
 import type { SearchDocument } from "./../../../services/search/types"
 import type { Quote, QuoteRevisionServiceLineItem, QuoteRevisionRentalLineItem, QuoteRevisionSaleLineItem, RFQServiceLineItem, RFQRentalLineItem, RFQSaleLineItem, QuoteRevision, RFQ } from "./../../../services/quoting/index"
 import type { GlobalAttributeType, GlobalAttributeValue, GlobalAttributeRelation, GlobalUnitDefinition } from "./../../../services/global_attributes/index"
+import type { GlobalTag, GlobalTagRelation } from "./../../../services/global_tags/index"
+import type { WorkspaceTag, WorkspaceAttributeType, WorkspaceUnitDefinition, WorkspaceAttributeValue, ResolvedWorkspaceTag, ResolvedWorkspaceAttributeType, ResolvedWorkspaceUnitDefinition, ResolvedWorkspaceAttributeValue } from "./../../../services/workspace_vocabulary/index"
 import type { core } from "nexus"
 declare global {
   interface NexusGenCustomInputMethods<TypeName extends string> {
@@ -67,6 +71,12 @@ export interface NexusGenInputs {
   AddInvoiceChargesInput: { // input type
     chargeIds: string[]; // [ID!]!
     invoiceId: string; // ID!
+  }
+  AddStudioConversationMessageInput: { // input type
+    content: string; // String!
+    conversationId: string; // String!
+    metadata?: NexusGenScalars['JSONObject'] | null; // JSONObject
+    role: NexusGenEnums['StudioConversationRole']; // StudioConversationRole!
   }
   AddTaxLineItemInput: { // input type
     description: string; // String!
@@ -168,6 +178,23 @@ export interface NexusGenInputs {
     synonyms?: Array<string | null> | null; // [String]
     value: string; // String!
   }
+  CreateGlobalTagInput: { // input type
+    auditStatus?: NexusGenEnums['GlobalTagAuditStatus'] | null; // GlobalTagAuditStatus
+    displayName?: string | null; // String
+    label?: string | null; // String
+    notes?: string | null; // String
+    pos?: NexusGenEnums['GlobalTagPartOfSpeech'] | null; // GlobalTagPartOfSpeech
+    source?: string | null; // String
+    status?: NexusGenEnums['GlobalTagStatus'] | null; // GlobalTagStatus
+    synonyms?: Array<string | null> | null; // [String]
+  }
+  CreateGlobalTagRelationInput: { // input type
+    confidence?: number | null; // Float
+    fromTagId: string; // String!
+    relationType: NexusGenEnums['GlobalTagRelationType']; // GlobalTagRelationType!
+    source?: string | null; // String
+    toTagId: string; // String!
+  }
   CreateGlobalUnitDefinitionInput: { // input type
     canonicalUnitCode?: string | null; // String
     code: string; // String!
@@ -268,13 +295,15 @@ export interface NexusGenInputs {
     workflowId?: string | null; // ID
   }
   CreateRentalPriceInput: { // input type
+    catalogRef?: NexusGenInputs['PriceCatalogRefInput'] | null; // PriceCatalogRefInput
     name?: string | null; // String
-    pimCategoryId: string; // String!
+    pimCategoryId?: string | null; // String
     pimProductId?: string | null; // ID
     priceBookId?: string | null; // ID
     pricePerDayInCents: number; // Int!
     pricePerMonthInCents: number; // Int!
     pricePerWeekInCents: number; // Int!
+    pricingSpec?: NexusGenInputs['PricingSpecInput'] | null; // PricingSpecInput
     workspaceId: string; // ID!
   }
   CreateRentalPurchaseOrderLineItemInput: { // input type
@@ -323,11 +352,13 @@ export interface NexusGenInputs {
     workflowId?: string | null; // ID
   }
   CreateSalePriceInput: { // input type
+    catalogRef?: NexusGenInputs['PriceCatalogRefInput'] | null; // PriceCatalogRefInput
     discounts?: NexusGenScalars['JSON'] | null; // JSON
     name?: string | null; // String
-    pimCategoryId: string; // String!
+    pimCategoryId?: string | null; // String
     pimProductId?: string | null; // ID
     priceBookId?: string | null; // ID
+    pricingSpec?: NexusGenInputs['PricingSpecInput'] | null; // PricingSpecInput
     unitCostInCents: number; // Int!
     workspaceId: string; // ID!
   }
@@ -356,6 +387,13 @@ export interface NexusGenInputs {
     so_pim_id?: string | null; // String
     so_quantity?: number | null; // Int
   }
+  CreateServiceFulfilmentFromLineItemInput: { // input type
+    assignedToId?: string | null; // ID
+    lineItemId: string; // ID!
+    serviceDate?: NexusGenScalars['DateTime'] | null; // DateTime
+    workflowColumnId?: string | null; // ID
+    workflowId?: string | null; // ID
+  }
   CreateServiceFulfilmentInput: { // input type
     assignedToId?: string | null; // String
     pimDetails?: NexusGenInputs['FulfilmentPimInput'] | null; // FulfilmentPimInput
@@ -365,6 +403,21 @@ export interface NexusGenInputs {
     unitCostInCents: number; // Int!
     workflowColumnId?: string | null; // ID
     workflowId?: string | null; // ID
+  }
+  CreateServicePriceInput: { // input type
+    catalogRef: NexusGenInputs['PriceCatalogRefInput']; // PriceCatalogRefInput!
+    name?: string | null; // String
+    pimCategoryId?: string | null; // String
+    pimProductId?: string | null; // ID
+    priceBookId?: string | null; // ID
+    pricingSpec: NexusGenInputs['PricingSpecInput']; // PricingSpecInput!
+    workspaceId: string; // ID!
+  }
+  CreateStudioConversationInput: { // input type
+    pinnedCatalogPath?: string | null; // String
+    title?: string | null; // String
+    workingSet?: NexusGenScalars['JSONObject'] | null; // JSONObject
+    workspaceId: string; // String!
   }
   CreateWorkflowConfigurationInput: { // input type
     columns: NexusGenInputs['WorkflowColumnInput'][]; // [WorkflowColumnInput!]!
@@ -393,6 +446,11 @@ export interface NexusGenInputs {
     unitCode?: string | null; // String
     value?: string | null; // String
     valueType?: NexusGenEnums['GlobalAttributeValueType'] | null; // GlobalAttributeValueType
+  }
+  IngestGlobalTagStringInput: { // input type
+    posHint?: NexusGenEnums['GlobalTagPartOfSpeech'] | null; // GlobalTagPartOfSpeech
+    raw: string; // String!
+    source?: string | null; // String
   }
   IntakeFormInput: { // input type
     isActive: boolean; // Boolean!
@@ -430,6 +488,106 @@ export interface NexusGenInputs {
     purchaseOrderNumber?: string | null; // String
     userId?: string | null; // String
     workspaceId: string; // ID!
+  }
+  LineItemConstraintAttributeInput: { // input type
+    attributeTypeId: string; // ID!
+    contextTags?: string[] | null; // [String!]
+    op: NexusGenEnums['LineItemConstraintAttributeOp']; // LineItemConstraintAttributeOp!
+    unitCode?: string | null; // String
+    value: NexusGenScalars['JSONObject']; // JSONObject!
+  }
+  LineItemConstraintBrandInput: { // input type
+    brandId?: string | null; // ID
+    manufacturerId?: string | null; // ID
+  }
+  LineItemConstraintDataInput: { // input type
+    attribute?: NexusGenInputs['LineItemConstraintAttributeInput'] | null; // LineItemConstraintAttributeInput
+    brand?: NexusGenInputs['LineItemConstraintBrandInput'] | null; // LineItemConstraintBrandInput
+    location?: NexusGenInputs['LineItemConstraintLocationInput'] | null; // LineItemConstraintLocationInput
+    other?: NexusGenInputs['LineItemConstraintOtherInput'] | null; // LineItemConstraintOtherInput
+    schedule?: NexusGenInputs['LineItemConstraintScheduleInput'] | null; // LineItemConstraintScheduleInput
+    tag?: NexusGenInputs['LineItemConstraintTagInput'] | null; // LineItemConstraintTagInput
+  }
+  LineItemConstraintInput: { // input type
+    data: NexusGenInputs['LineItemConstraintDataInput']; // LineItemConstraintDataInput!
+    kind: NexusGenEnums['LineItemConstraintKind']; // LineItemConstraintKind!
+    strength: NexusGenEnums['LineItemConstraintStrength']; // LineItemConstraintStrength!
+  }
+  LineItemConstraintLocationInput: { // input type
+    placeRef: NexusGenInputs['LineItemPlaceRefInput']; // LineItemPlaceRefInput!
+  }
+  LineItemConstraintOtherInput: { // input type
+    note: string; // String!
+  }
+  LineItemConstraintScheduleInput: { // input type
+    endAt?: NexusGenScalars['DateTime'] | null; // DateTime
+    startAt?: NexusGenScalars['DateTime'] | null; // DateTime
+  }
+  LineItemConstraintTagInput: { // input type
+    tagIds: string[]; // [ID!]!
+  }
+  LineItemDeliveryInput: { // input type
+    location?: string | null; // String
+    method?: NexusGenEnums['LineItemDeliveryMethod'] | null; // LineItemDeliveryMethod
+    notes?: string | null; // String
+  }
+  LineItemDocumentRefInput: { // input type
+    id: string; // ID!
+    revisionId?: string | null; // ID
+    type: NexusGenEnums['LineItemDocumentType']; // LineItemDocumentType!
+  }
+  LineItemInput: { // input type
+    constraints?: Array<NexusGenInputs['LineItemConstraintInput'] | null> | null; // [LineItemConstraintInput]
+    customPriceName?: string | null; // String
+    delivery?: NexusGenInputs['LineItemDeliveryInput'] | null; // LineItemDeliveryInput
+    deliveryChargeInCents?: number | null; // Int
+    description: string; // String!
+    documentRef: NexusGenInputs['LineItemDocumentRefInput']; // LineItemDocumentRefInput!
+    inputs?: Array<NexusGenInputs['LineItemInputValueInput'] | null> | null; // [LineItemInputValueInput]
+    notes?: string | null; // String
+    placeRef?: NexusGenInputs['LineItemPlaceRefInput'] | null; // LineItemPlaceRefInput
+    pricingRef?: NexusGenInputs['LineItemPricingRefInput'] | null; // LineItemPricingRefInput
+    pricingSpecSnapshot?: NexusGenInputs['PricingSpecInput'] | null; // PricingSpecInput
+    productRef?: NexusGenInputs['LineItemProductRefInput'] | null; // LineItemProductRefInput
+    quantity: string; // String!
+    rateInCentsSnapshot?: number | null; // Int
+    scopeTasks?: Array<NexusGenInputs['ServiceScopeTaskInput'] | null> | null; // [ServiceScopeTaskInput]
+    sourceLineItemId?: string | null; // ID
+    subtotalInCents?: number | null; // Int
+    targetSelectors?: Array<NexusGenInputs['LineItemTargetSelectorInput'] | null> | null; // [LineItemTargetSelectorInput]
+    timeWindow?: NexusGenInputs['LineItemTimeWindowInput'] | null; // LineItemTimeWindowInput
+    type: NexusGenEnums['LineItemType']; // LineItemType!
+    unitCode?: string | null; // String
+    workspaceId: string; // String!
+  }
+  LineItemInputValueInput: { // input type
+    attributeTypeId: string; // String!
+    contextTags?: string[] | null; // [String!]
+    unitCode?: string | null; // String
+    value: NexusGenScalars['JSONObject']; // JSONObject!
+  }
+  LineItemPlaceRefInput: { // input type
+    id: string; // ID!
+    kind: NexusGenEnums['LineItemPlaceKind']; // LineItemPlaceKind!
+  }
+  LineItemPricingRefInput: { // input type
+    priceBookId?: string | null; // ID
+    priceId?: string | null; // ID
+    priceType?: NexusGenEnums['LineItemType'] | null; // LineItemType
+  }
+  LineItemProductRefInput: { // input type
+    kind: NexusGenEnums['LineItemProductKind']; // LineItemProductKind!
+    productId: string; // ID!
+  }
+  LineItemTargetSelectorInput: { // input type
+    kind: NexusGenEnums['LineItemTargetSelectorKind']; // LineItemTargetSelectorKind!
+    tagIds?: string[] | null; // [String!]
+    targetLineItemIds?: string[] | null; // [String!]
+    targetProductId?: string | null; // String
+  }
+  LineItemTimeWindowInput: { // input type
+    endAt?: NexusGenScalars['DateTime'] | null; // DateTime
+    startAt?: NexusGenScalars['DateTime'] | null; // DateTime
   }
   ListAssetsPage: { // input type
     number: number | null; // Int
@@ -486,6 +644,16 @@ export interface NexusGenInputs {
     searchTerm?: string | null; // String
     status?: NexusGenEnums['GlobalAttributeStatus'] | null; // GlobalAttributeStatus
   }
+  ListGlobalTagRelationsFilter: { // input type
+    fromTagId?: string | null; // String
+    relationType?: NexusGenEnums['GlobalTagRelationType'] | null; // GlobalTagRelationType
+    toTagId?: string | null; // String
+  }
+  ListGlobalTagsFilter: { // input type
+    pos?: NexusGenEnums['GlobalTagPartOfSpeech'] | null; // GlobalTagPartOfSpeech
+    searchTerm?: string | null; // String
+    status?: NexusGenEnums['GlobalTagStatus'] | null; // GlobalTagStatus
+  }
   ListGlobalUnitsFilter: { // input type
     dimension?: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
     searchTerm?: string | null; // String
@@ -532,6 +700,18 @@ export interface NexusGenInputs {
     filter: NexusGenInputs['ListInvoicesFilter']; // ListInvoicesFilter!
     page?: NexusGenInputs['ListInvoicesPage'] | null; // ListInvoicesPage
   }
+  ListLineItemsFilter: { // input type
+    documentId?: string | null; // String
+    documentType?: NexusGenEnums['LineItemDocumentType'] | null; // LineItemDocumentType
+    revisionId?: string | null; // String
+    type?: NexusGenEnums['LineItemType'] | null; // LineItemType
+    workspaceId: string; // String!
+  }
+  ListLogisticsServiceGroupsFilter: { // input type
+    documentRef: NexusGenInputs['LineItemDocumentRefInput']; // LineItemDocumentRefInput!
+    productId?: NexusGenEnums['LogisticsServiceProductId'] | null; // LogisticsServiceProductId
+    workspaceId: string; // ID!
+  }
   ListPimCategoriesFilter: { // input type
     parentId?: string | null; // ID
     path?: string | null; // String
@@ -559,6 +739,8 @@ export interface NexusGenInputs {
   }
   ListPricesFilter: { // input type
     businessContactId?: string | null; // String
+    catalogRefId?: string | null; // String
+    catalogRefKind?: NexusGenEnums['CatalogProductKind'] | null; // CatalogProductKind
     name?: string | null; // String
     pimCategoryId?: string | null; // String
     priceBookId?: string | null; // String
@@ -616,9 +798,51 @@ export interface NexusGenInputs {
     number: number | null; // Int
     size: number | null; // Int
   }
+  ListStudioConversationsFilter: { // input type
+    searchTerm?: string | null; // String
+    workspaceId: string; // String!
+  }
   ListWorkflowConfigurationsPage: { // input type
     number?: number | null; // Int
     size?: number | null; // Int
+  }
+  ListWorkspaceAttributeTypesFilter: { // input type
+    appliesTo?: NexusGenEnums['GlobalAttributeAppliesTo'] | null; // GlobalAttributeAppliesTo
+    dimension?: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
+    kind?: NexusGenEnums['GlobalAttributeKind'] | null; // GlobalAttributeKind
+    promotedToGlobal?: boolean | null; // Boolean
+    searchTerm?: string | null; // String
+    status?: NexusGenEnums['GlobalAttributeStatus'] | null; // GlobalAttributeStatus
+    usageHint?: NexusGenEnums['GlobalAttributeUsageHint'] | null; // GlobalAttributeUsageHint
+    valueType?: NexusGenEnums['GlobalAttributeValueType'] | null; // GlobalAttributeValueType
+    workspaceId: string; // ID!
+  }
+  ListWorkspaceAttributeValuesFilter: { // input type
+    attributeTypeId?: string | null; // ID
+    auditStatus?: NexusGenEnums['GlobalAttributeAuditStatus'] | null; // GlobalAttributeAuditStatus
+    promotedToGlobal?: boolean | null; // Boolean
+    searchTerm?: string | null; // String
+    status?: NexusGenEnums['GlobalAttributeStatus'] | null; // GlobalAttributeStatus
+    workspaceId: string; // ID!
+  }
+  ListWorkspaceTagsFilter: { // input type
+    pos?: NexusGenEnums['GlobalTagPartOfSpeech'] | null; // GlobalTagPartOfSpeech
+    promotedToGlobal?: boolean | null; // Boolean
+    searchTerm?: string | null; // String
+    status?: NexusGenEnums['GlobalTagStatus'] | null; // GlobalTagStatus
+    workspaceId: string; // ID!
+  }
+  ListWorkspaceUnitDefinitionsFilter: { // input type
+    dimension?: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
+    promotedToGlobal?: boolean | null; // Boolean
+    searchTerm?: string | null; // String
+    status?: NexusGenEnums['GlobalUnitStatus'] | null; // GlobalUnitStatus
+    workspaceId: string; // ID!
+  }
+  LogisticsServiceAddOnSelectionInput: { // input type
+    enabled: boolean; // Boolean!
+    priceId?: string | null; // String
+    serviceLineItemId?: string | null; // ID
   }
   MarkInvoiceAsPaidInput: { // input type
     date: NexusGenScalars['DateTime']; // DateTime!
@@ -627,6 +851,11 @@ export interface NexusGenInputs {
   MarkInvoiceAsSentInput: { // input type
     date: NexusGenScalars['DateTime']; // DateTime!
     invoiceId: string; // String!
+  }
+  MergeGlobalTagInput: { // input type
+    reason?: string | null; // String
+    sourceTagId: string; // String!
+    targetTagId: string; // String!
   }
   NoteInput: { // input type
     parent_entity_id: string; // String!
@@ -652,6 +881,18 @@ export interface NexusGenInputs {
     resourceMapIds?: string[] | null; // [ID!]
     workspaceId: string; // String!
   }
+  PriceCatalogRefInput: { // input type
+    id: string; // ID!
+    kind: NexusGenEnums['CatalogProductKind']; // CatalogProductKind!
+  }
+  PricingSpecInput: { // input type
+    kind: NexusGenEnums['PricingSpecKind']; // PricingSpecKind!
+    pricePerDayInCents?: number | null; // Int
+    pricePerMonthInCents?: number | null; // Int
+    pricePerWeekInCents?: number | null; // Int
+    rateInCents?: number | null; // Int
+    unitCode?: string | null; // String
+  }
   ProjectContactInput: { // input type
     contact_id: string; // String!
     relation_to_project: NexusGenEnums['ProjectContactRelationEnum']; // ProjectContactRelationEnum!
@@ -667,34 +908,98 @@ export interface NexusGenInputs {
     status?: NexusGenEnums['ProjectStatusEnum'] | null; // ProjectStatusEnum
     workspaceId: string; // String!
   }
+  PromoteWorkspaceAttributeTypeToGlobalInput: { // input type
+    targetGlobalAttributeTypeId?: string | null; // ID
+    workspaceAttributeTypeId: string; // ID!
+  }
+  PromoteWorkspaceAttributeTypesToGlobalInput: { // input type
+    workspaceAttributeTypeIds: string[]; // [ID!]!
+  }
+  PromoteWorkspaceAttributeValueToGlobalInput: { // input type
+    targetGlobalAttributeValueId?: string | null; // ID
+    workspaceAttributeValueId: string; // ID!
+  }
+  PromoteWorkspaceAttributeValuesToGlobalInput: { // input type
+    workspaceAttributeValueIds: string[]; // [ID!]!
+  }
+  PromoteWorkspaceTagToGlobalInput: { // input type
+    targetGlobalTagId?: string | null; // ID
+    workspaceTagId: string; // ID!
+  }
+  PromoteWorkspaceUnitDefinitionToGlobalInput: { // input type
+    targetGlobalUnitCode?: string | null; // String
+    workspaceUnitDefinitionId: string; // ID!
+  }
   PurchaseOrderInput: { // input type
     project_id?: string | null; // String
     purchase_order_number?: string | null; // String
     seller_id: string; // String!
     workspace_id: string; // String!
   }
+  QuoteLineItemConstraintInput: { // input type
+    payload?: NexusGenScalars['JSONObject'] | null; // JSONObject
+    strength: NexusGenEnums['QuoteLineItemConstraintStrength']; // QuoteLineItemConstraintStrength!
+  }
+  QuoteLineItemInputValueInput: { // input type
+    attributeTypeId: string; // String!
+    contextTags?: string[] | null; // [String!]
+    unitCode?: string | null; // String
+    value: NexusGenScalars['JSONObject']; // JSONObject!
+  }
+  QuoteLineItemPricingRefInput: { // input type
+    priceBookId?: string | null; // String
+    priceId?: string | null; // String
+    priceType?: NexusGenEnums['QuoteLineItemPricingType'] | null; // QuoteLineItemPricingType
+  }
+  QuoteLineItemProductRefInput: { // input type
+    kind: NexusGenEnums['QuoteLineItemProductKind']; // QuoteLineItemProductKind!
+    productId: string; // String!
+  }
+  QuoteLineItemTimeWindowInput: { // input type
+    endAt?: NexusGenScalars['DateTime'] | null; // DateTime
+    startAt?: NexusGenScalars['DateTime'] | null; // DateTime
+  }
   QuoteRevisionLineItemInput: { // input type
+    constraints?: Array<NexusGenInputs['QuoteLineItemConstraintInput'] | null> | null; // [QuoteLineItemConstraintInput]
     deliveryLocation?: string | null; // String
     deliveryMethod?: NexusGenEnums['QuoteLineItemDeliveryMethod'] | null; // QuoteLineItemDeliveryMethod
     deliveryNotes?: string | null; // String
     description: string; // String!
     id?: string | null; // String
+    inputs?: Array<NexusGenInputs['QuoteLineItemInputValueInput'] | null> | null; // [QuoteLineItemInputValueInput]
     intakeFormSubmissionLineItemId?: string | null; // String
+    notes?: string | null; // String
     pimCategoryId?: string | null; // String
+    placeRef?: NexusGenInputs['LineItemPlaceRefInput'] | null; // LineItemPlaceRefInput
+    pricingRef?: NexusGenInputs['QuoteLineItemPricingRefInput'] | null; // QuoteLineItemPricingRefInput
+    pricingSpecSnapshot?: NexusGenInputs['PricingSpecInput'] | null; // PricingSpecInput
+    productRef?: NexusGenInputs['QuoteLineItemProductRefInput'] | null; // QuoteLineItemProductRefInput
     quantity?: number | null; // Int
+    rateInCentsSnapshot?: number | null; // Int
     rentalEndDate?: NexusGenScalars['DateTime'] | null; // DateTime
     rentalStartDate?: NexusGenScalars['DateTime'] | null; // DateTime
     sellersPriceId?: string | null; // ID
+    targetSelectors?: Array<NexusGenInputs['ServiceTargetSelectorInput'] | null> | null; // [ServiceTargetSelectorInput]
+    timeWindow?: NexusGenInputs['QuoteLineItemTimeWindowInput'] | null; // QuoteLineItemTimeWindowInput
     type: NexusGenEnums['QuoteLineItemType']; // QuoteLineItemType!
+    unitCode?: string | null; // String
   }
   RFQLineItemInput: { // input type
+    constraints?: Array<NexusGenInputs['QuoteLineItemConstraintInput'] | null> | null; // [QuoteLineItemConstraintInput]
     description: string; // String!
     id?: string | null; // String
+    inputs?: Array<NexusGenInputs['QuoteLineItemInputValueInput'] | null> | null; // [QuoteLineItemInputValueInput]
+    notes?: string | null; // String
     pimCategoryId?: string | null; // String
+    placeRef?: NexusGenInputs['LineItemPlaceRefInput'] | null; // LineItemPlaceRefInput
+    productRef?: NexusGenInputs['QuoteLineItemProductRefInput'] | null; // QuoteLineItemProductRefInput
     quantity?: number | null; // Int
     rentalEndDate?: NexusGenScalars['DateTime'] | null; // DateTime
     rentalStartDate?: NexusGenScalars['DateTime'] | null; // DateTime
+    targetSelectors?: Array<NexusGenInputs['ServiceTargetSelectorInput'] | null> | null; // [ServiceTargetSelectorInput]
+    timeWindow?: NexusGenInputs['QuoteLineItemTimeWindowInput'] | null; // QuoteLineItemTimeWindowInput
     type: NexusGenEnums['QuoteLineItemType']; // QuoteLineItemType!
+    unitCode?: string | null; // String
   }
   ReferenceNumberTemplateFilterInput: { // input type
     businessContactId?: string | null; // String
@@ -713,6 +1018,60 @@ export interface NexusGenInputs {
     rentalStatusId?: string | null; // String
     startDateFrom?: string | null; // String
     startDateTo?: string | null; // String
+  }
+  ResolveGlobalOrWorkspaceAttributeTypeInput: { // input type
+    allowedUnits?: Array<string | null> | null; // [String]
+    appliesTo?: NexusGenEnums['GlobalAttributeAppliesTo'] | null; // GlobalAttributeAppliesTo
+    auditStatus?: NexusGenEnums['GlobalAttributeAuditStatus'] | null; // GlobalAttributeAuditStatus
+    canonicalUnit?: string | null; // String
+    canonicalValueSetId?: string | null; // String
+    dimension?: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
+    kind: NexusGenEnums['GlobalAttributeKind']; // GlobalAttributeKind!
+    name: string; // String!
+    notes?: string | null; // String
+    preferGlobal?: boolean | null; // Boolean
+    source?: string | null; // String
+    status?: NexusGenEnums['GlobalAttributeStatus'] | null; // GlobalAttributeStatus
+    synonyms?: Array<string | null> | null; // [String]
+    usageHints?: Array<NexusGenEnums['GlobalAttributeUsageHint'] | null> | null; // [GlobalAttributeUsageHint]
+    validationRules?: NexusGenScalars['JSONObject'] | null; // JSONObject
+    valueType: NexusGenEnums['GlobalAttributeValueType']; // GlobalAttributeValueType!
+    workspaceId: string; // ID!
+  }
+  ResolveGlobalOrWorkspaceAttributeValueInput: { // input type
+    attributeTypeId: string; // ID!
+    auditStatus?: NexusGenEnums['GlobalAttributeAuditStatus'] | null; // GlobalAttributeAuditStatus
+    codes?: NexusGenScalars['JSONObject'] | null; // JSONObject
+    preferGlobal?: boolean | null; // Boolean
+    source?: string | null; // String
+    status?: NexusGenEnums['GlobalAttributeStatus'] | null; // GlobalAttributeStatus
+    synonyms?: Array<string | null> | null; // [String]
+    value: string; // String!
+    workspaceId: string; // ID!
+  }
+  ResolveGlobalOrWorkspaceTagInput: { // input type
+    auditStatus?: NexusGenEnums['GlobalTagAuditStatus'] | null; // GlobalTagAuditStatus
+    displayName?: string | null; // String
+    label: string; // String!
+    notes?: string | null; // String
+    pos?: NexusGenEnums['GlobalTagPartOfSpeech'] | null; // GlobalTagPartOfSpeech
+    preferGlobal?: boolean | null; // Boolean
+    source?: string | null; // String
+    status?: NexusGenEnums['GlobalTagStatus'] | null; // GlobalTagStatus
+    synonyms?: Array<string | null> | null; // [String]
+    workspaceId: string; // ID!
+  }
+  ResolveGlobalOrWorkspaceUnitDefinitionInput: { // input type
+    canonicalUnitCode?: string | null; // String
+    code: string; // String!
+    dimension?: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
+    name?: string | null; // String
+    offset?: number | null; // Float
+    preferGlobal?: boolean | null; // Boolean
+    source?: string | null; // String
+    status?: NexusGenEnums['GlobalUnitStatus'] | null; // GlobalUnitStatus
+    toCanonicalFactor?: number | null; // Float
+    workspaceId: string; // ID!
   }
   ResourceMapAddressInput: { // input type
     city?: string | null; // String
@@ -779,9 +1138,124 @@ export interface NexusGenInputs {
     quoteId: string; // String!
     revisionId: string; // String!
   }
+  ServiceScopeTaskInput: { // input type
+    activityTagIds: string[]; // [String!]!
+    contextTagIds?: string[] | null; // [String!]
+    id: string; // String!
+    notes?: string | null; // String
+    sourceTemplateId?: string | null; // String
+    title: string; // String!
+  }
+  ServiceTargetSelectorInput: { // input type
+    kind: NexusGenEnums['ServiceTargetSelectorKind']; // ServiceTargetSelectorKind!
+    tagIds?: string[] | null; // [String!]
+    targetLineItemIds?: string[] | null; // [String!]
+    targetProductId?: string | null; // String
+  }
   SetInvoiceTaxInput: { // input type
     invoiceId: string; // String!
     taxPercent: number; // Float!
+  }
+  StudioCatalogCompileInput: { // input type
+    catalogPath: string; // String!
+    workspaceId: string; // String!
+  }
+  StudioCatalogCreateProductInput: { // input type
+    catalogPath?: string | null; // String
+    product: NexusGenInputs['StudioCatalogProductInput']; // StudioCatalogProductInput!
+    workspaceId: string; // String!
+  }
+  StudioCatalogEnsureLogisticsServiceProductsInput: { // input type
+    workspaceId: string; // String!
+  }
+  StudioCatalogInitInput: { // input type
+    name?: string | null; // String
+    slug: string; // String!
+    workspaceId: string; // String!
+  }
+  StudioCatalogProductAttributeInput: { // input type
+    contextTags?: string[] | null; // [String!]
+    key: string; // String!
+    sourceRef?: string | null; // String
+    unit?: string | null; // String
+    value: NexusGenScalars['JSON']; // JSON!
+  }
+  StudioCatalogProductImageInput: { // input type
+    alt?: string | null; // String
+    uri: string; // String!
+  }
+  StudioCatalogProductInput: { // input type
+    activityTags?: string[] | null; // [String!]
+    attributes?: NexusGenInputs['StudioCatalogProductAttributeInput'][] | null; // [StudioCatalogProductAttributeInput!]
+    categoryPath?: string | null; // String
+    description?: string | null; // String
+    id: string; // String!
+    images?: NexusGenInputs['StudioCatalogProductImageInput'][] | null; // [StudioCatalogProductImageInput!]
+    kind?: NexusGenEnums['StudioCatalogProductKind'] | null; // StudioCatalogProductKind
+    name: string; // String!
+    notes?: string | null; // String
+    sourcePaths?: string[] | null; // [String!]
+    sourceRefs?: string[] | null; // [String!]
+    status?: NexusGenEnums['StudioCatalogProductStatus'] | null; // StudioCatalogProductStatus
+    tags?: string[] | null; // [String!]
+    targetSpecs?: NexusGenInputs['StudioCatalogProductTargetSpecInput'][] | null; // [StudioCatalogProductTargetSpecInput!]
+    taskTemplates?: NexusGenInputs['StudioCatalogProductTaskTemplateInput'][] | null; // [StudioCatalogProductTaskTemplateInput!]
+  }
+  StudioCatalogProductTargetSpecInput: { // input type
+    kind: NexusGenEnums['StudioCatalogProductTargetKind']; // StudioCatalogProductTargetKind!
+    productId?: string | null; // String
+    tagIds?: string[] | null; // [String!]
+  }
+  StudioCatalogProductTaskTemplateInput: { // input type
+    activityTagIds: string[]; // [String!]!
+    contextTagIds?: string[] | null; // [String!]
+    id: string; // String!
+    notes?: string | null; // String
+    title: string; // String!
+  }
+  StudioCatalogValidateInput: { // input type
+    catalogPath: string; // String!
+    workspaceId: string; // String!
+  }
+  StudioFsDeleteInput: { // input type
+    path: string; // String!
+    workspaceId: string; // String!
+  }
+  StudioFsListInput: { // input type
+    path: string; // String!
+    workspaceId: string; // String!
+  }
+  StudioFsMkdirInput: { // input type
+    path: string; // String!
+    workspaceId: string; // String!
+  }
+  StudioFsMoveInput: { // input type
+    from: string; // String!
+    to: string; // String!
+    workspaceId: string; // String!
+  }
+  StudioFsReadInput: { // input type
+    path: string; // String!
+    workspaceId: string; // String!
+  }
+  StudioFsUploadInput: { // input type
+    bytes: string; // String!
+    expectedEtag?: string | null; // String
+    mimeType?: string | null; // String
+    path: string; // String!
+    workspaceId: string; // String!
+  }
+  StudioFsWriteInput: { // input type
+    content: string; // String!
+    expectedEtag?: string | null; // String
+    mimeType?: string | null; // String
+    path: string; // String!
+    workspaceId: string; // String!
+  }
+  SyncMaterialLogisticsAddOnsInput: { // input type
+    delivery?: NexusGenInputs['LogisticsServiceAddOnSelectionInput'] | null; // LogisticsServiceAddOnSelectionInput
+    materialLineItemId: string; // ID!
+    pickup?: NexusGenInputs['LogisticsServiceAddOnSelectionInput'] | null; // LogisticsServiceAddOnSelectionInput
   }
   TransactionInput: { // input type
     projectId?: string | null; // ID
@@ -828,6 +1302,16 @@ export interface NexusGenInputs {
     synonyms?: Array<string | null> | null; // [String]
     value?: string | null; // String
   }
+  UpdateGlobalTagInput: { // input type
+    auditStatus?: NexusGenEnums['GlobalTagAuditStatus'] | null; // GlobalTagAuditStatus
+    displayName?: string | null; // String
+    label?: string | null; // String
+    notes?: string | null; // String
+    pos?: NexusGenEnums['GlobalTagPartOfSpeech'] | null; // GlobalTagPartOfSpeech
+    source?: string | null; // String
+    status?: NexusGenEnums['GlobalTagStatus'] | null; // GlobalTagStatus
+    synonyms?: Array<string | null> | null; // [String]
+  }
   UpdateGlobalUnitDefinitionInput: { // input type
     canonicalUnitCode?: string | null; // String
     dimension?: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
@@ -857,6 +1341,27 @@ export interface NexusGenInputs {
   }
   UpdateInventorySerialisedIdInput: { // input type
     assetId: string; // String!
+  }
+  UpdateLineItemInput: { // input type
+    constraints?: Array<NexusGenInputs['LineItemConstraintInput'] | null> | null; // [LineItemConstraintInput]
+    customPriceName?: string | null; // String
+    delivery?: NexusGenInputs['LineItemDeliveryInput'] | null; // LineItemDeliveryInput
+    deliveryChargeInCents?: number | null; // Int
+    description?: string | null; // String
+    inputs?: Array<NexusGenInputs['LineItemInputValueInput'] | null> | null; // [LineItemInputValueInput]
+    notes?: string | null; // String
+    placeRef?: NexusGenInputs['LineItemPlaceRefInput'] | null; // LineItemPlaceRefInput
+    pricingRef?: NexusGenInputs['LineItemPricingRefInput'] | null; // LineItemPricingRefInput
+    pricingSpecSnapshot?: NexusGenInputs['PricingSpecInput'] | null; // PricingSpecInput
+    productRef?: NexusGenInputs['LineItemProductRefInput'] | null; // LineItemProductRefInput
+    quantity?: string | null; // String
+    rateInCentsSnapshot?: number | null; // Int
+    scopeTasks?: Array<NexusGenInputs['ServiceScopeTaskInput'] | null> | null; // [ServiceScopeTaskInput]
+    sourceLineItemId?: string | null; // ID
+    subtotalInCents?: number | null; // Int
+    targetSelectors?: Array<NexusGenInputs['LineItemTargetSelectorInput'] | null> | null; // [LineItemTargetSelectorInput]
+    timeWindow?: NexusGenInputs['LineItemTimeWindowInput'] | null; // LineItemTimeWindowInput
+    unitCode?: string | null; // String
   }
   UpdatePersonContactInput: { // input type
     businessId?: string | null; // ID
@@ -934,6 +1439,7 @@ export interface NexusGenInputs {
     useGlobalSequence?: boolean | null; // Boolean
   }
   UpdateRentalPriceInput: { // input type
+    catalogRef?: NexusGenInputs['PriceCatalogRefInput'] | null; // PriceCatalogRefInput
     id: string; // ID!
     name?: string | null; // String
     pimCategoryId?: string | null; // String
@@ -941,6 +1447,7 @@ export interface NexusGenInputs {
     pricePerDayInCents?: number | null; // Int
     pricePerMonthInCents?: number | null; // Int
     pricePerWeekInCents?: number | null; // Int
+    pricingSpec?: NexusGenInputs['PricingSpecInput'] | null; // PricingSpecInput
   }
   UpdateRentalPurchaseOrderLineItemInput: { // input type
     deliveryNotes?: string | null; // String
@@ -976,11 +1483,13 @@ export interface NexusGenInputs {
     value?: string | null; // String
   }
   UpdateSalePriceInput: { // input type
+    catalogRef?: NexusGenInputs['PriceCatalogRefInput'] | null; // PriceCatalogRefInput
     discounts?: NexusGenScalars['JSON'] | null; // JSON
     id: string; // ID!
     name?: string | null; // String
     pimCategoryId?: string | null; // String
     pimProductId?: string | null; // ID
+    pricingSpec?: NexusGenInputs['PricingSpecInput'] | null; // PricingSpecInput
     unitCostInCents?: number | null; // Int
   }
   UpdateSalePurchaseOrderLineItemInput: { // input type
@@ -1029,6 +1538,24 @@ export interface NexusGenInputs {
     so_pim_id?: string | null; // String
     so_quantity?: number | null; // Int
   }
+  UpdateServiceFulfilmentTaskStatusInput: { // input type
+    fulfilmentId: string; // ID!
+    status: NexusGenEnums['ServiceFulfilmentTaskStatus']; // ServiceFulfilmentTaskStatus!
+    taskId: string; // String!
+  }
+  UpdateServicePriceInput: { // input type
+    catalogRef?: NexusGenInputs['PriceCatalogRefInput'] | null; // PriceCatalogRefInput
+    id: string; // ID!
+    name?: string | null; // String
+    pimCategoryId?: string | null; // String
+    pimProductId?: string | null; // ID
+    pricingSpec?: NexusGenInputs['PricingSpecInput'] | null; // PricingSpecInput
+  }
+  UpdateStudioConversationInput: { // input type
+    pinnedCatalogPath?: string | null; // String
+    title?: string | null; // String
+    workingSet?: NexusGenScalars['JSONObject'] | null; // JSONObject
+  }
   UpdateTaxLineItemInput: { // input type
     description?: string | null; // String
     invoiceId: string; // ID!
@@ -1048,6 +1575,56 @@ export interface NexusGenInputs {
     name: string; // String!
     path: string; // String!
     platform_id: string; // String!
+  }
+  UpsertWorkspaceAttributeTypeInput: { // input type
+    allowedUnits?: Array<string | null> | null; // [String]
+    appliesTo?: NexusGenEnums['GlobalAttributeAppliesTo'] | null; // GlobalAttributeAppliesTo
+    auditStatus?: NexusGenEnums['GlobalAttributeAuditStatus'] | null; // GlobalAttributeAuditStatus
+    canonicalUnit?: string | null; // String
+    canonicalValueSetId?: string | null; // String
+    dimension?: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
+    kind: NexusGenEnums['GlobalAttributeKind']; // GlobalAttributeKind!
+    name: string; // String!
+    notes?: string | null; // String
+    source?: string | null; // String
+    status?: NexusGenEnums['GlobalAttributeStatus'] | null; // GlobalAttributeStatus
+    synonyms?: Array<string | null> | null; // [String]
+    usageHints?: Array<NexusGenEnums['GlobalAttributeUsageHint'] | null> | null; // [GlobalAttributeUsageHint]
+    validationRules?: NexusGenScalars['JSONObject'] | null; // JSONObject
+    valueType: NexusGenEnums['GlobalAttributeValueType']; // GlobalAttributeValueType!
+    workspaceId: string; // ID!
+  }
+  UpsertWorkspaceAttributeValueInput: { // input type
+    attributeTypeId: string; // ID!
+    auditStatus?: NexusGenEnums['GlobalAttributeAuditStatus'] | null; // GlobalAttributeAuditStatus
+    codes?: NexusGenScalars['JSONObject'] | null; // JSONObject
+    source?: string | null; // String
+    status?: NexusGenEnums['GlobalAttributeStatus'] | null; // GlobalAttributeStatus
+    synonyms?: Array<string | null> | null; // [String]
+    value: string; // String!
+    workspaceId: string; // ID!
+  }
+  UpsertWorkspaceTagInput: { // input type
+    auditStatus?: NexusGenEnums['GlobalTagAuditStatus'] | null; // GlobalTagAuditStatus
+    displayName?: string | null; // String
+    label: string; // String!
+    notes?: string | null; // String
+    pos?: NexusGenEnums['GlobalTagPartOfSpeech'] | null; // GlobalTagPartOfSpeech
+    source?: string | null; // String
+    status?: NexusGenEnums['GlobalTagStatus'] | null; // GlobalTagStatus
+    synonyms?: Array<string | null> | null; // [String]
+    workspaceId: string; // ID!
+  }
+  UpsertWorkspaceUnitDefinitionInput: { // input type
+    canonicalUnitCode?: string | null; // String
+    code: string; // String!
+    dimension?: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
+    name?: string | null; // String
+    offset?: number | null; // Float
+    source?: string | null; // String
+    status?: NexusGenEnums['GlobalUnitStatus'] | null; // GlobalUnitStatus
+    toCanonicalFactor?: number | null; // Float
+    workspaceId: string; // ID!
   }
   UserUpsertInput: { // input type
     auth0UserId?: string | null; // String
@@ -1069,6 +1646,7 @@ export interface NexusGenInputs {
 }
 
 export interface NexusGenEnums {
+  CatalogProductKind: "ASSEMBLY_PRODUCT" | "MATERIAL_PRODUCT" | "SERVICE_PRODUCT"
   ChargeType: "RENTAL" | "SALE" | "SERVICE"
   ContactType: "BUSINESS" | "PERSON"
   DeliveryMethod: "DELIVERY" | "PICKUP"
@@ -1076,29 +1654,47 @@ export interface NexusGenEnums {
   FulfilmentType: "RENTAL" | "SALE" | "SERVICE"
   GlobalAttributeAppliesTo: "BOTH" | "MATERIAL" | "RESOURCE" | "SERVICE"
   GlobalAttributeAuditStatus: "FLAGGED" | "PENDING_REVIEW" | "REVIEWED"
-  GlobalAttributeDimension: "AREA" | "DENSITY" | "ENERGY" | "FORCE" | "LENGTH" | "MASS" | "POWER" | "PRESSURE" | "SPEED" | "TEMPERATURE" | "TIME" | "VOLUME"
+  GlobalAttributeDimension: "ACCELERATION" | "ANGLE" | "AREA" | "CURRENT" | "DENSITY" | "ENERGY" | "FLOW_RATE" | "FORCE" | "FREQUENCY" | "LENGTH" | "MASS" | "POWER" | "PRESSURE" | "RESISTANCE" | "SPEED" | "TEMPERATURE" | "TIME" | "TORQUE" | "VOLTAGE" | "VOLUME"
   GlobalAttributeKind: "BRAND" | "PHYSICAL"
   GlobalAttributeRelationType: "ALIAS" | "RELATED" | "REPLACES"
   GlobalAttributeStatus: "ACTIVE" | "DEPRECATED" | "PROPOSED"
   GlobalAttributeUsageHint: "BOTH" | "JOB_PARAMETER" | "RESOURCE_PROPERTY"
   GlobalAttributeValueType: "BOOLEAN" | "ENUM" | "NUMBER" | "REF" | "STRING"
+  GlobalTagAuditStatus: "FLAGGED" | "PENDING_REVIEW" | "REVIEWED"
+  GlobalTagPartOfSpeech: "NOUN" | "VERB"
+  GlobalTagRelationType: "ALIAS" | "BROADER" | "NARROWER" | "RELATED"
+  GlobalTagStatus: "ACTIVE" | "DEPRECATED" | "PROPOSED"
   GlobalUnitStatus: "ACTIVE" | "DEPRECATED"
   IntakeFormSubmissionStatus: "DRAFT" | "SUBMITTED"
   InventoryCondition: "DAMAGED" | "NEW" | "REFURBISHED" | "USED"
   InventoryStatus: "ON_ORDER" | "RECEIVED"
   InvoiceStatus: "CANCELLED" | "DRAFT" | "PAID" | "SENT"
+  LineItemConstraintAttributeOp: "EQ" | "GT" | "GTE" | "IN" | "LT" | "LTE" | "NEQ" | "NOT_IN"
+  LineItemConstraintKind: "ATTRIBUTE" | "BRAND" | "LOCATION" | "OTHER" | "SCHEDULE" | "TAG"
+  LineItemConstraintStrength: "EXCLUDED" | "PREFERRED" | "REQUIRED"
+  LineItemDeliveryMethod: "DELIVERY" | "PICKUP"
+  LineItemDocumentType: "INTAKE_SUBMISSION" | "PURCHASE_ORDER" | "QUOTE_REVISION" | "SALES_ORDER" | "WORK_ORDER"
+  LineItemPlaceKind: "ADDRESS" | "BRANCH" | "GEOFENCE" | "JOBSITE" | "OTHER" | "YARD"
+  LineItemProductKind: "ASSEMBLY_PRODUCT" | "CATALOG_PRODUCT" | "MATERIAL_PRODUCT" | "PIM_CATEGORY" | "PIM_PRODUCT" | "SERVICE_PRODUCT"
+  LineItemState: "CANCELLED" | "COMPLETED" | "IN_PROGRESS" | "PLANNED" | "PROPOSED"
   LineItemStatus: "CONFIRMED" | "DRAFT" | "SUBMITTED"
-  LineItemType: "RENTAL" | "SALE"
+  LineItemTargetSelectorKind: "line_item" | "product" | "tags"
+  LineItemType: "RENTAL" | "SALE" | "SERVICE" | "TRANSFER" | "WORK"
+  LogisticsServiceProductId: "svc_delivery" | "svc_pickup"
   POLineItemStatus: "CONFIRMED" | "DRAFT" | "SUBMITTED"
   POLineItemType: "RENTAL" | "SALE"
   PaginationOrder: "ASC" | "DESC"
   PermissionType: "delete" | "read" | "update" | "delete" | "read" | "update" | "is_member" | "delete" | "read" | "update" | "delete" | "manage_rental_period" | "read" | "update" | "create_submission" | "read" | "read_submissions" | "read" | "update" | "update" | "update_submissions" | "read" | "update" | "is_admin" | "read" | "update" | "read" | "update" | "read" | "update" | "read" | "update" | "accept" | "read" | "reject" | "update" | "read" | "update" | "portal_access" | "read" | "update" | "add_user" | "can_join" | "can_manage_buyer_intake_form_submissions" | "can_manage_charges" | "can_manage_contacts" | "can_manage_files" | "can_manage_intake_forms" | "can_manage_intake_form_submissions" | "can_manage_invoices" | "can_manage_prices" | "can_manage_price_books" | "can_manage_projects" | "can_manage_purchase_orders" | "can_manage_quotes" | "can_manage_reference_number_templates" | "can_manage_rfqs" | "can_manage_sales_orders" | "can_read_buyer_intake_form_submissions" | "can_read_charges" | "can_read_contacts" | "can_read_files" | "can_read_invoices" | "can_read_projects" | "can_read_purchase_orders" | "can_read_quotes" | "can_read_reference_number_templates" | "can_read_rfqs" | "can_read_sales_orders" | "create_intake_form" | "create_intake_form_submission" | "create_price_book" | "is_admin" | "manage" | "read" | "read_intake_forms" | "read_intake_form_submissions" | "read_prices" | "read_price_books" | "remove_user" | "update_user_roles"
   PersonContactType: "EMPLOYEE" | "EXTERNAL"
-  PriceType: "RENTAL" | "SALE"
+  PriceType: "RENTAL" | "SALE" | "SERVICE"
+  PricingSpecKind: "RENTAL_RATE_TABLE" | "TIME" | "UNIT"
   ProjectContactRelationEnum: "ARCHITECT_ENGINEER_OF_RECORD" | "EQUIPMENT_RENTAL_COORDINATOR" | "OWNERS_REPRESENTATIVE" | "PROJECT_MANAGER_GC" | "SAFETY_MANAGER" | "SITE_SUPERINTENDENT"
   ProjectStatusEnum: "ACTIVE_CONSTRUCTION" | "ARCHIVED_CLOSED" | "BIDDING_TENDERING" | "CLOSE_OUT" | "CONCEPT_OPPORTUNITY" | "MOBILIZATION" | "PRE_CONSTRUCTION" | "SUBSTANTIAL_COMPLETION" | "WARRANTY_MAINTENANCE"
   PurchaseOrderStatus: "DRAFT" | "SUBMITTED"
+  QuoteLineItemConstraintStrength: "EXCLUDED" | "PREFERRED" | "REQUIRED"
   QuoteLineItemDeliveryMethod: "DELIVERY" | "PICKUP"
+  QuoteLineItemPricingType: "RENTAL" | "SALE" | "SERVICE"
+  QuoteLineItemProductKind: "ASSEMBLY_PRODUCT" | "MATERIAL_PRODUCT" | "SERVICE_PRODUCT"
   QuoteLineItemType: "RENTAL" | "SALE" | "SERVICE"
   QuoteStatus: "ACCEPTED" | "ACTIVE" | "CANCELLED" | "EXPIRED" | "REJECTED"
   RFQStatus: "ACCEPTED" | "CANCELLED" | "DRAFT" | "EXPIRED" | "REJECTED" | "SENT"
@@ -1116,11 +1712,21 @@ export interface NexusGenEnums {
   SalesOrderStatus: "DRAFT" | "SUBMITTED"
   ScopeOfWorkEnum: "BUILDING_ENVELOPE" | "COMMISSIONING_STARTUP" | "DEMOBILIZATION_CLOSE_OUT" | "FOUNDATIONS" | "INTERIOR_BUILD_OUT" | "MEP" | "SITE_CIVIL" | "SPECIALTY_SYSTEMS" | "STRUCTURAL_FRAME" | "WARRANTY_SERVICES"
   SearchableCollectionType: "contacts" | "invoices" | "notes" | "projects" | "purchase_orders" | "sales_orders"
+  ServiceFulfilmentTaskStatus: "DONE" | "OPEN" | "SKIPPED"
+  ServiceTargetSelectorKind: "line_item" | "product" | "tags"
   ServiceTransactionTypes: "CUSTOM" | "HAULING" | "MAINTENANCE"
+  StudioCatalogProductKind: "assembly" | "material" | "service"
+  StudioCatalogProductOrigin: "system" | "workspace"
+  StudioCatalogProductStatus: "active" | "archived" | "draft"
+  StudioCatalogProductTargetKind: "product" | "tags"
+  StudioCatalogSeedStatus: "created" | "existing"
+  StudioConversationRole: "assistant" | "system" | "tool" | "user"
+  StudioFsNodeType: "FILE" | "FOLDER"
   SupportedContentType: "APPLICATION_PDF" | "IMAGE_JPEG" | "IMAGE_PNG" | "TEXT_CSV"
   TaxType: "FIXED_AMOUNT" | "PERCENTAGE"
   TransactionStatusType: "DOING" | "DONE" | "TODO"
   TransactionType: "RENTAL" | "SALE" | "SERVICE"
+  VocabularyScope: "GLOBAL" | "WORKSPACE"
   WorkspaceAccessType: "INVITE_ONLY" | "SAME_DOMAIN"
   WorkspaceUserRole: ERP_WORKSPACE_RELATIONS
 }
@@ -1497,6 +2103,20 @@ export interface NexusGenObjects {
     items: NexusGenRootTypes['GlobalAttributeValue'][]; // [GlobalAttributeValue!]!
     page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
   }
+  GlobalTag: GlobalTag;
+  GlobalTagIngestionResult: { // root type
+    parsed: NexusGenScalars['JSONObject']; // JSONObject!
+    tag: NexusGenRootTypes['GlobalTag']; // GlobalTag!
+  }
+  GlobalTagListResult: { // root type
+    items: NexusGenRootTypes['GlobalTag'][]; // [GlobalTag!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  GlobalTagRelation: GlobalTagRelation;
+  GlobalTagRelationListResult: { // root type
+    items: NexusGenRootTypes['GlobalTagRelation'][]; // [GlobalTagRelation!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
   GlobalUnitDefinition: GlobalUnitDefinition;
   GlobalUnitDefinitionListResult: { // root type
     items: NexusGenRootTypes['GlobalUnitDefinition'][]; // [GlobalUnitDefinition!]!
@@ -1508,7 +2128,7 @@ export interface NexusGenObjects {
     imported: number; // Int!
   }
   IntakeForm: IntakeFormDTO;
-  IntakeFormLineItem: IntakeFormSubmissionLineItemDTO;
+  IntakeFormLineItem: LineItem;
   IntakeFormPage: { // root type
     items: NexusGenRootTypes['IntakeForm'][]; // [IntakeForm!]!
     page: NexusGenRootTypes['IntakeFormPageInfo']; // IntakeFormPageInfo!
@@ -1569,11 +2189,91 @@ export interface NexusGenObjects {
   InvoicesResponse: { // root type
     items: NexusGenRootTypes['Invoice'][]; // [Invoice!]!
   }
+  LineItem: { // root type
+    constraints?: Array<NexusGenRootTypes['LineItemConstraint'] | null> | null; // [LineItemConstraint]
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    customPriceName?: string | null; // String
+    delivery?: NexusGenRootTypes['LineItemDelivery'] | null; // LineItemDelivery
+    deliveryChargeInCents?: number | null; // Int
+    description: string; // String!
+    documentRef: NexusGenRootTypes['LineItemDocumentRef']; // LineItemDocumentRef!
+    id: string; // ID!
+    inputs?: Array<NexusGenRootTypes['LineItemInputValue'] | null> | null; // [LineItemInputValue]
+    notes?: string | null; // String
+    placeRef?: NexusGenRootTypes['LineItemPlaceRef'] | null; // LineItemPlaceRef
+    pricingRef?: NexusGenRootTypes['LineItemPricingRef'] | null; // LineItemPricingRef
+    pricingSpecSnapshot?: NexusGenRootTypes['PricingSpec'] | null; // PricingSpec
+    productRef?: NexusGenRootTypes['LineItemProductRef'] | null; // LineItemProductRef
+    quantity: string; // String!
+    rateInCentsSnapshot?: number | null; // Int
+    scopeTasks?: Array<NexusGenRootTypes['ServiceScopeTask'] | null> | null; // [ServiceScopeTask]
+    sourceLineItemId?: string | null; // ID
+    subtotalInCents?: number | null; // Int
+    targetSelectors?: Array<NexusGenRootTypes['LineItemTargetSelector'] | null> | null; // [LineItemTargetSelector]
+    timeWindow?: NexusGenRootTypes['LineItemTimeWindow'] | null; // LineItemTimeWindow
+    type: NexusGenEnums['LineItemType']; // LineItemType!
+    unitCode?: string | null; // String
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+    workspaceId: string; // String!
+  }
+  LineItemConstraint: LineItemConstraint;
+  LineItemConstraintAttribute: { // root type
+    attributeTypeId: string; // ID!
+    contextTags?: string[] | null; // [String!]
+    op: NexusGenEnums['LineItemConstraintAttributeOp']; // LineItemConstraintAttributeOp!
+    unitCode?: string | null; // String
+    value: NexusGenScalars['JSONObject']; // JSONObject!
+  }
+  LineItemConstraintBrand: { // root type
+    brandId?: string | null; // ID
+    manufacturerId?: string | null; // ID
+  }
+  LineItemConstraintData: { // root type
+    attribute?: NexusGenRootTypes['LineItemConstraintAttribute'] | null; // LineItemConstraintAttribute
+    brand?: NexusGenRootTypes['LineItemConstraintBrand'] | null; // LineItemConstraintBrand
+    location?: NexusGenRootTypes['LineItemConstraintLocation'] | null; // LineItemConstraintLocation
+    other?: NexusGenRootTypes['LineItemConstraintOther'] | null; // LineItemConstraintOther
+    schedule?: NexusGenRootTypes['LineItemConstraintSchedule'] | null; // LineItemConstraintSchedule
+    tag?: NexusGenRootTypes['LineItemConstraintTag'] | null; // LineItemConstraintTag
+  }
+  LineItemConstraintLocation: { // root type
+    placeRef: NexusGenRootTypes['LineItemPlaceRef']; // LineItemPlaceRef!
+  }
+  LineItemConstraintOther: { // root type
+    note: string; // String!
+  }
+  LineItemConstraintSchedule: { // root type
+    endAt?: NexusGenScalars['DateTime'] | null; // DateTime
+    startAt?: NexusGenScalars['DateTime'] | null; // DateTime
+  }
+  LineItemConstraintTag: { // root type
+    tagIds: string[]; // [ID!]!
+  }
   LineItemCostOptionDetails: { // root type
     exactSplitDistribution: NexusGenRootTypes['LineItemRentalPeriod']; // LineItemRentalPeriod!
     optimalSplit: NexusGenRootTypes['LineItemRentalPeriod']; // LineItemRentalPeriod!
     plainText: string; // String!
     rates: NexusGenRootTypes['LineItemPricing']; // LineItemPricing!
+  }
+  LineItemDelivery: { // root type
+    location?: string | null; // String
+    method?: NexusGenEnums['LineItemDeliveryMethod'] | null; // LineItemDeliveryMethod
+    notes?: string | null; // String
+  }
+  LineItemDocumentRef: { // root type
+    id: string; // ID!
+    revisionId?: string | null; // ID
+    type: NexusGenEnums['LineItemDocumentType']; // LineItemDocumentType!
+  }
+  LineItemInputValue: { // root type
+    attributeTypeId: string; // String!
+    contextTags?: string[] | null; // [String!]
+    unitCode?: string | null; // String
+    value: NexusGenScalars['JSONObject']; // JSONObject!
+  }
+  LineItemPlaceRef: { // root type
+    id: string; // ID!
+    kind: NexusGenEnums['LineItemPlaceKind']; // LineItemPlaceKind!
   }
   LineItemPriceForecast: { // root type
     days: NexusGenRootTypes['LineItemPriceForecastDay'][]; // [LineItemPriceForecastDay!]!
@@ -1587,10 +2287,29 @@ export interface NexusGenObjects {
     pricePer7DaysInCents: number; // Int!
     pricePer28DaysInCents: number; // Int!
   }
+  LineItemPricingRef: { // root type
+    priceBookId?: string | null; // ID
+    priceId?: string | null; // ID
+    priceType?: NexusGenEnums['LineItemType'] | null; // LineItemType
+  }
+  LineItemProductRef: { // root type
+    kind: NexusGenEnums['LineItemProductKind']; // LineItemProductKind!
+    productId: string; // ID!
+  }
   LineItemRentalPeriod: { // root type
     days1: number; // Int!
     days7: number; // Int!
     days28: number; // Int!
+  }
+  LineItemTargetSelector: { // root type
+    kind: NexusGenEnums['LineItemTargetSelectorKind']; // LineItemTargetSelectorKind!
+    tagIds?: string[] | null; // [String!]
+    targetLineItemIds?: string[] | null; // [String!]
+    targetProductId?: string | null; // String
+  }
+  LineItemTimeWindow: { // root type
+    endAt?: NexusGenScalars['DateTime'] | null; // DateTime
+    startAt?: NexusGenScalars['DateTime'] | null; // DateTime
   }
   ListAssetsResult: { // root type
     items: NexusGenRootTypes['Asset'][]; // [Asset!]!
@@ -1602,6 +2321,10 @@ export interface NexusGenObjects {
   }
   ListFulfilmentsResult: { // root type
     items: NexusGenRootTypes['Fulfilment'][]; // [Fulfilment!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  ListLineItemsResult: { // root type
+    items: NexusGenRootTypes['LineItem'][]; // [LineItem!]!
     page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
   }
   ListPersonContactsResult: { // root type
@@ -1698,6 +2421,18 @@ export interface NexusGenObjects {
   PimCategory: PimCategory;
   PimProduct: PimProduct;
   PriceBook: PriceBook;
+  PriceCatalogRef: { // root type
+    id: string; // ID!
+    kind: NexusGenEnums['CatalogProductKind']; // CatalogProductKind!
+  }
+  PricingSpec: { // root type
+    kind: NexusGenEnums['PricingSpecKind']; // PricingSpecKind!
+    pricePerDayInCents?: number | null; // Int
+    pricePerMonthInCents?: number | null; // Int
+    pricePerWeekInCents?: number | null; // Int
+    rateInCents?: number | null; // Int
+    unitCode?: string | null; // String
+  }
   Project: ProjectDoc;
   ProjectContact: { // root type
     contact_id: string; // String!
@@ -1710,6 +2445,20 @@ export interface NexusGenObjects {
   ProjectStatusCode: { // root type
     code: string; // String!
     description: string; // String!
+  }
+  PromoteWorkspaceAttributeTypesToGlobalResult: { // root type
+    items: NexusGenRootTypes['PromotedWorkspaceAttributeType'][]; // [PromotedWorkspaceAttributeType!]!
+  }
+  PromoteWorkspaceAttributeValuesToGlobalResult: { // root type
+    items: NexusGenRootTypes['PromotedWorkspaceAttributeValue'][]; // [PromotedWorkspaceAttributeValue!]!
+  }
+  PromotedWorkspaceAttributeType: { // root type
+    globalAttributeType: NexusGenRootTypes['GlobalAttributeType']; // GlobalAttributeType!
+    workspaceAttributeTypeId: string; // ID!
+  }
+  PromotedWorkspaceAttributeValue: { // root type
+    globalAttributeValue: NexusGenRootTypes['GlobalAttributeValue']; // GlobalAttributeValue!
+    workspaceAttributeValueId: string; // ID!
   }
   PurchaseOrder: PurchaseOrderDoc;
   PurchaseOrderFulfillmentProgress: { // root type
@@ -1741,6 +2490,29 @@ export interface NexusGenObjects {
   }
   Query: {};
   Quote: Quote;
+  QuoteLineItemConstraint: { // root type
+    payload?: NexusGenScalars['JSONObject'] | null; // JSONObject
+    strength: NexusGenEnums['QuoteLineItemConstraintStrength']; // QuoteLineItemConstraintStrength!
+  }
+  QuoteLineItemInputValue: { // root type
+    attributeTypeId: string; // String!
+    contextTags?: string[] | null; // [String!]
+    unitCode?: string | null; // String
+    value: NexusGenScalars['JSONObject']; // JSONObject!
+  }
+  QuoteLineItemPricingRef: { // root type
+    priceBookId?: string | null; // String
+    priceId?: string | null; // String
+    priceType?: NexusGenEnums['QuoteLineItemPricingType'] | null; // QuoteLineItemPricingType
+  }
+  QuoteLineItemProductRef: { // root type
+    kind: NexusGenEnums['QuoteLineItemProductKind']; // QuoteLineItemProductKind!
+    productId: string; // String!
+  }
+  QuoteLineItemTimeWindow: { // root type
+    endAt?: NexusGenScalars['DateTime'] | null; // DateTime
+    startAt?: NexusGenScalars['DateTime'] | null; // DateTime
+  }
   QuoteRevision: QuoteRevision;
   QuoteRevisionRentalLineItem: QuoteRevisionRentalLineItem;
   QuoteRevisionSaleLineItem: QuoteRevisionSaleLineItem;
@@ -1778,21 +2550,23 @@ export interface NexusGenObjects {
     status?: NexusGenRootTypes['RentalViewStatus'] | null; // RentalViewStatus
   }
   RentalPrice: { // root type
+    catalogRef?: NexusGenRootTypes['PriceCatalogRef'] | null; // PriceCatalogRef
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     createdBy: string; // String!
     id: string; // ID!
     name?: string | null; // String
     parentPriceId?: string | null; // ID
     parentPriceIdPercentageFactor?: number | null; // Float
-    pimCategoryId: string; // String!
-    pimCategoryName: string; // String!
-    pimCategoryPath: string; // String!
+    pimCategoryId?: string | null; // String
+    pimCategoryName?: string | null; // String
+    pimCategoryPath?: string | null; // String
     pimProductId?: string | null; // ID
     priceBookId?: string | null; // ID
     pricePerDayInCents: number; // Int!
     pricePerMonthInCents: number; // Int!
     pricePerWeekInCents: number; // Int!
     priceType: NexusGenEnums['PriceType']; // PriceType!
+    pricingSpec?: NexusGenRootTypes['PricingSpec'] | null; // PricingSpec
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
     workspaceId: string; // ID!
   }
@@ -1970,6 +2744,10 @@ export interface NexusGenObjects {
     id?: string | null; // String
     name?: string | null; // String
   }
+  ResolvedWorkspaceAttributeTypeResult: ResolvedWorkspaceAttributeType;
+  ResolvedWorkspaceAttributeValueResult: ResolvedWorkspaceAttributeValue;
+  ResolvedWorkspaceTagResult: ResolvedWorkspaceTag;
+  ResolvedWorkspaceUnitDefinitionResult: ResolvedWorkspaceUnitDefinition;
   ResourceMapAddress: { // root type
     city?: string | null; // String
     country?: string | null; // String
@@ -2020,6 +2798,7 @@ export interface NexusGenObjects {
   }
   SaleFulfilment: SaleFulfilment;
   SalePrice: { // root type
+    catalogRef?: NexusGenRootTypes['PriceCatalogRef'] | null; // PriceCatalogRef
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     createdBy: string; // String!
     discounts?: NexusGenScalars['JSON'] | null; // JSON
@@ -2027,12 +2806,13 @@ export interface NexusGenObjects {
     name?: string | null; // String
     parentPriceId?: string | null; // ID
     parentPriceIdPercentageFactor?: number | null; // Float
-    pimCategoryId: string; // String!
-    pimCategoryName: string; // String!
-    pimCategoryPath: string; // String!
+    pimCategoryId?: string | null; // String
+    pimCategoryName?: string | null; // String
+    pimCategoryPath?: string | null; // String
     pimProductId?: string | null; // ID
     priceBookId?: string | null; // ID
     priceType: NexusGenEnums['PriceType']; // PriceType!
+    pricingSpec?: NexusGenRootTypes['PricingSpec'] | null; // PricingSpec
     unitCostInCents: number; // Int!
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
     workspaceId: string; // ID!
@@ -2113,6 +2893,60 @@ export interface NexusGenObjects {
     workspaceId: string; // String!
   }
   ServiceFulfilment: ServiceFulfilment;
+  ServiceFulfilmentTask: ServiceFulfilmentTask;
+  ServicePrice: { // root type
+    catalogRef?: NexusGenRootTypes['PriceCatalogRef'] | null; // PriceCatalogRef
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    createdBy: string; // String!
+    id: string; // ID!
+    name?: string | null; // String
+    parentPriceId?: string | null; // ID
+    parentPriceIdPercentageFactor?: number | null; // Float
+    pimCategoryId?: string | null; // String
+    pimCategoryName?: string | null; // String
+    pimCategoryPath?: string | null; // String
+    pimProductId?: string | null; // ID
+    priceBookId?: string | null; // ID
+    priceType: NexusGenEnums['PriceType']; // PriceType!
+    pricingSpec?: NexusGenRootTypes['PricingSpec'] | null; // PricingSpec
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+    workspaceId: string; // ID!
+  }
+  ServiceRequirementEnvelope: { // root type
+    maxHeight?: NexusGenRootTypes['ServiceRequirementMeasurement'] | null; // ServiceRequirementMeasurement
+    maxItemWeight?: NexusGenRootTypes['ServiceRequirementMeasurement'] | null; // ServiceRequirementMeasurement
+    maxLength?: NexusGenRootTypes['ServiceRequirementMeasurement'] | null; // ServiceRequirementMeasurement
+    maxWidth?: NexusGenRootTypes['ServiceRequirementMeasurement'] | null; // ServiceRequirementMeasurement
+    missingTargets: NexusGenRootTypes['ServiceRequirementMissingTarget'][]; // [ServiceRequirementMissingTarget!]!
+    targetLineItemCount: number; // Int!
+    targetLineItemIds: string[]; // [String!]!
+    targetQuantity?: number | null; // Float
+    totalWeight?: NexusGenRootTypes['ServiceRequirementMeasurement'] | null; // ServiceRequirementMeasurement
+    warnings: string[]; // [String!]!
+  }
+  ServiceRequirementMeasurement: { // root type
+    unitCode: string; // String!
+    value: number; // Float!
+  }
+  ServiceRequirementMissingTarget: { // root type
+    missingAttributeKeys: string[]; // [String!]!
+    reason: string; // String!
+    targetLineItemId: string; // String!
+  }
+  ServiceScopeTask: { // root type
+    activityTagIds: string[]; // [String!]!
+    contextTagIds?: string[] | null; // [String!]
+    id: string; // String!
+    notes?: string | null; // String
+    sourceTemplateId?: string | null; // String
+    title: string; // String!
+  }
+  ServiceTargetSelector: { // root type
+    kind: NexusGenEnums['ServiceTargetSelectorKind']; // ServiceTargetSelectorKind!
+    tagIds?: string[] | null; // [String!]
+    targetLineItemIds?: string[] | null; // [String!]
+    targetProductId?: string | null; // String
+  }
   ServiceTask: { // root type
     completed?: boolean | null; // Boolean
     taskDetails?: string | null; // String
@@ -2154,8 +2988,95 @@ export interface NexusGenObjects {
     relation?: string | null; // String
     type: string; // String!
   }
+  StudioCatalogCreateProductResult: { // root type
+    catalogPath: string; // String!
+    product: NexusGenRootTypes['StudioCatalogProductSummary']; // StudioCatalogProductSummary!
+  }
+  StudioCatalogEnsureLogisticsServiceProductsResult: { // root type
+    catalogPath: string; // String!
+    products: NexusGenRootTypes['StudioCatalogSeededProduct'][]; // [StudioCatalogSeededProduct!]!
+  }
+  StudioCatalogInitResult: { // root type
+    catalogPath: string; // String!
+  }
+  StudioCatalogProductSummary: { // root type
+    categoryPath?: string | null; // String
+    id: string; // String!
+    kind?: NexusGenEnums['StudioCatalogProductKind'] | null; // StudioCatalogProductKind
+    name: string; // String!
+    origin: NexusGenEnums['StudioCatalogProductOrigin']; // StudioCatalogProductOrigin!
+    path: string; // String!
+    status?: NexusGenEnums['StudioCatalogProductStatus'] | null; // StudioCatalogProductStatus
+    tags?: string[] | null; // [String!]
+  }
+  StudioCatalogSeededProduct: { // root type
+    product: NexusGenRootTypes['StudioCatalogProductSummary']; // StudioCatalogProductSummary!
+    status: NexusGenEnums['StudioCatalogSeedStatus']; // StudioCatalogSeedStatus!
+  }
+  StudioCatalogValidateResult: { // root type
+    errors: NexusGenRootTypes['StudioCatalogValidationIssue'][]; // [StudioCatalogValidationIssue!]!
+    warnings: NexusGenRootTypes['StudioCatalogValidationIssue'][]; // [StudioCatalogValidationIssue!]!
+  }
+  StudioCatalogValidationIssue: { // root type
+    message: string; // String!
+    path?: string | null; // String
+  }
+  StudioConversation: { // root type
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    createdBy: string; // String!
+    id: string; // String!
+    lastMessageAt?: NexusGenScalars['DateTime'] | null; // DateTime
+    messageCount: number; // Int!
+    pinnedCatalogPath?: string | null; // String
+    title?: string | null; // String
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+    updatedBy: string; // String!
+    workingSet?: NexusGenScalars['JSONObject'] | null; // JSONObject
+    workspaceId: string; // String!
+  }
+  StudioConversationListResult: { // root type
+    items: NexusGenRootTypes['StudioConversation'][]; // [StudioConversation!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  StudioConversationMessage: { // root type
+    content: string; // String!
+    conversationId: string; // String!
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    createdBy?: string | null; // String
+    id: string; // String!
+    metadata?: NexusGenScalars['JSONObject'] | null; // JSONObject
+    role: NexusGenEnums['StudioConversationRole']; // StudioConversationRole!
+  }
+  StudioConversationMessageListResult: { // root type
+    items: NexusGenRootTypes['StudioConversationMessage'][]; // [StudioConversationMessage!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  StudioFsNode: { // root type
+    etag: string; // String!
+    mimeType?: string | null; // String
+    name: string; // String!
+    path: string; // String!
+    sizeBytes?: number | null; // Int
+    type: NexusGenEnums['StudioFsNodeType']; // StudioFsNodeType!
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+  }
+  StudioFsReadResult: { // root type
+    content: string; // String!
+    etag: string; // String!
+    mimeType?: string | null; // String
+  }
+  StudioFsWriteResult: { // root type
+    etag: string; // String!
+  }
   SubmissionSalesOrder: SalesOrderDoc;
   Subscription: {};
+  SyncMaterialLogisticsAddOnsResult: { // root type
+    deliveryLineItem?: NexusGenRootTypes['LineItem'] | null; // LineItem
+    materialLineItemId: string; // ID!
+    pickupLineItem?: NexusGenRootTypes['LineItem'] | null; // LineItem
+    serviceAddOns: NexusGenRootTypes['LineItem'][]; // [LineItem!]!
+    warnings: string[]; // [String!]!
+  }
   TaxAnalysisResult: { // root type
     taxes: NexusGenRootTypes['TaxObligation'][]; // [TaxObligation!]!
   }
@@ -2320,6 +3241,16 @@ export interface NexusGenObjects {
     updatedAt?: string | null; // String
     updatedBy?: string | null; // String
   }
+  WorkspaceAttributeType: WorkspaceAttributeType;
+  WorkspaceAttributeTypeListResult: { // root type
+    items: NexusGenRootTypes['WorkspaceAttributeType'][]; // [WorkspaceAttributeType!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  WorkspaceAttributeValue: WorkspaceAttributeValue;
+  WorkspaceAttributeValueListResult: { // root type
+    items: NexusGenRootTypes['WorkspaceAttributeValue'][]; // [WorkspaceAttributeValue!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
   WorkspaceMember: { // root type
     roles: NexusGenEnums['WorkspaceUserRole'][]; // [WorkspaceUserRole!]!
     userId: string; // String!
@@ -2328,6 +3259,16 @@ export interface NexusGenObjects {
     description?: string | null; // String
     label?: string | null; // String
     role: NexusGenEnums['WorkspaceUserRole']; // WorkspaceUserRole!
+  }
+  WorkspaceTag: WorkspaceTag;
+  WorkspaceTagListResult: { // root type
+    items: NexusGenRootTypes['WorkspaceTag'][]; // [WorkspaceTag!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  WorkspaceUnitDefinition: WorkspaceUnitDefinition;
+  WorkspaceUnitDefinitionListResult: { // root type
+    items: NexusGenRootTypes['WorkspaceUnitDefinition'][]; // [WorkspaceUnitDefinition!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
   }
   WriteRelationshipResult: { // root type
     message?: string | null; // String
@@ -2345,7 +3286,7 @@ export interface NexusGenUnions {
   Contact: NexusGenRootTypes['BusinessContact'] | NexusGenRootTypes['PersonContact'];
   Fulfilment: NexusGenRootTypes['RentalFulfilment'] | NexusGenRootTypes['SaleFulfilment'] | NexusGenRootTypes['ServiceFulfilment'];
   InventoryReservation: NexusGenRootTypes['FulfilmentReservation'];
-  Price: NexusGenRootTypes['RentalPrice'] | NexusGenRootTypes['SalePrice'];
+  Price: NexusGenRootTypes['RentalPrice'] | NexusGenRootTypes['SalePrice'] | NexusGenRootTypes['ServicePrice'];
   PurchaseOrderLineItem: NexusGenRootTypes['RentalPurchaseOrderLineItem'] | NexusGenRootTypes['SalePurchaseOrderLineItem'];
   QuoteRevisionLineItem: NexusGenRootTypes['QuoteRevisionRentalLineItem'] | NexusGenRootTypes['QuoteRevisionSaleLineItem'] | NexusGenRootTypes['QuoteRevisionServiceLineItem'];
   RFQLineItem: NexusGenRootTypes['RFQRentalLineItem'] | NexusGenRootTypes['RFQSaleLineItem'] | NexusGenRootTypes['RFQServiceLineItem'];
@@ -2368,25 +3309,38 @@ export interface NexusGenFieldTypes {
     collectionSnapshot: NexusGenRootTypes['CollectionSnapshotResult']; // CollectionSnapshotResult!
     createGlobalAttributeType: NexusGenRootTypes['GlobalAttributeType'] | null; // GlobalAttributeType
     createGlobalAttributeValue: NexusGenRootTypes['GlobalAttributeValue'] | null; // GlobalAttributeValue
+    createGlobalTag: NexusGenRootTypes['GlobalTag'] | null; // GlobalTag
+    createGlobalTagRelation: NexusGenRootTypes['GlobalTagRelation'] | null; // GlobalTagRelation
     createGlobalUnitDefinition: NexusGenRootTypes['GlobalUnitDefinition'] | null; // GlobalUnitDefinition
     deleteRelationship: NexusGenRootTypes['DeleteRelationshipResult']; // DeleteRelationshipResult!
+    mergeGlobalTag: NexusGenRootTypes['GlobalTag'] | null; // GlobalTag
+    promoteWorkspaceAttributeTypeToGlobal: NexusGenRootTypes['GlobalAttributeType'] | null; // GlobalAttributeType
+    promoteWorkspaceAttributeTypesToGlobal: NexusGenRootTypes['PromoteWorkspaceAttributeTypesToGlobalResult'] | null; // PromoteWorkspaceAttributeTypesToGlobalResult
+    promoteWorkspaceAttributeValueToGlobal: NexusGenRootTypes['GlobalAttributeValue'] | null; // GlobalAttributeValue
+    promoteWorkspaceAttributeValuesToGlobal: NexusGenRootTypes['PromoteWorkspaceAttributeValuesToGlobalResult'] | null; // PromoteWorkspaceAttributeValuesToGlobalResult
+    promoteWorkspaceTagToGlobal: NexusGenRootTypes['GlobalTag'] | null; // GlobalTag
+    promoteWorkspaceUnitDefinitionToGlobal: NexusGenRootTypes['GlobalUnitDefinition'] | null; // GlobalUnitDefinition
     removeRolesFromUser: boolean | null; // Boolean
     sendTemplatedEmail: NexusGenRootTypes['SendTemplatedEmailResult']; // SendTemplatedEmailResult!
     sendTestEmail: NexusGenRootTypes['SendTestEmailResult']; // SendTestEmailResult!
     updateGlobalAttributeType: NexusGenRootTypes['GlobalAttributeType'] | null; // GlobalAttributeType
     updateGlobalAttributeValue: NexusGenRootTypes['GlobalAttributeValue'] | null; // GlobalAttributeValue
+    updateGlobalTag: NexusGenRootTypes['GlobalTag'] | null; // GlobalTag
     updateGlobalUnitDefinition: NexusGenRootTypes['GlobalUnitDefinition'] | null; // GlobalUnitDefinition
     writeRelationship: NexusGenRootTypes['WriteRelationshipResult']; // WriteRelationshipResult!
   }
   AdminQueryNamespace: { // field return type
     getGlobalAttributeTypeById: NexusGenRootTypes['GlobalAttributeType'] | null; // GlobalAttributeType
     getGlobalAttributeValueById: NexusGenRootTypes['GlobalAttributeValue'] | null; // GlobalAttributeValue
+    getGlobalTagById: NexusGenRootTypes['GlobalTag'] | null; // GlobalTag
     getGlobalUnitDefinitionByCode: NexusGenRootTypes['GlobalUnitDefinition'] | null; // GlobalUnitDefinition
     getUserById: NexusGenRootTypes['Auth0User'] | null; // Auth0User
     getUserRoles: Array<NexusGenRootTypes['Auth0Role'] | null> | null; // [Auth0Role]
     listAvailableRelations: NexusGenRootTypes['AvailableRelation'][]; // [AvailableRelation!]!
     listGlobalAttributeTypes: NexusGenRootTypes['GlobalAttributeTypeListResult'] | null; // GlobalAttributeTypeListResult
     listGlobalAttributeValues: NexusGenRootTypes['GlobalAttributeValueListResult'] | null; // GlobalAttributeValueListResult
+    listGlobalTagRelations: NexusGenRootTypes['GlobalTagRelationListResult'] | null; // GlobalTagRelationListResult
+    listGlobalTags: NexusGenRootTypes['GlobalTagListResult'] | null; // GlobalTagListResult
     listGlobalUnitDefinitions: NexusGenRootTypes['GlobalUnitDefinitionListResult'] | null; // GlobalUnitDefinitionListResult
     listRelationships: NexusGenRootTypes['ListRelationshipsResult']; // ListRelationshipsResult!
     listResourceTypes: string[]; // [String!]!
@@ -2856,6 +3810,46 @@ export interface NexusGenFieldTypes {
     items: NexusGenRootTypes['GlobalAttributeValue'][]; // [GlobalAttributeValue!]!
     page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
   }
+  GlobalTag: { // field return type
+    auditStatus: NexusGenEnums['GlobalTagAuditStatus'] | null; // GlobalTagAuditStatus
+    createdAt: NexusGenScalars['DateTime'] | null; // DateTime
+    createdBy: string | null; // String
+    displayName: string | null; // String
+    id: string; // String!
+    label: string; // String!
+    mergedIntoId: string | null; // String
+    notes: string | null; // String
+    pos: NexusGenEnums['GlobalTagPartOfSpeech']; // GlobalTagPartOfSpeech!
+    source: string | null; // String
+    status: NexusGenEnums['GlobalTagStatus']; // GlobalTagStatus!
+    synonyms: Array<string | null> | null; // [String]
+    updatedAt: NexusGenScalars['DateTime'] | null; // DateTime
+    updatedBy: string | null; // String
+  }
+  GlobalTagIngestionResult: { // field return type
+    parsed: NexusGenScalars['JSONObject']; // JSONObject!
+    tag: NexusGenRootTypes['GlobalTag']; // GlobalTag!
+  }
+  GlobalTagListResult: { // field return type
+    items: NexusGenRootTypes['GlobalTag'][]; // [GlobalTag!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  GlobalTagRelation: { // field return type
+    confidence: number | null; // Float
+    createdAt: NexusGenScalars['DateTime'] | null; // DateTime
+    createdBy: string | null; // String
+    fromTagId: string; // String!
+    id: string; // String!
+    relationType: NexusGenEnums['GlobalTagRelationType']; // GlobalTagRelationType!
+    source: string | null; // String
+    toTagId: string; // String!
+    updatedAt: NexusGenScalars['DateTime'] | null; // DateTime
+    updatedBy: string | null; // String
+  }
+  GlobalTagRelationListResult: { // field return type
+    items: NexusGenRootTypes['GlobalTagRelation'][]; // [GlobalTagRelation!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
   GlobalUnitDefinition: { // field return type
     canonicalUnitCode: string | null; // String
     code: string; // String!
@@ -3077,11 +4071,96 @@ export interface NexusGenFieldTypes {
   InvoicesResponse: { // field return type
     items: NexusGenRootTypes['Invoice'][]; // [Invoice!]!
   }
+  LineItem: { // field return type
+    constraints: Array<NexusGenRootTypes['LineItemConstraint'] | null> | null; // [LineItemConstraint]
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    customPriceName: string | null; // String
+    delivery: NexusGenRootTypes['LineItemDelivery'] | null; // LineItemDelivery
+    deliveryChargeInCents: number | null; // Int
+    description: string; // String!
+    documentRef: NexusGenRootTypes['LineItemDocumentRef']; // LineItemDocumentRef!
+    id: string; // ID!
+    inputs: Array<NexusGenRootTypes['LineItemInputValue'] | null> | null; // [LineItemInputValue]
+    notes: string | null; // String
+    placeRef: NexusGenRootTypes['LineItemPlaceRef'] | null; // LineItemPlaceRef
+    pricingRef: NexusGenRootTypes['LineItemPricingRef'] | null; // LineItemPricingRef
+    pricingSpecSnapshot: NexusGenRootTypes['PricingSpec'] | null; // PricingSpec
+    productRef: NexusGenRootTypes['LineItemProductRef'] | null; // LineItemProductRef
+    quantity: string; // String!
+    rateInCentsSnapshot: number | null; // Int
+    scopeTasks: Array<NexusGenRootTypes['ServiceScopeTask'] | null> | null; // [ServiceScopeTask]
+    sourceLineItemId: string | null; // ID
+    state: NexusGenEnums['LineItemState']; // LineItemState!
+    subtotalInCents: number | null; // Int
+    targetSelectors: Array<NexusGenRootTypes['LineItemTargetSelector'] | null> | null; // [LineItemTargetSelector]
+    timeWindow: NexusGenRootTypes['LineItemTimeWindow'] | null; // LineItemTimeWindow
+    type: NexusGenEnums['LineItemType']; // LineItemType!
+    unitCode: string | null; // String
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+    workspaceId: string; // String!
+  }
+  LineItemConstraint: { // field return type
+    data: NexusGenRootTypes['LineItemConstraintData'] | null; // LineItemConstraintData
+    kind: NexusGenEnums['LineItemConstraintKind']; // LineItemConstraintKind!
+    strength: NexusGenEnums['LineItemConstraintStrength']; // LineItemConstraintStrength!
+  }
+  LineItemConstraintAttribute: { // field return type
+    attributeTypeId: string; // ID!
+    contextTags: string[] | null; // [String!]
+    op: NexusGenEnums['LineItemConstraintAttributeOp']; // LineItemConstraintAttributeOp!
+    unitCode: string | null; // String
+    value: NexusGenScalars['JSONObject']; // JSONObject!
+  }
+  LineItemConstraintBrand: { // field return type
+    brandId: string | null; // ID
+    manufacturerId: string | null; // ID
+  }
+  LineItemConstraintData: { // field return type
+    attribute: NexusGenRootTypes['LineItemConstraintAttribute'] | null; // LineItemConstraintAttribute
+    brand: NexusGenRootTypes['LineItemConstraintBrand'] | null; // LineItemConstraintBrand
+    location: NexusGenRootTypes['LineItemConstraintLocation'] | null; // LineItemConstraintLocation
+    other: NexusGenRootTypes['LineItemConstraintOther'] | null; // LineItemConstraintOther
+    schedule: NexusGenRootTypes['LineItemConstraintSchedule'] | null; // LineItemConstraintSchedule
+    tag: NexusGenRootTypes['LineItemConstraintTag'] | null; // LineItemConstraintTag
+  }
+  LineItemConstraintLocation: { // field return type
+    placeRef: NexusGenRootTypes['LineItemPlaceRef']; // LineItemPlaceRef!
+  }
+  LineItemConstraintOther: { // field return type
+    note: string; // String!
+  }
+  LineItemConstraintSchedule: { // field return type
+    endAt: NexusGenScalars['DateTime'] | null; // DateTime
+    startAt: NexusGenScalars['DateTime'] | null; // DateTime
+  }
+  LineItemConstraintTag: { // field return type
+    tagIds: string[]; // [ID!]!
+  }
   LineItemCostOptionDetails: { // field return type
     exactSplitDistribution: NexusGenRootTypes['LineItemRentalPeriod']; // LineItemRentalPeriod!
     optimalSplit: NexusGenRootTypes['LineItemRentalPeriod']; // LineItemRentalPeriod!
     plainText: string; // String!
     rates: NexusGenRootTypes['LineItemPricing']; // LineItemPricing!
+  }
+  LineItemDelivery: { // field return type
+    location: string | null; // String
+    method: NexusGenEnums['LineItemDeliveryMethod'] | null; // LineItemDeliveryMethod
+    notes: string | null; // String
+  }
+  LineItemDocumentRef: { // field return type
+    id: string; // ID!
+    revisionId: string | null; // ID
+    type: NexusGenEnums['LineItemDocumentType']; // LineItemDocumentType!
+  }
+  LineItemInputValue: { // field return type
+    attributeTypeId: string; // String!
+    contextTags: string[] | null; // [String!]
+    unitCode: string | null; // String
+    value: NexusGenScalars['JSONObject']; // JSONObject!
+  }
+  LineItemPlaceRef: { // field return type
+    id: string; // ID!
+    kind: NexusGenEnums['LineItemPlaceKind']; // LineItemPlaceKind!
   }
   LineItemPriceForecast: { // field return type
     accumulative_cost_in_cents: number; // Int!
@@ -3103,10 +4182,29 @@ export interface NexusGenFieldTypes {
     pricePer7DaysInCents: number; // Int!
     pricePer28DaysInCents: number; // Int!
   }
+  LineItemPricingRef: { // field return type
+    priceBookId: string | null; // ID
+    priceId: string | null; // ID
+    priceType: NexusGenEnums['LineItemType'] | null; // LineItemType
+  }
+  LineItemProductRef: { // field return type
+    kind: NexusGenEnums['LineItemProductKind']; // LineItemProductKind!
+    productId: string; // ID!
+  }
   LineItemRentalPeriod: { // field return type
     days1: number; // Int!
     days7: number; // Int!
     days28: number; // Int!
+  }
+  LineItemTargetSelector: { // field return type
+    kind: NexusGenEnums['LineItemTargetSelectorKind']; // LineItemTargetSelectorKind!
+    tagIds: string[] | null; // [String!]
+    targetLineItemIds: string[] | null; // [String!]
+    targetProductId: string | null; // String
+  }
+  LineItemTimeWindow: { // field return type
+    endAt: NexusGenScalars['DateTime'] | null; // DateTime
+    startAt: NexusGenScalars['DateTime'] | null; // DateTime
   }
   ListAssetsResult: { // field return type
     items: NexusGenRootTypes['Asset'][]; // [Asset!]!
@@ -3118,6 +4216,10 @@ export interface NexusGenFieldTypes {
   }
   ListFulfilmentsResult: { // field return type
     items: NexusGenRootTypes['Fulfilment'][]; // [Fulfilment!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  ListLineItemsResult: { // field return type
+    items: NexusGenRootTypes['LineItem'][]; // [LineItem!]!
     page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
   }
   ListPersonContactsResult: { // field return type
@@ -3184,6 +4286,7 @@ export interface NexusGenFieldTypes {
     addFileToEntity: NexusGenRootTypes['File']; // File!
     addInvoiceCharges: NexusGenRootTypes['Invoice']; // Invoice!
     addSearchRecent: NexusGenRootTypes['SearchUserState']; // SearchUserState!
+    addStudioConversationMessage: NexusGenRootTypes['StudioConversationMessage']; // StudioConversationMessage!
     addTaxLineItem: NexusGenRootTypes['Invoice']; // Invoice!
     admin: NexusGenRootTypes['AdminMutationNamespace'] | null; // AdminMutationNamespace
     adoptOrphanedSubmissions: NexusGenRootTypes['AdoptOrphanedSubmissionsResult']; // AdoptOrphanedSubmissionsResult!
@@ -3200,12 +4303,15 @@ export interface NexusGenFieldTypes {
     createGlobalAttributeRelation: NexusGenRootTypes['GlobalAttributeRelation'] | null; // GlobalAttributeRelation
     createGlobalAttributeType: NexusGenRootTypes['GlobalAttributeType'] | null; // GlobalAttributeType
     createGlobalAttributeValue: NexusGenRootTypes['GlobalAttributeValue'] | null; // GlobalAttributeValue
+    createGlobalTag: NexusGenRootTypes['GlobalTag'] | null; // GlobalTag
+    createGlobalTagRelation: NexusGenRootTypes['GlobalTagRelation'] | null; // GlobalTagRelation
     createGlobalUnitDefinition: NexusGenRootTypes['GlobalUnitDefinition'] | null; // GlobalUnitDefinition
     createIntakeForm: NexusGenRootTypes['IntakeForm'] | null; // IntakeForm
     createIntakeFormSubmission: NexusGenRootTypes['IntakeFormSubmission'] | null; // IntakeFormSubmission
     createIntakeFormSubmissionLineItem: NexusGenRootTypes['IntakeFormLineItem'] | null; // IntakeFormLineItem
     createInventory: NexusGenRootTypes['Inventory']; // Inventory!
     createInvoice: NexusGenRootTypes['Invoice']; // Invoice!
+    createLineItem: NexusGenRootTypes['LineItem']; // LineItem!
     createNote: NexusGenRootTypes['Note'] | null; // Note
     createPdfFromPageAndAttachToEntityId: NexusGenRootTypes['CreatePdfResult'] | null; // CreatePdfResult
     createPersonContact: NexusGenRootTypes['PersonContact'] | null; // PersonContact
@@ -3228,6 +4334,9 @@ export interface NexusGenFieldTypes {
     createSaleSalesOrderLineItem: NexusGenRootTypes['SaleSalesOrderLineItem'] | null; // SaleSalesOrderLineItem
     createSalesOrder: NexusGenRootTypes['SalesOrder'] | null; // SalesOrder
     createServiceFulfilment: NexusGenRootTypes['ServiceFulfilment'] | null; // ServiceFulfilment
+    createServiceFulfilmentFromLineItem: NexusGenRootTypes['ServiceFulfilment'] | null; // ServiceFulfilment
+    createServicePrice: NexusGenRootTypes['ServicePrice'] | null; // ServicePrice
+    createStudioConversation: NexusGenRootTypes['StudioConversation']; // StudioConversation!
     createTransaction: NexusGenRootTypes['Transaction'] | null; // Transaction
     createWorkflowConfiguration: NexusGenRootTypes['WorkflowConfiguration'] | null; // WorkflowConfiguration
     createWorkspace: NexusGenRootTypes['Workspace'] | null; // Workspace
@@ -3237,18 +4346,21 @@ export interface NexusGenFieldTypes {
     deleteIntakeFormSubmissionLineItem: boolean | null; // Boolean
     deleteInventory: boolean; // Boolean!
     deleteInvoice: boolean; // Boolean!
+    deleteLineItem: NexusGenRootTypes['LineItem']; // LineItem!
     deleteNote: NexusGenRootTypes['Note'] | null; // Note
     deletePriceBookById: boolean | null; // Boolean
     deletePriceById: boolean | null; // Boolean
     deleteProject: NexusGenRootTypes['Project'] | null; // Project
     deleteReferenceNumberTemplate: boolean | null; // Boolean
     deleteResourceMapTag: NexusGenRootTypes['ResourceMapResource'] | null; // ResourceMapResource
+    deleteStudioConversation: boolean; // Boolean!
     deleteWorkflowConfigurationById: boolean | null; // Boolean
     exportPrices: NexusGenRootTypes['File'] | null; // File
     generateReferenceNumber: NexusGenRootTypes['GenerateReferenceNumberResult'] | null; // GenerateReferenceNumberResult
     getSignedReadUrl: string | null; // String
     importPrices: NexusGenRootTypes['ImportPricesResult'] | null; // ImportPricesResult
     ingestGlobalAttributeString: NexusGenRootTypes['GlobalAttributeIngestionResult'] | null; // GlobalAttributeIngestionResult
+    ingestGlobalTagString: NexusGenRootTypes['GlobalTagIngestionResult'] | null; // GlobalTagIngestionResult
     inviteUserToWorkspace: NexusGenRootTypes['WorkspaceMember'] | null; // WorkspaceMember
     joinWorkspace: NexusGenRootTypes['Workspace'] | null; // Workspace
     markInvoiceAsPaid: NexusGenRootTypes['Invoice']; // Invoice!
@@ -3261,6 +4373,10 @@ export interface NexusGenFieldTypes {
     removeUserFromWorkspace: boolean | null; // Boolean
     renameFile: NexusGenRootTypes['File']; // File!
     resetSequenceNumber: boolean | null; // Boolean
+    resolveGlobalOrWorkspaceAttributeType: NexusGenRootTypes['ResolvedWorkspaceAttributeTypeResult'] | null; // ResolvedWorkspaceAttributeTypeResult
+    resolveGlobalOrWorkspaceAttributeValue: NexusGenRootTypes['ResolvedWorkspaceAttributeValueResult'] | null; // ResolvedWorkspaceAttributeValueResult
+    resolveGlobalOrWorkspaceTag: NexusGenRootTypes['ResolvedWorkspaceTagResult'] | null; // ResolvedWorkspaceTagResult
+    resolveGlobalOrWorkspaceUnitDefinition: NexusGenRootTypes['ResolvedWorkspaceUnitDefinitionResult'] | null; // ResolvedWorkspaceUnitDefinitionResult
     runNightlyRentalChargesJob: NexusGenRootTypes['RentalFulfilment'][]; // [RentalFulfilment!]!
     runNightlyRentalChargesJobAsync: boolean | null; // Boolean
     sendQuote: NexusGenRootTypes['Quote']; // Quote!
@@ -3274,10 +4390,22 @@ export interface NexusGenFieldTypes {
     softDeletePurchaseOrderLineItem: NexusGenRootTypes['PurchaseOrderLineItem'] | null; // PurchaseOrderLineItem
     softDeleteSalesOrder: NexusGenRootTypes['SalesOrder'] | null; // SalesOrder
     softDeleteSalesOrderLineItem: NexusGenRootTypes['SalesOrderLineItem'] | null; // SalesOrderLineItem
+    studioCatalogCompile: NexusGenScalars['JSONObject']; // JSONObject!
+    studioCatalogCreateProduct: NexusGenRootTypes['StudioCatalogCreateProductResult']; // StudioCatalogCreateProductResult!
+    studioCatalogEnsureLogisticsServiceProducts: NexusGenRootTypes['StudioCatalogEnsureLogisticsServiceProductsResult']; // StudioCatalogEnsureLogisticsServiceProductsResult!
+    studioCatalogInit: NexusGenRootTypes['StudioCatalogInitResult']; // StudioCatalogInitResult!
+    studioCatalogPreview: NexusGenScalars['JSONObject']; // JSONObject!
+    studioCatalogValidate: NexusGenRootTypes['StudioCatalogValidateResult']; // StudioCatalogValidateResult!
+    studioFsDelete: boolean; // Boolean!
+    studioFsMkdir: NexusGenScalars['JSONObject']; // JSONObject!
+    studioFsMove: NexusGenScalars['JSONObject']; // JSONObject!
+    studioFsUpload: NexusGenRootTypes['StudioFsWriteResult']; // StudioFsWriteResult!
+    studioFsWrite: NexusGenRootTypes['StudioFsWriteResult']; // StudioFsWriteResult!
     submitIntakeFormSubmission: NexusGenRootTypes['IntakeFormSubmission'] | null; // IntakeFormSubmission
     submitPurchaseOrder: NexusGenRootTypes['PurchaseOrder'] | null; // PurchaseOrder
     submitSalesOrder: NexusGenRootTypes['SalesOrder'] | null; // SalesOrder
     syncCurrentUser: NexusGenRootTypes['User'] | null; // User
+    syncMaterialLogisticsAddOns: NexusGenRootTypes['SyncMaterialLogisticsAddOnsResult']; // SyncMaterialLogisticsAddOnsResult!
     toggleSearchFavorite: NexusGenRootTypes['SearchUserState']; // SearchUserState!
     touchAllContacts: NexusGenRootTypes['TouchAllContactsResult'] | null; // TouchAllContactsResult
     unarchiveWorkspace: NexusGenRootTypes['Workspace'] | null; // Workspace
@@ -3293,6 +4421,7 @@ export interface NexusGenFieldTypes {
     updateFulfilmentColumn: NexusGenRootTypes['FulfilmentBase'] | null; // FulfilmentBase
     updateGlobalAttributeType: NexusGenRootTypes['GlobalAttributeType'] | null; // GlobalAttributeType
     updateGlobalAttributeValue: NexusGenRootTypes['GlobalAttributeValue'] | null; // GlobalAttributeValue
+    updateGlobalTag: NexusGenRootTypes['GlobalTag'] | null; // GlobalTag
     updateGlobalUnitDefinition: NexusGenRootTypes['GlobalUnitDefinition'] | null; // GlobalUnitDefinition
     updateIntakeForm: NexusGenRootTypes['IntakeForm'] | null; // IntakeForm
     updateIntakeFormSubmission: NexusGenRootTypes['IntakeFormSubmission'] | null; // IntakeFormSubmission
@@ -3300,6 +4429,7 @@ export interface NexusGenFieldTypes {
     updateInventoryActualReturnDate: NexusGenRootTypes['Inventory'] | null; // Inventory
     updateInventoryExpectedReturnDate: NexusGenRootTypes['Inventory'] | null; // Inventory
     updateInventorySerialisedId: NexusGenRootTypes['Inventory'] | null; // Inventory
+    updateLineItem: NexusGenRootTypes['LineItem']; // LineItem!
     updateNote: NexusGenRootTypes['Note'] | null; // Note
     updatePersonBusiness: NexusGenRootTypes['PersonContact'] | null; // PersonContact
     updatePersonContact: NexusGenRootTypes['PersonContact'] | null; // PersonContact
@@ -3332,6 +4462,9 @@ export interface NexusGenFieldTypes {
     updateSaleSalesOrderLineItem: NexusGenRootTypes['SaleSalesOrderLineItem'] | null; // SaleSalesOrderLineItem
     updateSalesOrder: NexusGenRootTypes['SalesOrder'] | null; // SalesOrder
     updateSalesOrderLineItem: NexusGenRootTypes['SalesOrderLineItem'] | null; // SalesOrderLineItem
+    updateServiceFulfilmentTaskStatus: NexusGenRootTypes['ServiceFulfilment'] | null; // ServiceFulfilment
+    updateServicePrice: NexusGenRootTypes['ServicePrice'] | null; // ServicePrice
+    updateStudioConversation: NexusGenRootTypes['StudioConversation']; // StudioConversation!
     updateTaxLineItem: NexusGenRootTypes['Invoice']; // Invoice!
     updateWorkflowConfiguration: NexusGenRootTypes['WorkflowConfiguration'] | null; // WorkflowConfiguration
     updateWorkspaceAccessType: NexusGenRootTypes['Workspace'] | null; // Workspace
@@ -3339,6 +4472,10 @@ export interface NexusGenFieldTypes {
     updateWorkspaceUserRoles: NexusGenRootTypes['WorkspaceMember'] | null; // WorkspaceMember
     upsertPimCategory: NexusGenRootTypes['PimCategory'] | null; // PimCategory
     upsertUser: NexusGenRootTypes['User'] | null; // User
+    upsertWorkspaceAttributeType: NexusGenRootTypes['WorkspaceAttributeType'] | null; // WorkspaceAttributeType
+    upsertWorkspaceAttributeValue: NexusGenRootTypes['WorkspaceAttributeValue'] | null; // WorkspaceAttributeValue
+    upsertWorkspaceTag: NexusGenRootTypes['WorkspaceTag'] | null; // WorkspaceTag
+    upsertWorkspaceUnitDefinition: NexusGenRootTypes['WorkspaceUnitDefinition'] | null; // WorkspaceUnitDefinition
   }
   Note: { // field return type
     _id: string; // String!
@@ -3429,6 +4566,18 @@ export interface NexusGenFieldTypes {
     updatedByUser: NexusGenRootTypes['User'] | null; // User
     workspaceId: string; // ID!
   }
+  PriceCatalogRef: { // field return type
+    id: string; // ID!
+    kind: NexusGenEnums['CatalogProductKind']; // CatalogProductKind!
+  }
+  PricingSpec: { // field return type
+    kind: NexusGenEnums['PricingSpecKind']; // PricingSpecKind!
+    pricePerDayInCents: number | null; // Int
+    pricePerMonthInCents: number | null; // Int
+    pricePerWeekInCents: number | null; // Int
+    rateInCents: number | null; // Int
+    unitCode: string | null; // String
+  }
   Project: { // field return type
     associatedPriceBooks: NexusGenRootTypes['ListPriceBooksResult'] | null; // ListPriceBooksResult
     comments: NexusGenRootTypes['Note'][]; // [Note!]!
@@ -3464,6 +4613,20 @@ export interface NexusGenFieldTypes {
     code: string; // String!
     description: string; // String!
   }
+  PromoteWorkspaceAttributeTypesToGlobalResult: { // field return type
+    items: NexusGenRootTypes['PromotedWorkspaceAttributeType'][]; // [PromotedWorkspaceAttributeType!]!
+  }
+  PromoteWorkspaceAttributeValuesToGlobalResult: { // field return type
+    items: NexusGenRootTypes['PromotedWorkspaceAttributeValue'][]; // [PromotedWorkspaceAttributeValue!]!
+  }
+  PromotedWorkspaceAttributeType: { // field return type
+    globalAttributeType: NexusGenRootTypes['GlobalAttributeType']; // GlobalAttributeType!
+    workspaceAttributeTypeId: string; // ID!
+  }
+  PromotedWorkspaceAttributeValue: { // field return type
+    globalAttributeValue: NexusGenRootTypes['GlobalAttributeValue']; // GlobalAttributeValue!
+    workspaceAttributeValueId: string; // ID!
+  }
   PurchaseOrder: { // field return type
     comments: NexusGenRootTypes['Note'][]; // [Note!]!
     company_id: string; // String!
@@ -3475,6 +4638,7 @@ export interface NexusGenFieldTypes {
     id: string; // String!
     intakeFormSubmission: NexusGenRootTypes['IntakeFormSubmission'] | null; // IntakeFormSubmission
     inventory: NexusGenRootTypes['Inventory'][]; // [Inventory!]!
+    lineItems: NexusGenRootTypes['LineItem'][]; // [LineItem!]!
     line_items: Array<NexusGenRootTypes['PurchaseOrderLineItem'] | null> | null; // [PurchaseOrderLineItem]
     pricing: NexusGenRootTypes['PurchaseOrderPricing'] | null; // PurchaseOrderPricing
     project: NexusGenRootTypes['Project'] | null; // Project
@@ -3525,6 +4689,7 @@ export interface NexusGenFieldTypes {
     admin: NexusGenRootTypes['AdminQueryNamespace'] | null; // AdminQueryNamespace
     bulkCalculateSubTotal: NexusGenRootTypes['LineItemPriceForecast'][]; // [LineItemPriceForecast!]!
     calculateSubTotal: NexusGenRootTypes['LineItemPriceForecast']; // LineItemPriceForecast!
+    computeServiceRequirementEnvelope: NexusGenRootTypes['ServiceRequirementEnvelope']; // ServiceRequirementEnvelope!
     getBrandByDomain: NexusGenRootTypes['Brand'] | null; // Brand
     getBrandById: NexusGenRootTypes['Brand'] | null; // Brand
     getBrandsByIds: Array<NexusGenRootTypes['Brand'] | null> | null; // [Brand]
@@ -3535,12 +4700,14 @@ export interface NexusGenFieldTypes {
     getDefaultTemplates: NexusGenRootTypes['ReferenceNumberTemplate'][]; // [ReferenceNumberTemplate!]!
     getFulfilmentById: NexusGenRootTypes['Fulfilment'] | null; // Fulfilment
     getGlobalAttributeTypeById: NexusGenRootTypes['GlobalAttributeType'] | null; // GlobalAttributeType
+    getGlobalTagById: NexusGenRootTypes['GlobalTag'] | null; // GlobalTag
     getIntakeFormById: NexusGenRootTypes['IntakeForm'] | null; // IntakeForm
     getIntakeFormSubmissionById: NexusGenRootTypes['IntakeFormSubmission'] | null; // IntakeFormSubmission
     getIntakeFormSubmissionByPurchaseOrderId: NexusGenRootTypes['IntakeFormSubmission'] | null; // IntakeFormSubmission
     getIntakeFormSubmissionBySalesOrderId: NexusGenRootTypes['IntakeFormSubmission'] | null; // IntakeFormSubmission
     getIntakeFormSubmissionLineItem: NexusGenRootTypes['IntakeFormLineItem'] | null; // IntakeFormLineItem
     getInventoryReservationById: NexusGenRootTypes['InventoryReservation'] | null; // InventoryReservation
+    getLineItemById: NexusGenRootTypes['LineItem'] | null; // LineItem
     getNoteById: NexusGenRootTypes['Note'] | null; // Note
     getPimCategoryById: NexusGenRootTypes['PimCategory'] | null; // PimCategory
     getPimProductById: NexusGenRootTypes['PimProduct'] | null; // PimProduct
@@ -3557,9 +4724,14 @@ export interface NexusGenFieldTypes {
     getSearchDocumentById: NexusGenRootTypes['SearchDocument'] | null; // SearchDocument
     getSearchUserState: NexusGenRootTypes['SearchUserState'] | null; // SearchUserState
     getSignedUploadUrl: NexusGenRootTypes['SignedUploadUrl']; // SignedUploadUrl!
+    getStudioConversationById: NexusGenRootTypes['StudioConversation'] | null; // StudioConversation
     getUsersById: Array<NexusGenRootTypes['User'] | null> | null; // [User]
     getWorkflowConfigurationById: NexusGenRootTypes['WorkflowConfiguration'] | null; // WorkflowConfiguration
+    getWorkspaceAttributeTypeById: NexusGenRootTypes['WorkspaceAttributeType'] | null; // WorkspaceAttributeType
+    getWorkspaceAttributeValueById: NexusGenRootTypes['WorkspaceAttributeValue'] | null; // WorkspaceAttributeValue
     getWorkspaceById: NexusGenRootTypes['Workspace'] | null; // Workspace
+    getWorkspaceTagById: NexusGenRootTypes['WorkspaceTag'] | null; // WorkspaceTag
+    getWorkspaceUnitDefinitionById: NexusGenRootTypes['WorkspaceUnitDefinition'] | null; // WorkspaceUnitDefinition
     helloWorld: string | null; // String
     inventoryById: NexusGenRootTypes['Inventory'] | null; // Inventory
     invoiceById: NexusGenRootTypes['Invoice'] | null; // Invoice
@@ -3572,6 +4744,8 @@ export interface NexusGenFieldTypes {
     listGlobalAttributeRelations: NexusGenRootTypes['GlobalAttributeRelationListResult'] | null; // GlobalAttributeRelationListResult
     listGlobalAttributeTypes: NexusGenRootTypes['GlobalAttributeTypeListResult'] | null; // GlobalAttributeTypeListResult
     listGlobalAttributeValues: NexusGenRootTypes['GlobalAttributeValueListResult'] | null; // GlobalAttributeValueListResult
+    listGlobalTagRelations: NexusGenRootTypes['GlobalTagRelationListResult'] | null; // GlobalTagRelationListResult
+    listGlobalTags: NexusGenRootTypes['GlobalTagListResult'] | null; // GlobalTagListResult
     listGlobalUnitDefinitions: NexusGenRootTypes['GlobalUnitDefinitionListResult'] | null; // GlobalUnitDefinitionListResult
     listIntakeFormSubmissionLineItems: NexusGenRootTypes['IntakeFormLineItem'][]; // [IntakeFormLineItem!]!
     listIntakeFormSubmissions: NexusGenRootTypes['IntakeFormSubmissionPage'] | null; // IntakeFormSubmissionPage
@@ -3583,6 +4757,8 @@ export interface NexusGenFieldTypes {
     listInventoryReservations: NexusGenRootTypes['InventoryReservationsResponse']; // InventoryReservationsResponse!
     listInvoices: NexusGenRootTypes['InvoicesResponse']; // InvoicesResponse!
     listJoinableWorkspaces: NexusGenRootTypes['ListWorkspacesResult']; // ListWorkspacesResult!
+    listLineItems: NexusGenRootTypes['ListLineItemsResult'] | null; // ListLineItemsResult
+    listLogisticsServiceGroups: NexusGenRootTypes['LineItem'][]; // [LineItem!]!
     listMyOrphanedSubmissions: NexusGenRootTypes['IntakeFormSubmission'][]; // [IntakeFormSubmission!]!
     listNotesByEntityId: NexusGenRootTypes['Note'][]; // [Note!]!
     listPimCategories: NexusGenRootTypes['ListPimCategoriesResult'] | null; // ListPimCategoriesResult
@@ -3607,11 +4783,17 @@ export interface NexusGenFieldTypes {
     listResourceMapLocationTags: Array<NexusGenRootTypes['ResourceMapResource'] | null> | null; // [ResourceMapResource]
     listSalesOrders: NexusGenRootTypes['SalesOrderListResult'] | null; // SalesOrderListResult
     listScopeOfWorkCodes: Array<NexusGenRootTypes['ScopeOfWorkCode'] | null> | null; // [ScopeOfWorkCode]
+    listStudioConversationMessages: NexusGenRootTypes['StudioConversationMessageListResult'] | null; // StudioConversationMessageListResult
+    listStudioConversations: NexusGenRootTypes['StudioConversationListResult'] | null; // StudioConversationListResult
     listTopLevelProjects: Array<NexusGenRootTypes['Project'] | null> | null; // [Project]
     listTransactions: NexusGenRootTypes['ListTransactionResult']; // ListTransactionResult!
     listUserResourcePermissions: NexusGenRootTypes['ListUserPermissionsResult']; // ListUserPermissionsResult!
     listWorkflowConfigurations: NexusGenRootTypes['ListWorkflowConfigurationsResult'] | null; // ListWorkflowConfigurationsResult
+    listWorkspaceAttributeTypes: NexusGenRootTypes['WorkspaceAttributeTypeListResult'] | null; // WorkspaceAttributeTypeListResult
+    listWorkspaceAttributeValues: NexusGenRootTypes['WorkspaceAttributeValueListResult'] | null; // WorkspaceAttributeValueListResult
     listWorkspaceMembers: NexusGenRootTypes['ListWorkspaceMembersResult']; // ListWorkspaceMembersResult!
+    listWorkspaceTags: NexusGenRootTypes['WorkspaceTagListResult'] | null; // WorkspaceTagListResult
+    listWorkspaceUnitDefinitions: NexusGenRootTypes['WorkspaceUnitDefinitionListResult'] | null; // WorkspaceUnitDefinitionListResult
     listWorkspaces: NexusGenRootTypes['ListWorkspacesResult']; // ListWorkspacesResult!
     llm: NexusGenRootTypes['Llm'] | null; // Llm
     quoteById: NexusGenRootTypes['Quote'] | null; // Quote
@@ -3619,10 +4801,14 @@ export interface NexusGenFieldTypes {
     rfqById: NexusGenRootTypes['RFQ'] | null; // RFQ
     searchBrands: Array<NexusGenRootTypes['BrandSearchResult'] | null> | null; // [BrandSearchResult]
     searchDocuments: NexusGenRootTypes['SearchDocumentsResult']; // SearchDocumentsResult!
+    studioFsList: NexusGenRootTypes['StudioFsNode'][]; // [StudioFsNode!]!
+    studioFsRead: NexusGenRootTypes['StudioFsReadResult']; // StudioFsReadResult!
+    studioFsRoots: string[]; // [String!]!
     usersSearch: Array<NexusGenRootTypes['User'] | null> | null; // [User]
     validEnterpriseDomain: NexusGenRootTypes['ValidEnterpriseDomainResult']; // ValidEnterpriseDomainResult!
   }
   Quote: { // field return type
+    approvalConfirmation: string | null; // String
     buyerAcceptedFullLegalName: string | null; // String
     buyerUserId: string | null; // String
     buyerWorkspaceId: string | null; // String
@@ -3651,7 +4837,31 @@ export interface NexusGenFieldTypes {
     updatedByUser: NexusGenRootTypes['User'] | null; // User
     validUntil: NexusGenScalars['DateTime'] | null; // DateTime
   }
+  QuoteLineItemConstraint: { // field return type
+    payload: NexusGenScalars['JSONObject'] | null; // JSONObject
+    strength: NexusGenEnums['QuoteLineItemConstraintStrength']; // QuoteLineItemConstraintStrength!
+  }
+  QuoteLineItemInputValue: { // field return type
+    attributeTypeId: string; // String!
+    contextTags: string[] | null; // [String!]
+    unitCode: string | null; // String
+    value: NexusGenScalars['JSONObject']; // JSONObject!
+  }
+  QuoteLineItemPricingRef: { // field return type
+    priceBookId: string | null; // String
+    priceId: string | null; // String
+    priceType: NexusGenEnums['QuoteLineItemPricingType'] | null; // QuoteLineItemPricingType
+  }
+  QuoteLineItemProductRef: { // field return type
+    kind: NexusGenEnums['QuoteLineItemProductKind']; // QuoteLineItemProductKind!
+    productId: string; // String!
+  }
+  QuoteLineItemTimeWindow: { // field return type
+    endAt: NexusGenScalars['DateTime'] | null; // DateTime
+    startAt: NexusGenScalars['DateTime'] | null; // DateTime
+  }
   QuoteRevision: { // field return type
+    canonicalLineItems: NexusGenRootTypes['LineItem'][]; // [LineItem!]!
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     createdBy: string; // String!
     createdByUser: NexusGenRootTypes['User'] | null; // User
@@ -3667,52 +4877,83 @@ export interface NexusGenFieldTypes {
     validUntil: NexusGenScalars['DateTime'] | null; // DateTime
   }
   QuoteRevisionRentalLineItem: { // field return type
+    constraints: Array<NexusGenRootTypes['QuoteLineItemConstraint'] | null> | null; // [QuoteLineItemConstraint]
     deliveryLocation: string | null; // String
     deliveryMethod: NexusGenEnums['QuoteLineItemDeliveryMethod'] | null; // QuoteLineItemDeliveryMethod
     deliveryNotes: string | null; // String
     description: string; // String!
     id: string | null; // String
+    inputs: Array<NexusGenRootTypes['QuoteLineItemInputValue'] | null> | null; // [QuoteLineItemInputValue]
     intakeFormSubmissionLineItem: NexusGenRootTypes['IntakeFormLineItem'] | null; // IntakeFormLineItem
     intakeFormSubmissionLineItemId: string | null; // String
+    notes: string | null; // String
     pimCategory: NexusGenRootTypes['PimCategory'] | null; // PimCategory
-    pimCategoryId: string; // String!
+    pimCategoryId: string | null; // String
+    placeRef: NexusGenRootTypes['LineItemPlaceRef'] | null; // LineItemPlaceRef
     price: NexusGenRootTypes['Price'] | null; // Price
+    pricingRef: NexusGenRootTypes['QuoteLineItemPricingRef'] | null; // QuoteLineItemPricingRef
+    pricingSpecSnapshot: NexusGenRootTypes['PricingSpec'] | null; // PricingSpec
+    productRef: NexusGenRootTypes['QuoteLineItemProductRef'] | null; // QuoteLineItemProductRef
     quantity: number; // Int!
+    rateInCentsSnapshot: number | null; // Int
     rentalEndDate: NexusGenScalars['DateTime']; // DateTime!
     rentalStartDate: NexusGenScalars['DateTime']; // DateTime!
     sellersPriceId: string | null; // ID
     subtotalInCents: number; // Int!
+    timeWindow: NexusGenRootTypes['QuoteLineItemTimeWindow'] | null; // QuoteLineItemTimeWindow
     type: NexusGenEnums['QuoteLineItemType']; // QuoteLineItemType!
+    unitCode: string | null; // String
   }
   QuoteRevisionSaleLineItem: { // field return type
+    constraints: Array<NexusGenRootTypes['QuoteLineItemConstraint'] | null> | null; // [QuoteLineItemConstraint]
     deliveryLocation: string | null; // String
     deliveryMethod: NexusGenEnums['QuoteLineItemDeliveryMethod'] | null; // QuoteLineItemDeliveryMethod
     deliveryNotes: string | null; // String
     description: string; // String!
     id: string | null; // String
+    inputs: Array<NexusGenRootTypes['QuoteLineItemInputValue'] | null> | null; // [QuoteLineItemInputValue]
     intakeFormSubmissionLineItem: NexusGenRootTypes['IntakeFormLineItem'] | null; // IntakeFormLineItem
     intakeFormSubmissionLineItemId: string | null; // String
+    notes: string | null; // String
     pimCategory: NexusGenRootTypes['PimCategory'] | null; // PimCategory
-    pimCategoryId: string; // String!
+    pimCategoryId: string | null; // String
+    placeRef: NexusGenRootTypes['LineItemPlaceRef'] | null; // LineItemPlaceRef
     price: NexusGenRootTypes['Price'] | null; // Price
+    pricingRef: NexusGenRootTypes['QuoteLineItemPricingRef'] | null; // QuoteLineItemPricingRef
+    pricingSpecSnapshot: NexusGenRootTypes['PricingSpec'] | null; // PricingSpec
+    productRef: NexusGenRootTypes['QuoteLineItemProductRef'] | null; // QuoteLineItemProductRef
     quantity: number; // Int!
+    rateInCentsSnapshot: number | null; // Int
     sellersPriceId: string | null; // ID
     subtotalInCents: number; // Int!
+    timeWindow: NexusGenRootTypes['QuoteLineItemTimeWindow'] | null; // QuoteLineItemTimeWindow
     type: NexusGenEnums['QuoteLineItemType']; // QuoteLineItemType!
+    unitCode: string | null; // String
   }
   QuoteRevisionServiceLineItem: { // field return type
+    constraints: Array<NexusGenRootTypes['QuoteLineItemConstraint'] | null> | null; // [QuoteLineItemConstraint]
     deliveryLocation: string | null; // String
     deliveryMethod: NexusGenEnums['QuoteLineItemDeliveryMethod'] | null; // QuoteLineItemDeliveryMethod
     deliveryNotes: string | null; // String
     description: string; // String!
     id: string | null; // String
+    inputs: Array<NexusGenRootTypes['QuoteLineItemInputValue'] | null> | null; // [QuoteLineItemInputValue]
     intakeFormSubmissionLineItem: NexusGenRootTypes['IntakeFormLineItem'] | null; // IntakeFormLineItem
     intakeFormSubmissionLineItemId: string | null; // String
+    notes: string | null; // String
+    placeRef: NexusGenRootTypes['LineItemPlaceRef'] | null; // LineItemPlaceRef
     price: NexusGenRootTypes['Price'] | null; // Price
+    pricingRef: NexusGenRootTypes['QuoteLineItemPricingRef'] | null; // QuoteLineItemPricingRef
+    pricingSpecSnapshot: NexusGenRootTypes['PricingSpec'] | null; // PricingSpec
+    productRef: NexusGenRootTypes['QuoteLineItemProductRef'] | null; // QuoteLineItemProductRef
     quantity: number; // Int!
+    rateInCentsSnapshot: number | null; // Int
     sellersPriceId: string | null; // ID
     subtotalInCents: number; // Int!
+    targetSelectors: Array<NexusGenRootTypes['ServiceTargetSelector'] | null> | null; // [ServiceTargetSelector]
+    timeWindow: NexusGenRootTypes['QuoteLineItemTimeWindow'] | null; // QuoteLineItemTimeWindow
     type: NexusGenEnums['QuoteLineItemType']; // QuoteLineItemType!
+    unitCode: string | null; // String
   }
   QuotesResponse: { // field return type
     items: NexusGenRootTypes['Quote'][]; // [Quote!]!
@@ -3734,28 +4975,50 @@ export interface NexusGenFieldTypes {
     updatedByUser: NexusGenRootTypes['User'] | null; // User
   }
   RFQRentalLineItem: { // field return type
+    constraints: Array<NexusGenRootTypes['QuoteLineItemConstraint'] | null> | null; // [QuoteLineItemConstraint]
     description: string; // String!
     id: string | null; // String
+    inputs: Array<NexusGenRootTypes['QuoteLineItemInputValue'] | null> | null; // [QuoteLineItemInputValue]
+    notes: string | null; // String
     pimCategory: NexusGenRootTypes['PimCategory'] | null; // PimCategory
-    pimCategoryId: string; // String!
+    pimCategoryId: string | null; // String
+    placeRef: NexusGenRootTypes['LineItemPlaceRef'] | null; // LineItemPlaceRef
+    productRef: NexusGenRootTypes['QuoteLineItemProductRef'] | null; // QuoteLineItemProductRef
     quantity: number; // Int!
     rentalEndDate: NexusGenScalars['DateTime']; // DateTime!
     rentalStartDate: NexusGenScalars['DateTime']; // DateTime!
+    timeWindow: NexusGenRootTypes['QuoteLineItemTimeWindow'] | null; // QuoteLineItemTimeWindow
     type: NexusGenEnums['QuoteLineItemType']; // QuoteLineItemType!
+    unitCode: string | null; // String
   }
   RFQSaleLineItem: { // field return type
+    constraints: Array<NexusGenRootTypes['QuoteLineItemConstraint'] | null> | null; // [QuoteLineItemConstraint]
     description: string; // String!
     id: string | null; // String
+    inputs: Array<NexusGenRootTypes['QuoteLineItemInputValue'] | null> | null; // [QuoteLineItemInputValue]
+    notes: string | null; // String
     pimCategory: NexusGenRootTypes['PimCategory'] | null; // PimCategory
-    pimCategoryId: string; // String!
+    pimCategoryId: string | null; // String
+    placeRef: NexusGenRootTypes['LineItemPlaceRef'] | null; // LineItemPlaceRef
+    productRef: NexusGenRootTypes['QuoteLineItemProductRef'] | null; // QuoteLineItemProductRef
     quantity: number; // Int!
+    timeWindow: NexusGenRootTypes['QuoteLineItemTimeWindow'] | null; // QuoteLineItemTimeWindow
     type: NexusGenEnums['QuoteLineItemType']; // QuoteLineItemType!
+    unitCode: string | null; // String
   }
   RFQServiceLineItem: { // field return type
+    constraints: Array<NexusGenRootTypes['QuoteLineItemConstraint'] | null> | null; // [QuoteLineItemConstraint]
     description: string; // String!
     id: string | null; // String
+    inputs: Array<NexusGenRootTypes['QuoteLineItemInputValue'] | null> | null; // [QuoteLineItemInputValue]
+    notes: string | null; // String
+    placeRef: NexusGenRootTypes['LineItemPlaceRef'] | null; // LineItemPlaceRef
+    productRef: NexusGenRootTypes['QuoteLineItemProductRef'] | null; // QuoteLineItemProductRef
     quantity: number; // Int!
+    targetSelectors: Array<NexusGenRootTypes['ServiceTargetSelector'] | null> | null; // [ServiceTargetSelector]
+    timeWindow: NexusGenRootTypes['QuoteLineItemTimeWindow'] | null; // QuoteLineItemTimeWindow
     type: NexusGenEnums['QuoteLineItemType']; // QuoteLineItemType!
+    unitCode: string | null; // String
   }
   ReferenceNumberTemplate: { // field return type
     businessContact: NexusGenRootTypes['Contact'] | null; // Contact
@@ -3830,6 +5093,7 @@ export interface NexusGenFieldTypes {
   }
   RentalPrice: { // field return type
     calculateSubTotal: NexusGenRootTypes['LineItemPriceForecast']; // LineItemPriceForecast!
+    catalogRef: NexusGenRootTypes['PriceCatalogRef'] | null; // PriceCatalogRef
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     createdBy: string; // String!
     id: string; // ID!
@@ -3838,9 +5102,9 @@ export interface NexusGenFieldTypes {
     parentPriceId: string | null; // ID
     parentPriceIdPercentageFactor: number | null; // Float
     pimCategory: NexusGenRootTypes['PimCategory'] | null; // PimCategory
-    pimCategoryId: string; // String!
-    pimCategoryName: string; // String!
-    pimCategoryPath: string; // String!
+    pimCategoryId: string | null; // String
+    pimCategoryName: string | null; // String
+    pimCategoryPath: string | null; // String
     pimProduct: NexusGenRootTypes['PimProduct'] | null; // PimProduct
     pimProductId: string | null; // ID
     priceBook: NexusGenRootTypes['PriceBook'] | null; // PriceBook
@@ -3849,6 +5113,7 @@ export interface NexusGenFieldTypes {
     pricePerMonthInCents: number; // Int!
     pricePerWeekInCents: number; // Int!
     priceType: NexusGenEnums['PriceType']; // PriceType!
+    pricingSpec: NexusGenRootTypes['PricingSpec'] | null; // PricingSpec
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
     workspaceId: string; // ID!
   }
@@ -4086,6 +5351,30 @@ export interface NexusGenFieldTypes {
     id: string | null; // String
     name: string | null; // String
   }
+  ResolvedWorkspaceAttributeTypeResult: { // field return type
+    created: boolean; // Boolean!
+    globalAttributeType: NexusGenRootTypes['GlobalAttributeType'] | null; // GlobalAttributeType
+    scope: NexusGenEnums['VocabularyScope']; // VocabularyScope!
+    workspaceAttributeType: NexusGenRootTypes['WorkspaceAttributeType'] | null; // WorkspaceAttributeType
+  }
+  ResolvedWorkspaceAttributeValueResult: { // field return type
+    created: boolean; // Boolean!
+    globalAttributeValue: NexusGenRootTypes['GlobalAttributeValue'] | null; // GlobalAttributeValue
+    scope: NexusGenEnums['VocabularyScope']; // VocabularyScope!
+    workspaceAttributeValue: NexusGenRootTypes['WorkspaceAttributeValue'] | null; // WorkspaceAttributeValue
+  }
+  ResolvedWorkspaceTagResult: { // field return type
+    created: boolean; // Boolean!
+    globalTag: NexusGenRootTypes['GlobalTag'] | null; // GlobalTag
+    scope: NexusGenEnums['VocabularyScope']; // VocabularyScope!
+    workspaceTag: NexusGenRootTypes['WorkspaceTag'] | null; // WorkspaceTag
+  }
+  ResolvedWorkspaceUnitDefinitionResult: { // field return type
+    created: boolean; // Boolean!
+    globalUnitDefinition: NexusGenRootTypes['GlobalUnitDefinition'] | null; // GlobalUnitDefinition
+    scope: NexusGenEnums['VocabularyScope']; // VocabularyScope!
+    workspaceUnitDefinition: NexusGenRootTypes['WorkspaceUnitDefinition'] | null; // WorkspaceUnitDefinition
+  }
   ResourceMapAddress: { // field return type
     city: string | null; // String
     country: string | null; // String
@@ -4177,6 +5466,7 @@ export interface NexusGenFieldTypes {
     workspaceId: string; // ID!
   }
   SalePrice: { // field return type
+    catalogRef: NexusGenRootTypes['PriceCatalogRef'] | null; // PriceCatalogRef
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     createdBy: string; // String!
     discounts: NexusGenScalars['JSON'] | null; // JSON
@@ -4186,14 +5476,15 @@ export interface NexusGenFieldTypes {
     parentPriceId: string | null; // ID
     parentPriceIdPercentageFactor: number | null; // Float
     pimCategory: NexusGenRootTypes['PimCategory'] | null; // PimCategory
-    pimCategoryId: string; // String!
-    pimCategoryName: string; // String!
-    pimCategoryPath: string; // String!
+    pimCategoryId: string | null; // String
+    pimCategoryName: string | null; // String
+    pimCategoryPath: string | null; // String
     pimProduct: NexusGenRootTypes['PimProduct'] | null; // PimProduct
     pimProductId: string | null; // ID
     priceBook: NexusGenRootTypes['PriceBook'] | null; // PriceBook
     priceBookId: string | null; // ID
     priceType: NexusGenEnums['PriceType']; // PriceType!
+    pricingSpec: NexusGenRootTypes['PricingSpec'] | null; // PricingSpec
     unitCostInCents: number; // Int!
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
     workspaceId: string; // ID!
@@ -4284,6 +5575,7 @@ export interface NexusGenFieldTypes {
     id: string; // String!
     intakeFormSubmission: NexusGenRootTypes['IntakeFormSubmission'] | null; // IntakeFormSubmission
     intake_form_submission_id: string | null; // String
+    lineItems: NexusGenRootTypes['LineItem'][]; // [LineItem!]!
     line_items: Array<NexusGenRootTypes['SalesOrderLineItem'] | null> | null; // [SalesOrderLineItem]
     pricing: NexusGenRootTypes['SalesOrderPricing'] | null; // SalesOrderPricing
     project: NexusGenRootTypes['Project'] | null; // Project
@@ -4413,11 +5705,79 @@ export interface NexusGenFieldTypes {
     salesOrderPONumber: string | null; // String
     salesOrderType: NexusGenEnums['FulfilmentType']; // FulfilmentType!
     serviceDate: NexusGenScalars['DateTime'] | null; // DateTime
+    tasks: Array<NexusGenRootTypes['ServiceFulfilmentTask'] | null> | null; // [ServiceFulfilmentTask]
     unitCostInCents: number; // Int!
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
     workflowColumnId: string | null; // ID
     workflowId: string | null; // ID
     workspaceId: string; // ID!
+  }
+  ServiceFulfilmentTask: { // field return type
+    activityTagIds: string[]; // [String!]!
+    completedAt: NexusGenScalars['DateTime'] | null; // DateTime
+    completedBy: string | null; // String
+    contextTagIds: string[] | null; // [String!]
+    id: string; // String!
+    notes: string | null; // String
+    status: NexusGenEnums['ServiceFulfilmentTaskStatus']; // ServiceFulfilmentTaskStatus!
+    title: string; // String!
+  }
+  ServicePrice: { // field return type
+    catalogRef: NexusGenRootTypes['PriceCatalogRef'] | null; // PriceCatalogRef
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    createdBy: string; // String!
+    id: string; // ID!
+    name: string | null; // String
+    parentPrice: NexusGenRootTypes['Price'] | null; // Price
+    parentPriceId: string | null; // ID
+    parentPriceIdPercentageFactor: number | null; // Float
+    pimCategory: NexusGenRootTypes['PimCategory'] | null; // PimCategory
+    pimCategoryId: string | null; // String
+    pimCategoryName: string | null; // String
+    pimCategoryPath: string | null; // String
+    pimProduct: NexusGenRootTypes['PimProduct'] | null; // PimProduct
+    pimProductId: string | null; // ID
+    priceBook: NexusGenRootTypes['PriceBook'] | null; // PriceBook
+    priceBookId: string | null; // ID
+    priceType: NexusGenEnums['PriceType']; // PriceType!
+    pricingSpec: NexusGenRootTypes['PricingSpec'] | null; // PricingSpec
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+    workspaceId: string; // ID!
+  }
+  ServiceRequirementEnvelope: { // field return type
+    maxHeight: NexusGenRootTypes['ServiceRequirementMeasurement'] | null; // ServiceRequirementMeasurement
+    maxItemWeight: NexusGenRootTypes['ServiceRequirementMeasurement'] | null; // ServiceRequirementMeasurement
+    maxLength: NexusGenRootTypes['ServiceRequirementMeasurement'] | null; // ServiceRequirementMeasurement
+    maxWidth: NexusGenRootTypes['ServiceRequirementMeasurement'] | null; // ServiceRequirementMeasurement
+    missingTargets: NexusGenRootTypes['ServiceRequirementMissingTarget'][]; // [ServiceRequirementMissingTarget!]!
+    targetLineItemCount: number; // Int!
+    targetLineItemIds: string[]; // [String!]!
+    targetQuantity: number | null; // Float
+    totalWeight: NexusGenRootTypes['ServiceRequirementMeasurement'] | null; // ServiceRequirementMeasurement
+    warnings: string[]; // [String!]!
+  }
+  ServiceRequirementMeasurement: { // field return type
+    unitCode: string; // String!
+    value: number; // Float!
+  }
+  ServiceRequirementMissingTarget: { // field return type
+    missingAttributeKeys: string[]; // [String!]!
+    reason: string; // String!
+    targetLineItemId: string; // String!
+  }
+  ServiceScopeTask: { // field return type
+    activityTagIds: string[]; // [String!]!
+    contextTagIds: string[] | null; // [String!]
+    id: string; // String!
+    notes: string | null; // String
+    sourceTemplateId: string | null; // String
+    title: string; // String!
+  }
+  ServiceTargetSelector: { // field return type
+    kind: NexusGenEnums['ServiceTargetSelectorKind']; // ServiceTargetSelectorKind!
+    tagIds: string[] | null; // [String!]
+    targetLineItemIds: string[] | null; // [String!]
+    targetProductId: string | null; // String
   }
   ServiceTask: { // field return type
     completed: boolean | null; // Boolean
@@ -4460,6 +5820,86 @@ export interface NexusGenFieldTypes {
     relation: string | null; // String
     type: string; // String!
   }
+  StudioCatalogCreateProductResult: { // field return type
+    catalogPath: string; // String!
+    product: NexusGenRootTypes['StudioCatalogProductSummary']; // StudioCatalogProductSummary!
+  }
+  StudioCatalogEnsureLogisticsServiceProductsResult: { // field return type
+    catalogPath: string; // String!
+    products: NexusGenRootTypes['StudioCatalogSeededProduct'][]; // [StudioCatalogSeededProduct!]!
+  }
+  StudioCatalogInitResult: { // field return type
+    catalogPath: string; // String!
+  }
+  StudioCatalogProductSummary: { // field return type
+    categoryPath: string | null; // String
+    id: string; // String!
+    kind: NexusGenEnums['StudioCatalogProductKind'] | null; // StudioCatalogProductKind
+    name: string; // String!
+    origin: NexusGenEnums['StudioCatalogProductOrigin']; // StudioCatalogProductOrigin!
+    path: string; // String!
+    status: NexusGenEnums['StudioCatalogProductStatus'] | null; // StudioCatalogProductStatus
+    tags: string[] | null; // [String!]
+  }
+  StudioCatalogSeededProduct: { // field return type
+    product: NexusGenRootTypes['StudioCatalogProductSummary']; // StudioCatalogProductSummary!
+    status: NexusGenEnums['StudioCatalogSeedStatus']; // StudioCatalogSeedStatus!
+  }
+  StudioCatalogValidateResult: { // field return type
+    errors: NexusGenRootTypes['StudioCatalogValidationIssue'][]; // [StudioCatalogValidationIssue!]!
+    warnings: NexusGenRootTypes['StudioCatalogValidationIssue'][]; // [StudioCatalogValidationIssue!]!
+  }
+  StudioCatalogValidationIssue: { // field return type
+    message: string; // String!
+    path: string | null; // String
+  }
+  StudioConversation: { // field return type
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    createdBy: string; // String!
+    id: string; // String!
+    lastMessageAt: NexusGenScalars['DateTime'] | null; // DateTime
+    messageCount: number; // Int!
+    pinnedCatalogPath: string | null; // String
+    title: string | null; // String
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+    updatedBy: string; // String!
+    workingSet: NexusGenScalars['JSONObject'] | null; // JSONObject
+    workspaceId: string; // String!
+  }
+  StudioConversationListResult: { // field return type
+    items: NexusGenRootTypes['StudioConversation'][]; // [StudioConversation!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  StudioConversationMessage: { // field return type
+    content: string; // String!
+    conversationId: string; // String!
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    createdBy: string | null; // String
+    id: string; // String!
+    metadata: NexusGenScalars['JSONObject'] | null; // JSONObject
+    role: NexusGenEnums['StudioConversationRole']; // StudioConversationRole!
+  }
+  StudioConversationMessageListResult: { // field return type
+    items: NexusGenRootTypes['StudioConversationMessage'][]; // [StudioConversationMessage!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  StudioFsNode: { // field return type
+    etag: string; // String!
+    mimeType: string | null; // String
+    name: string; // String!
+    path: string; // String!
+    sizeBytes: number | null; // Int
+    type: NexusGenEnums['StudioFsNodeType']; // StudioFsNodeType!
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+  }
+  StudioFsReadResult: { // field return type
+    content: string; // String!
+    etag: string; // String!
+    mimeType: string | null; // String
+  }
+  StudioFsWriteResult: { // field return type
+    etag: string; // String!
+  }
   SubmissionSalesOrder: { // field return type
     created_at: string; // String!
     deleted_at: NexusGenScalars['DateTime'] | null; // DateTime
@@ -4474,6 +5914,13 @@ export interface NexusGenFieldTypes {
   }
   Subscription: { // field return type
     currentTime: NexusGenRootTypes['CurrentTimeEvent'] | null; // CurrentTimeEvent
+  }
+  SyncMaterialLogisticsAddOnsResult: { // field return type
+    deliveryLineItem: NexusGenRootTypes['LineItem'] | null; // LineItem
+    materialLineItemId: string; // ID!
+    pickupLineItem: NexusGenRootTypes['LineItem'] | null; // LineItem
+    serviceAddOns: NexusGenRootTypes['LineItem'][]; // [LineItem!]!
+    warnings: string[]; // [String!]!
   }
   TaxAnalysisResult: { // field return type
     taxes: NexusGenRootTypes['TaxObligation'][]; // [TaxObligation!]!
@@ -4665,6 +6112,54 @@ export interface NexusGenFieldTypes {
     updatedAt: string | null; // String
     updatedBy: string | null; // String
   }
+  WorkspaceAttributeType: { // field return type
+    allowedUnits: Array<string | null> | null; // [String]
+    appliesTo: NexusGenEnums['GlobalAttributeAppliesTo'] | null; // GlobalAttributeAppliesTo
+    auditStatus: NexusGenEnums['GlobalAttributeAuditStatus'] | null; // GlobalAttributeAuditStatus
+    canonicalUnit: string | null; // String
+    canonicalValueSetId: string | null; // String
+    createdAt: NexusGenScalars['DateTime'] | null; // DateTime
+    createdBy: string | null; // String
+    dimension: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
+    globalAttributeTypeId: string | null; // ID
+    id: string; // ID!
+    kind: NexusGenEnums['GlobalAttributeKind']; // GlobalAttributeKind!
+    name: string; // String!
+    notes: string | null; // String
+    source: string | null; // String
+    status: NexusGenEnums['GlobalAttributeStatus']; // GlobalAttributeStatus!
+    synonyms: Array<string | null> | null; // [String]
+    updatedAt: NexusGenScalars['DateTime'] | null; // DateTime
+    updatedBy: string | null; // String
+    usageHints: Array<NexusGenEnums['GlobalAttributeUsageHint'] | null> | null; // [GlobalAttributeUsageHint]
+    validationRules: NexusGenScalars['JSONObject'] | null; // JSONObject
+    valueType: NexusGenEnums['GlobalAttributeValueType']; // GlobalAttributeValueType!
+    workspaceId: string; // ID!
+  }
+  WorkspaceAttributeTypeListResult: { // field return type
+    items: NexusGenRootTypes['WorkspaceAttributeType'][]; // [WorkspaceAttributeType!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  WorkspaceAttributeValue: { // field return type
+    attributeTypeId: string; // ID!
+    auditStatus: NexusGenEnums['GlobalAttributeAuditStatus'] | null; // GlobalAttributeAuditStatus
+    codes: NexusGenScalars['JSONObject'] | null; // JSONObject
+    createdAt: NexusGenScalars['DateTime'] | null; // DateTime
+    createdBy: string | null; // String
+    globalAttributeValueId: string | null; // String
+    id: string; // ID!
+    source: string | null; // String
+    status: NexusGenEnums['GlobalAttributeStatus']; // GlobalAttributeStatus!
+    synonyms: Array<string | null> | null; // [String]
+    updatedAt: NexusGenScalars['DateTime'] | null; // DateTime
+    updatedBy: string | null; // String
+    value: string; // String!
+    workspaceId: string; // ID!
+  }
+  WorkspaceAttributeValueListResult: { // field return type
+    items: NexusGenRootTypes['WorkspaceAttributeValue'][]; // [WorkspaceAttributeValue!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
   WorkspaceMember: { // field return type
     roles: NexusGenEnums['WorkspaceUserRole'][]; // [WorkspaceUserRole!]!
     user: NexusGenRootTypes['User'] | null; // User
@@ -4674,6 +6169,48 @@ export interface NexusGenFieldTypes {
     description: string | null; // String
     label: string | null; // String
     role: NexusGenEnums['WorkspaceUserRole']; // WorkspaceUserRole!
+  }
+  WorkspaceTag: { // field return type
+    auditStatus: NexusGenEnums['GlobalTagAuditStatus'] | null; // GlobalTagAuditStatus
+    createdAt: NexusGenScalars['DateTime'] | null; // DateTime
+    createdBy: string | null; // String
+    displayName: string | null; // String
+    globalTagId: string | null; // ID
+    id: string; // ID!
+    label: string; // String!
+    notes: string | null; // String
+    pos: NexusGenEnums['GlobalTagPartOfSpeech']; // GlobalTagPartOfSpeech!
+    source: string | null; // String
+    status: NexusGenEnums['GlobalTagStatus']; // GlobalTagStatus!
+    synonyms: Array<string | null> | null; // [String]
+    updatedAt: NexusGenScalars['DateTime'] | null; // DateTime
+    updatedBy: string | null; // String
+    workspaceId: string; // ID!
+  }
+  WorkspaceTagListResult: { // field return type
+    items: NexusGenRootTypes['WorkspaceTag'][]; // [WorkspaceTag!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
+  }
+  WorkspaceUnitDefinition: { // field return type
+    canonicalUnitCode: string | null; // String
+    code: string; // String!
+    createdAt: NexusGenScalars['DateTime'] | null; // DateTime
+    createdBy: string | null; // String
+    dimension: NexusGenEnums['GlobalAttributeDimension'] | null; // GlobalAttributeDimension
+    globalUnitCode: string | null; // String
+    id: string; // ID!
+    name: string | null; // String
+    offset: number | null; // Float
+    source: string | null; // String
+    status: NexusGenEnums['GlobalUnitStatus']; // GlobalUnitStatus!
+    toCanonicalFactor: number | null; // Float
+    updatedAt: NexusGenScalars['DateTime'] | null; // DateTime
+    updatedBy: string | null; // String
+    workspaceId: string; // ID!
+  }
+  WorkspaceUnitDefinitionListResult: { // field return type
+    items: NexusGenRootTypes['WorkspaceUnitDefinition'][]; // [WorkspaceUnitDefinition!]!
+    page: NexusGenRootTypes['PaginationInfo']; // PaginationInfo!
   }
   WriteRelationshipResult: { // field return type
     message: string | null; // String
@@ -4741,25 +6278,38 @@ export interface NexusGenFieldTypeNames {
     collectionSnapshot: 'CollectionSnapshotResult'
     createGlobalAttributeType: 'GlobalAttributeType'
     createGlobalAttributeValue: 'GlobalAttributeValue'
+    createGlobalTag: 'GlobalTag'
+    createGlobalTagRelation: 'GlobalTagRelation'
     createGlobalUnitDefinition: 'GlobalUnitDefinition'
     deleteRelationship: 'DeleteRelationshipResult'
+    mergeGlobalTag: 'GlobalTag'
+    promoteWorkspaceAttributeTypeToGlobal: 'GlobalAttributeType'
+    promoteWorkspaceAttributeTypesToGlobal: 'PromoteWorkspaceAttributeTypesToGlobalResult'
+    promoteWorkspaceAttributeValueToGlobal: 'GlobalAttributeValue'
+    promoteWorkspaceAttributeValuesToGlobal: 'PromoteWorkspaceAttributeValuesToGlobalResult'
+    promoteWorkspaceTagToGlobal: 'GlobalTag'
+    promoteWorkspaceUnitDefinitionToGlobal: 'GlobalUnitDefinition'
     removeRolesFromUser: 'Boolean'
     sendTemplatedEmail: 'SendTemplatedEmailResult'
     sendTestEmail: 'SendTestEmailResult'
     updateGlobalAttributeType: 'GlobalAttributeType'
     updateGlobalAttributeValue: 'GlobalAttributeValue'
+    updateGlobalTag: 'GlobalTag'
     updateGlobalUnitDefinition: 'GlobalUnitDefinition'
     writeRelationship: 'WriteRelationshipResult'
   }
   AdminQueryNamespace: { // field return type name
     getGlobalAttributeTypeById: 'GlobalAttributeType'
     getGlobalAttributeValueById: 'GlobalAttributeValue'
+    getGlobalTagById: 'GlobalTag'
     getGlobalUnitDefinitionByCode: 'GlobalUnitDefinition'
     getUserById: 'Auth0User'
     getUserRoles: 'Auth0Role'
     listAvailableRelations: 'AvailableRelation'
     listGlobalAttributeTypes: 'GlobalAttributeTypeListResult'
     listGlobalAttributeValues: 'GlobalAttributeValueListResult'
+    listGlobalTagRelations: 'GlobalTagRelationListResult'
+    listGlobalTags: 'GlobalTagListResult'
     listGlobalUnitDefinitions: 'GlobalUnitDefinitionListResult'
     listRelationships: 'ListRelationshipsResult'
     listResourceTypes: 'String'
@@ -5229,6 +6779,46 @@ export interface NexusGenFieldTypeNames {
     items: 'GlobalAttributeValue'
     page: 'PaginationInfo'
   }
+  GlobalTag: { // field return type name
+    auditStatus: 'GlobalTagAuditStatus'
+    createdAt: 'DateTime'
+    createdBy: 'String'
+    displayName: 'String'
+    id: 'String'
+    label: 'String'
+    mergedIntoId: 'String'
+    notes: 'String'
+    pos: 'GlobalTagPartOfSpeech'
+    source: 'String'
+    status: 'GlobalTagStatus'
+    synonyms: 'String'
+    updatedAt: 'DateTime'
+    updatedBy: 'String'
+  }
+  GlobalTagIngestionResult: { // field return type name
+    parsed: 'JSONObject'
+    tag: 'GlobalTag'
+  }
+  GlobalTagListResult: { // field return type name
+    items: 'GlobalTag'
+    page: 'PaginationInfo'
+  }
+  GlobalTagRelation: { // field return type name
+    confidence: 'Float'
+    createdAt: 'DateTime'
+    createdBy: 'String'
+    fromTagId: 'String'
+    id: 'String'
+    relationType: 'GlobalTagRelationType'
+    source: 'String'
+    toTagId: 'String'
+    updatedAt: 'DateTime'
+    updatedBy: 'String'
+  }
+  GlobalTagRelationListResult: { // field return type name
+    items: 'GlobalTagRelation'
+    page: 'PaginationInfo'
+  }
   GlobalUnitDefinition: { // field return type name
     canonicalUnitCode: 'String'
     code: 'String'
@@ -5450,11 +7040,96 @@ export interface NexusGenFieldTypeNames {
   InvoicesResponse: { // field return type name
     items: 'Invoice'
   }
+  LineItem: { // field return type name
+    constraints: 'LineItemConstraint'
+    createdAt: 'DateTime'
+    customPriceName: 'String'
+    delivery: 'LineItemDelivery'
+    deliveryChargeInCents: 'Int'
+    description: 'String'
+    documentRef: 'LineItemDocumentRef'
+    id: 'ID'
+    inputs: 'LineItemInputValue'
+    notes: 'String'
+    placeRef: 'LineItemPlaceRef'
+    pricingRef: 'LineItemPricingRef'
+    pricingSpecSnapshot: 'PricingSpec'
+    productRef: 'LineItemProductRef'
+    quantity: 'String'
+    rateInCentsSnapshot: 'Int'
+    scopeTasks: 'ServiceScopeTask'
+    sourceLineItemId: 'ID'
+    state: 'LineItemState'
+    subtotalInCents: 'Int'
+    targetSelectors: 'LineItemTargetSelector'
+    timeWindow: 'LineItemTimeWindow'
+    type: 'LineItemType'
+    unitCode: 'String'
+    updatedAt: 'DateTime'
+    workspaceId: 'String'
+  }
+  LineItemConstraint: { // field return type name
+    data: 'LineItemConstraintData'
+    kind: 'LineItemConstraintKind'
+    strength: 'LineItemConstraintStrength'
+  }
+  LineItemConstraintAttribute: { // field return type name
+    attributeTypeId: 'ID'
+    contextTags: 'String'
+    op: 'LineItemConstraintAttributeOp'
+    unitCode: 'String'
+    value: 'JSONObject'
+  }
+  LineItemConstraintBrand: { // field return type name
+    brandId: 'ID'
+    manufacturerId: 'ID'
+  }
+  LineItemConstraintData: { // field return type name
+    attribute: 'LineItemConstraintAttribute'
+    brand: 'LineItemConstraintBrand'
+    location: 'LineItemConstraintLocation'
+    other: 'LineItemConstraintOther'
+    schedule: 'LineItemConstraintSchedule'
+    tag: 'LineItemConstraintTag'
+  }
+  LineItemConstraintLocation: { // field return type name
+    placeRef: 'LineItemPlaceRef'
+  }
+  LineItemConstraintOther: { // field return type name
+    note: 'String'
+  }
+  LineItemConstraintSchedule: { // field return type name
+    endAt: 'DateTime'
+    startAt: 'DateTime'
+  }
+  LineItemConstraintTag: { // field return type name
+    tagIds: 'ID'
+  }
   LineItemCostOptionDetails: { // field return type name
     exactSplitDistribution: 'LineItemRentalPeriod'
     optimalSplit: 'LineItemRentalPeriod'
     plainText: 'String'
     rates: 'LineItemPricing'
+  }
+  LineItemDelivery: { // field return type name
+    location: 'String'
+    method: 'LineItemDeliveryMethod'
+    notes: 'String'
+  }
+  LineItemDocumentRef: { // field return type name
+    id: 'ID'
+    revisionId: 'ID'
+    type: 'LineItemDocumentType'
+  }
+  LineItemInputValue: { // field return type name
+    attributeTypeId: 'String'
+    contextTags: 'String'
+    unitCode: 'String'
+    value: 'JSONObject'
+  }
+  LineItemPlaceRef: { // field return type name
+    id: 'ID'
+    kind: 'LineItemPlaceKind'
   }
   LineItemPriceForecast: { // field return type name
     accumulative_cost_in_cents: 'Int'
@@ -5476,10 +7151,29 @@ export interface NexusGenFieldTypeNames {
     pricePer7DaysInCents: 'Int'
     pricePer28DaysInCents: 'Int'
   }
+  LineItemPricingRef: { // field return type name
+    priceBookId: 'ID'
+    priceId: 'ID'
+    priceType: 'LineItemType'
+  }
+  LineItemProductRef: { // field return type name
+    kind: 'LineItemProductKind'
+    productId: 'ID'
+  }
   LineItemRentalPeriod: { // field return type name
     days1: 'Int'
     days7: 'Int'
     days28: 'Int'
+  }
+  LineItemTargetSelector: { // field return type name
+    kind: 'LineItemTargetSelectorKind'
+    tagIds: 'String'
+    targetLineItemIds: 'String'
+    targetProductId: 'String'
+  }
+  LineItemTimeWindow: { // field return type name
+    endAt: 'DateTime'
+    startAt: 'DateTime'
   }
   ListAssetsResult: { // field return type name
     items: 'Asset'
@@ -5491,6 +7185,10 @@ export interface NexusGenFieldTypeNames {
   }
   ListFulfilmentsResult: { // field return type name
     items: 'Fulfilment'
+    page: 'PaginationInfo'
+  }
+  ListLineItemsResult: { // field return type name
+    items: 'LineItem'
     page: 'PaginationInfo'
   }
   ListPersonContactsResult: { // field return type name
@@ -5557,6 +7255,7 @@ export interface NexusGenFieldTypeNames {
     addFileToEntity: 'File'
     addInvoiceCharges: 'Invoice'
     addSearchRecent: 'SearchUserState'
+    addStudioConversationMessage: 'StudioConversationMessage'
     addTaxLineItem: 'Invoice'
     admin: 'AdminMutationNamespace'
     adoptOrphanedSubmissions: 'AdoptOrphanedSubmissionsResult'
@@ -5573,12 +7272,15 @@ export interface NexusGenFieldTypeNames {
     createGlobalAttributeRelation: 'GlobalAttributeRelation'
     createGlobalAttributeType: 'GlobalAttributeType'
     createGlobalAttributeValue: 'GlobalAttributeValue'
+    createGlobalTag: 'GlobalTag'
+    createGlobalTagRelation: 'GlobalTagRelation'
     createGlobalUnitDefinition: 'GlobalUnitDefinition'
     createIntakeForm: 'IntakeForm'
     createIntakeFormSubmission: 'IntakeFormSubmission'
     createIntakeFormSubmissionLineItem: 'IntakeFormLineItem'
     createInventory: 'Inventory'
     createInvoice: 'Invoice'
+    createLineItem: 'LineItem'
     createNote: 'Note'
     createPdfFromPageAndAttachToEntityId: 'CreatePdfResult'
     createPersonContact: 'PersonContact'
@@ -5601,6 +7303,9 @@ export interface NexusGenFieldTypeNames {
     createSaleSalesOrderLineItem: 'SaleSalesOrderLineItem'
     createSalesOrder: 'SalesOrder'
     createServiceFulfilment: 'ServiceFulfilment'
+    createServiceFulfilmentFromLineItem: 'ServiceFulfilment'
+    createServicePrice: 'ServicePrice'
+    createStudioConversation: 'StudioConversation'
     createTransaction: 'Transaction'
     createWorkflowConfiguration: 'WorkflowConfiguration'
     createWorkspace: 'Workspace'
@@ -5610,18 +7315,21 @@ export interface NexusGenFieldTypeNames {
     deleteIntakeFormSubmissionLineItem: 'Boolean'
     deleteInventory: 'Boolean'
     deleteInvoice: 'Boolean'
+    deleteLineItem: 'LineItem'
     deleteNote: 'Note'
     deletePriceBookById: 'Boolean'
     deletePriceById: 'Boolean'
     deleteProject: 'Project'
     deleteReferenceNumberTemplate: 'Boolean'
     deleteResourceMapTag: 'ResourceMapResource'
+    deleteStudioConversation: 'Boolean'
     deleteWorkflowConfigurationById: 'Boolean'
     exportPrices: 'File'
     generateReferenceNumber: 'GenerateReferenceNumberResult'
     getSignedReadUrl: 'String'
     importPrices: 'ImportPricesResult'
     ingestGlobalAttributeString: 'GlobalAttributeIngestionResult'
+    ingestGlobalTagString: 'GlobalTagIngestionResult'
     inviteUserToWorkspace: 'WorkspaceMember'
     joinWorkspace: 'Workspace'
     markInvoiceAsPaid: 'Invoice'
@@ -5634,6 +7342,10 @@ export interface NexusGenFieldTypeNames {
     removeUserFromWorkspace: 'Boolean'
     renameFile: 'File'
     resetSequenceNumber: 'Boolean'
+    resolveGlobalOrWorkspaceAttributeType: 'ResolvedWorkspaceAttributeTypeResult'
+    resolveGlobalOrWorkspaceAttributeValue: 'ResolvedWorkspaceAttributeValueResult'
+    resolveGlobalOrWorkspaceTag: 'ResolvedWorkspaceTagResult'
+    resolveGlobalOrWorkspaceUnitDefinition: 'ResolvedWorkspaceUnitDefinitionResult'
     runNightlyRentalChargesJob: 'RentalFulfilment'
     runNightlyRentalChargesJobAsync: 'Boolean'
     sendQuote: 'Quote'
@@ -5647,10 +7359,22 @@ export interface NexusGenFieldTypeNames {
     softDeletePurchaseOrderLineItem: 'PurchaseOrderLineItem'
     softDeleteSalesOrder: 'SalesOrder'
     softDeleteSalesOrderLineItem: 'SalesOrderLineItem'
+    studioCatalogCompile: 'JSONObject'
+    studioCatalogCreateProduct: 'StudioCatalogCreateProductResult'
+    studioCatalogEnsureLogisticsServiceProducts: 'StudioCatalogEnsureLogisticsServiceProductsResult'
+    studioCatalogInit: 'StudioCatalogInitResult'
+    studioCatalogPreview: 'JSONObject'
+    studioCatalogValidate: 'StudioCatalogValidateResult'
+    studioFsDelete: 'Boolean'
+    studioFsMkdir: 'JSONObject'
+    studioFsMove: 'JSONObject'
+    studioFsUpload: 'StudioFsWriteResult'
+    studioFsWrite: 'StudioFsWriteResult'
     submitIntakeFormSubmission: 'IntakeFormSubmission'
     submitPurchaseOrder: 'PurchaseOrder'
     submitSalesOrder: 'SalesOrder'
     syncCurrentUser: 'User'
+    syncMaterialLogisticsAddOns: 'SyncMaterialLogisticsAddOnsResult'
     toggleSearchFavorite: 'SearchUserState'
     touchAllContacts: 'TouchAllContactsResult'
     unarchiveWorkspace: 'Workspace'
@@ -5666,6 +7390,7 @@ export interface NexusGenFieldTypeNames {
     updateFulfilmentColumn: 'FulfilmentBase'
     updateGlobalAttributeType: 'GlobalAttributeType'
     updateGlobalAttributeValue: 'GlobalAttributeValue'
+    updateGlobalTag: 'GlobalTag'
     updateGlobalUnitDefinition: 'GlobalUnitDefinition'
     updateIntakeForm: 'IntakeForm'
     updateIntakeFormSubmission: 'IntakeFormSubmission'
@@ -5673,6 +7398,7 @@ export interface NexusGenFieldTypeNames {
     updateInventoryActualReturnDate: 'Inventory'
     updateInventoryExpectedReturnDate: 'Inventory'
     updateInventorySerialisedId: 'Inventory'
+    updateLineItem: 'LineItem'
     updateNote: 'Note'
     updatePersonBusiness: 'PersonContact'
     updatePersonContact: 'PersonContact'
@@ -5705,6 +7431,9 @@ export interface NexusGenFieldTypeNames {
     updateSaleSalesOrderLineItem: 'SaleSalesOrderLineItem'
     updateSalesOrder: 'SalesOrder'
     updateSalesOrderLineItem: 'SalesOrderLineItem'
+    updateServiceFulfilmentTaskStatus: 'ServiceFulfilment'
+    updateServicePrice: 'ServicePrice'
+    updateStudioConversation: 'StudioConversation'
     updateTaxLineItem: 'Invoice'
     updateWorkflowConfiguration: 'WorkflowConfiguration'
     updateWorkspaceAccessType: 'Workspace'
@@ -5712,6 +7441,10 @@ export interface NexusGenFieldTypeNames {
     updateWorkspaceUserRoles: 'WorkspaceMember'
     upsertPimCategory: 'PimCategory'
     upsertUser: 'User'
+    upsertWorkspaceAttributeType: 'WorkspaceAttributeType'
+    upsertWorkspaceAttributeValue: 'WorkspaceAttributeValue'
+    upsertWorkspaceTag: 'WorkspaceTag'
+    upsertWorkspaceUnitDefinition: 'WorkspaceUnitDefinition'
   }
   Note: { // field return type name
     _id: 'String'
@@ -5802,6 +7535,18 @@ export interface NexusGenFieldTypeNames {
     updatedByUser: 'User'
     workspaceId: 'ID'
   }
+  PriceCatalogRef: { // field return type name
+    id: 'ID'
+    kind: 'CatalogProductKind'
+  }
+  PricingSpec: { // field return type name
+    kind: 'PricingSpecKind'
+    pricePerDayInCents: 'Int'
+    pricePerMonthInCents: 'Int'
+    pricePerWeekInCents: 'Int'
+    rateInCents: 'Int'
+    unitCode: 'String'
+  }
   Project: { // field return type name
     associatedPriceBooks: 'ListPriceBooksResult'
     comments: 'Note'
@@ -5837,6 +7582,20 @@ export interface NexusGenFieldTypeNames {
     code: 'String'
     description: 'String'
   }
+  PromoteWorkspaceAttributeTypesToGlobalResult: { // field return type name
+    items: 'PromotedWorkspaceAttributeType'
+  }
+  PromoteWorkspaceAttributeValuesToGlobalResult: { // field return type name
+    items: 'PromotedWorkspaceAttributeValue'
+  }
+  PromotedWorkspaceAttributeType: { // field return type name
+    globalAttributeType: 'GlobalAttributeType'
+    workspaceAttributeTypeId: 'ID'
+  }
+  PromotedWorkspaceAttributeValue: { // field return type name
+    globalAttributeValue: 'GlobalAttributeValue'
+    workspaceAttributeValueId: 'ID'
+  }
   PurchaseOrder: { // field return type name
     comments: 'Note'
     company_id: 'String'
@@ -5848,6 +7607,7 @@ export interface NexusGenFieldTypeNames {
     id: 'String'
     intakeFormSubmission: 'IntakeFormSubmission'
     inventory: 'Inventory'
+    lineItems: 'LineItem'
     line_items: 'PurchaseOrderLineItem'
     pricing: 'PurchaseOrderPricing'
     project: 'Project'
@@ -5898,6 +7658,7 @@ export interface NexusGenFieldTypeNames {
     admin: 'AdminQueryNamespace'
     bulkCalculateSubTotal: 'LineItemPriceForecast'
     calculateSubTotal: 'LineItemPriceForecast'
+    computeServiceRequirementEnvelope: 'ServiceRequirementEnvelope'
     getBrandByDomain: 'Brand'
     getBrandById: 'Brand'
     getBrandsByIds: 'Brand'
@@ -5908,12 +7669,14 @@ export interface NexusGenFieldTypeNames {
     getDefaultTemplates: 'ReferenceNumberTemplate'
     getFulfilmentById: 'Fulfilment'
     getGlobalAttributeTypeById: 'GlobalAttributeType'
+    getGlobalTagById: 'GlobalTag'
     getIntakeFormById: 'IntakeForm'
     getIntakeFormSubmissionById: 'IntakeFormSubmission'
     getIntakeFormSubmissionByPurchaseOrderId: 'IntakeFormSubmission'
     getIntakeFormSubmissionBySalesOrderId: 'IntakeFormSubmission'
     getIntakeFormSubmissionLineItem: 'IntakeFormLineItem'
     getInventoryReservationById: 'InventoryReservation'
+    getLineItemById: 'LineItem'
     getNoteById: 'Note'
     getPimCategoryById: 'PimCategory'
     getPimProductById: 'PimProduct'
@@ -5930,9 +7693,14 @@ export interface NexusGenFieldTypeNames {
     getSearchDocumentById: 'SearchDocument'
     getSearchUserState: 'SearchUserState'
     getSignedUploadUrl: 'SignedUploadUrl'
+    getStudioConversationById: 'StudioConversation'
     getUsersById: 'User'
     getWorkflowConfigurationById: 'WorkflowConfiguration'
+    getWorkspaceAttributeTypeById: 'WorkspaceAttributeType'
+    getWorkspaceAttributeValueById: 'WorkspaceAttributeValue'
     getWorkspaceById: 'Workspace'
+    getWorkspaceTagById: 'WorkspaceTag'
+    getWorkspaceUnitDefinitionById: 'WorkspaceUnitDefinition'
     helloWorld: 'String'
     inventoryById: 'Inventory'
     invoiceById: 'Invoice'
@@ -5945,6 +7713,8 @@ export interface NexusGenFieldTypeNames {
     listGlobalAttributeRelations: 'GlobalAttributeRelationListResult'
     listGlobalAttributeTypes: 'GlobalAttributeTypeListResult'
     listGlobalAttributeValues: 'GlobalAttributeValueListResult'
+    listGlobalTagRelations: 'GlobalTagRelationListResult'
+    listGlobalTags: 'GlobalTagListResult'
     listGlobalUnitDefinitions: 'GlobalUnitDefinitionListResult'
     listIntakeFormSubmissionLineItems: 'IntakeFormLineItem'
     listIntakeFormSubmissions: 'IntakeFormSubmissionPage'
@@ -5956,6 +7726,8 @@ export interface NexusGenFieldTypeNames {
     listInventoryReservations: 'InventoryReservationsResponse'
     listInvoices: 'InvoicesResponse'
     listJoinableWorkspaces: 'ListWorkspacesResult'
+    listLineItems: 'ListLineItemsResult'
+    listLogisticsServiceGroups: 'LineItem'
     listMyOrphanedSubmissions: 'IntakeFormSubmission'
     listNotesByEntityId: 'Note'
     listPimCategories: 'ListPimCategoriesResult'
@@ -5980,11 +7752,17 @@ export interface NexusGenFieldTypeNames {
     listResourceMapLocationTags: 'ResourceMapResource'
     listSalesOrders: 'SalesOrderListResult'
     listScopeOfWorkCodes: 'ScopeOfWorkCode'
+    listStudioConversationMessages: 'StudioConversationMessageListResult'
+    listStudioConversations: 'StudioConversationListResult'
     listTopLevelProjects: 'Project'
     listTransactions: 'ListTransactionResult'
     listUserResourcePermissions: 'ListUserPermissionsResult'
     listWorkflowConfigurations: 'ListWorkflowConfigurationsResult'
+    listWorkspaceAttributeTypes: 'WorkspaceAttributeTypeListResult'
+    listWorkspaceAttributeValues: 'WorkspaceAttributeValueListResult'
     listWorkspaceMembers: 'ListWorkspaceMembersResult'
+    listWorkspaceTags: 'WorkspaceTagListResult'
+    listWorkspaceUnitDefinitions: 'WorkspaceUnitDefinitionListResult'
     listWorkspaces: 'ListWorkspacesResult'
     llm: 'Llm'
     quoteById: 'Quote'
@@ -5992,10 +7770,14 @@ export interface NexusGenFieldTypeNames {
     rfqById: 'RFQ'
     searchBrands: 'BrandSearchResult'
     searchDocuments: 'SearchDocumentsResult'
+    studioFsList: 'StudioFsNode'
+    studioFsRead: 'StudioFsReadResult'
+    studioFsRoots: 'String'
     usersSearch: 'User'
     validEnterpriseDomain: 'ValidEnterpriseDomainResult'
   }
   Quote: { // field return type name
+    approvalConfirmation: 'String'
     buyerAcceptedFullLegalName: 'String'
     buyerUserId: 'String'
     buyerWorkspaceId: 'String'
@@ -6024,7 +7806,31 @@ export interface NexusGenFieldTypeNames {
     updatedByUser: 'User'
     validUntil: 'DateTime'
   }
+  QuoteLineItemConstraint: { // field return type name
+    payload: 'JSONObject'
+    strength: 'QuoteLineItemConstraintStrength'
+  }
+  QuoteLineItemInputValue: { // field return type name
+    attributeTypeId: 'String'
+    contextTags: 'String'
+    unitCode: 'String'
+    value: 'JSONObject'
+  }
+  QuoteLineItemPricingRef: { // field return type name
+    priceBookId: 'String'
+    priceId: 'String'
+    priceType: 'QuoteLineItemPricingType'
+  }
+  QuoteLineItemProductRef: { // field return type name
+    kind: 'QuoteLineItemProductKind'
+    productId: 'String'
+  }
+  QuoteLineItemTimeWindow: { // field return type name
+    endAt: 'DateTime'
+    startAt: 'DateTime'
+  }
   QuoteRevision: { // field return type name
+    canonicalLineItems: 'LineItem'
     createdAt: 'DateTime'
     createdBy: 'String'
     createdByUser: 'User'
@@ -6040,52 +7846,83 @@ export interface NexusGenFieldTypeNames {
     validUntil: 'DateTime'
   }
   QuoteRevisionRentalLineItem: { // field return type name
+    constraints: 'QuoteLineItemConstraint'
     deliveryLocation: 'String'
     deliveryMethod: 'QuoteLineItemDeliveryMethod'
     deliveryNotes: 'String'
     description: 'String'
     id: 'String'
+    inputs: 'QuoteLineItemInputValue'
     intakeFormSubmissionLineItem: 'IntakeFormLineItem'
     intakeFormSubmissionLineItemId: 'String'
+    notes: 'String'
     pimCategory: 'PimCategory'
     pimCategoryId: 'String'
+    placeRef: 'LineItemPlaceRef'
     price: 'Price'
+    pricingRef: 'QuoteLineItemPricingRef'
+    pricingSpecSnapshot: 'PricingSpec'
+    productRef: 'QuoteLineItemProductRef'
     quantity: 'Int'
+    rateInCentsSnapshot: 'Int'
     rentalEndDate: 'DateTime'
     rentalStartDate: 'DateTime'
     sellersPriceId: 'ID'
     subtotalInCents: 'Int'
+    timeWindow: 'QuoteLineItemTimeWindow'
     type: 'QuoteLineItemType'
+    unitCode: 'String'
   }
   QuoteRevisionSaleLineItem: { // field return type name
+    constraints: 'QuoteLineItemConstraint'
     deliveryLocation: 'String'
     deliveryMethod: 'QuoteLineItemDeliveryMethod'
     deliveryNotes: 'String'
     description: 'String'
     id: 'String'
+    inputs: 'QuoteLineItemInputValue'
     intakeFormSubmissionLineItem: 'IntakeFormLineItem'
     intakeFormSubmissionLineItemId: 'String'
+    notes: 'String'
     pimCategory: 'PimCategory'
     pimCategoryId: 'String'
+    placeRef: 'LineItemPlaceRef'
     price: 'Price'
+    pricingRef: 'QuoteLineItemPricingRef'
+    pricingSpecSnapshot: 'PricingSpec'
+    productRef: 'QuoteLineItemProductRef'
     quantity: 'Int'
+    rateInCentsSnapshot: 'Int'
     sellersPriceId: 'ID'
     subtotalInCents: 'Int'
+    timeWindow: 'QuoteLineItemTimeWindow'
     type: 'QuoteLineItemType'
+    unitCode: 'String'
   }
   QuoteRevisionServiceLineItem: { // field return type name
+    constraints: 'QuoteLineItemConstraint'
     deliveryLocation: 'String'
     deliveryMethod: 'QuoteLineItemDeliveryMethod'
     deliveryNotes: 'String'
     description: 'String'
     id: 'String'
+    inputs: 'QuoteLineItemInputValue'
     intakeFormSubmissionLineItem: 'IntakeFormLineItem'
     intakeFormSubmissionLineItemId: 'String'
+    notes: 'String'
+    placeRef: 'LineItemPlaceRef'
     price: 'Price'
+    pricingRef: 'QuoteLineItemPricingRef'
+    pricingSpecSnapshot: 'PricingSpec'
+    productRef: 'QuoteLineItemProductRef'
     quantity: 'Int'
+    rateInCentsSnapshot: 'Int'
     sellersPriceId: 'ID'
     subtotalInCents: 'Int'
+    targetSelectors: 'ServiceTargetSelector'
+    timeWindow: 'QuoteLineItemTimeWindow'
     type: 'QuoteLineItemType'
+    unitCode: 'String'
   }
   QuotesResponse: { // field return type name
     items: 'Quote'
@@ -6107,28 +7944,50 @@ export interface NexusGenFieldTypeNames {
     updatedByUser: 'User'
   }
   RFQRentalLineItem: { // field return type name
+    constraints: 'QuoteLineItemConstraint'
     description: 'String'
     id: 'String'
+    inputs: 'QuoteLineItemInputValue'
+    notes: 'String'
     pimCategory: 'PimCategory'
     pimCategoryId: 'String'
+    placeRef: 'LineItemPlaceRef'
+    productRef: 'QuoteLineItemProductRef'
     quantity: 'Int'
     rentalEndDate: 'DateTime'
     rentalStartDate: 'DateTime'
+    timeWindow: 'QuoteLineItemTimeWindow'
     type: 'QuoteLineItemType'
+    unitCode: 'String'
   }
   RFQSaleLineItem: { // field return type name
+    constraints: 'QuoteLineItemConstraint'
     description: 'String'
     id: 'String'
+    inputs: 'QuoteLineItemInputValue'
+    notes: 'String'
     pimCategory: 'PimCategory'
     pimCategoryId: 'String'
+    placeRef: 'LineItemPlaceRef'
+    productRef: 'QuoteLineItemProductRef'
     quantity: 'Int'
+    timeWindow: 'QuoteLineItemTimeWindow'
     type: 'QuoteLineItemType'
+    unitCode: 'String'
   }
   RFQServiceLineItem: { // field return type name
+    constraints: 'QuoteLineItemConstraint'
     description: 'String'
     id: 'String'
+    inputs: 'QuoteLineItemInputValue'
+    notes: 'String'
+    placeRef: 'LineItemPlaceRef'
+    productRef: 'QuoteLineItemProductRef'
     quantity: 'Int'
+    targetSelectors: 'ServiceTargetSelector'
+    timeWindow: 'QuoteLineItemTimeWindow'
     type: 'QuoteLineItemType'
+    unitCode: 'String'
   }
   ReferenceNumberTemplate: { // field return type name
     businessContact: 'Contact'
@@ -6203,6 +8062,7 @@ export interface NexusGenFieldTypeNames {
   }
   RentalPrice: { // field return type name
     calculateSubTotal: 'LineItemPriceForecast'
+    catalogRef: 'PriceCatalogRef'
     createdAt: 'DateTime'
     createdBy: 'String'
     id: 'ID'
@@ -6222,6 +8082,7 @@ export interface NexusGenFieldTypeNames {
     pricePerMonthInCents: 'Int'
     pricePerWeekInCents: 'Int'
     priceType: 'PriceType'
+    pricingSpec: 'PricingSpec'
     updatedAt: 'DateTime'
     workspaceId: 'ID'
   }
@@ -6459,6 +8320,30 @@ export interface NexusGenFieldTypeNames {
     id: 'String'
     name: 'String'
   }
+  ResolvedWorkspaceAttributeTypeResult: { // field return type name
+    created: 'Boolean'
+    globalAttributeType: 'GlobalAttributeType'
+    scope: 'VocabularyScope'
+    workspaceAttributeType: 'WorkspaceAttributeType'
+  }
+  ResolvedWorkspaceAttributeValueResult: { // field return type name
+    created: 'Boolean'
+    globalAttributeValue: 'GlobalAttributeValue'
+    scope: 'VocabularyScope'
+    workspaceAttributeValue: 'WorkspaceAttributeValue'
+  }
+  ResolvedWorkspaceTagResult: { // field return type name
+    created: 'Boolean'
+    globalTag: 'GlobalTag'
+    scope: 'VocabularyScope'
+    workspaceTag: 'WorkspaceTag'
+  }
+  ResolvedWorkspaceUnitDefinitionResult: { // field return type name
+    created: 'Boolean'
+    globalUnitDefinition: 'GlobalUnitDefinition'
+    scope: 'VocabularyScope'
+    workspaceUnitDefinition: 'WorkspaceUnitDefinition'
+  }
   ResourceMapAddress: { // field return type name
     city: 'String'
     country: 'String'
@@ -6550,6 +8435,7 @@ export interface NexusGenFieldTypeNames {
     workspaceId: 'ID'
   }
   SalePrice: { // field return type name
+    catalogRef: 'PriceCatalogRef'
     createdAt: 'DateTime'
     createdBy: 'String'
     discounts: 'JSON'
@@ -6567,6 +8453,7 @@ export interface NexusGenFieldTypeNames {
     priceBook: 'PriceBook'
     priceBookId: 'ID'
     priceType: 'PriceType'
+    pricingSpec: 'PricingSpec'
     unitCostInCents: 'Int'
     updatedAt: 'DateTime'
     workspaceId: 'ID'
@@ -6657,6 +8544,7 @@ export interface NexusGenFieldTypeNames {
     id: 'String'
     intakeFormSubmission: 'IntakeFormSubmission'
     intake_form_submission_id: 'String'
+    lineItems: 'LineItem'
     line_items: 'SalesOrderLineItem'
     pricing: 'SalesOrderPricing'
     project: 'Project'
@@ -6786,11 +8674,79 @@ export interface NexusGenFieldTypeNames {
     salesOrderPONumber: 'String'
     salesOrderType: 'FulfilmentType'
     serviceDate: 'DateTime'
+    tasks: 'ServiceFulfilmentTask'
     unitCostInCents: 'Int'
     updatedAt: 'DateTime'
     workflowColumnId: 'ID'
     workflowId: 'ID'
     workspaceId: 'ID'
+  }
+  ServiceFulfilmentTask: { // field return type name
+    activityTagIds: 'String'
+    completedAt: 'DateTime'
+    completedBy: 'String'
+    contextTagIds: 'String'
+    id: 'String'
+    notes: 'String'
+    status: 'ServiceFulfilmentTaskStatus'
+    title: 'String'
+  }
+  ServicePrice: { // field return type name
+    catalogRef: 'PriceCatalogRef'
+    createdAt: 'DateTime'
+    createdBy: 'String'
+    id: 'ID'
+    name: 'String'
+    parentPrice: 'Price'
+    parentPriceId: 'ID'
+    parentPriceIdPercentageFactor: 'Float'
+    pimCategory: 'PimCategory'
+    pimCategoryId: 'String'
+    pimCategoryName: 'String'
+    pimCategoryPath: 'String'
+    pimProduct: 'PimProduct'
+    pimProductId: 'ID'
+    priceBook: 'PriceBook'
+    priceBookId: 'ID'
+    priceType: 'PriceType'
+    pricingSpec: 'PricingSpec'
+    updatedAt: 'DateTime'
+    workspaceId: 'ID'
+  }
+  ServiceRequirementEnvelope: { // field return type name
+    maxHeight: 'ServiceRequirementMeasurement'
+    maxItemWeight: 'ServiceRequirementMeasurement'
+    maxLength: 'ServiceRequirementMeasurement'
+    maxWidth: 'ServiceRequirementMeasurement'
+    missingTargets: 'ServiceRequirementMissingTarget'
+    targetLineItemCount: 'Int'
+    targetLineItemIds: 'String'
+    targetQuantity: 'Float'
+    totalWeight: 'ServiceRequirementMeasurement'
+    warnings: 'String'
+  }
+  ServiceRequirementMeasurement: { // field return type name
+    unitCode: 'String'
+    value: 'Float'
+  }
+  ServiceRequirementMissingTarget: { // field return type name
+    missingAttributeKeys: 'String'
+    reason: 'String'
+    targetLineItemId: 'String'
+  }
+  ServiceScopeTask: { // field return type name
+    activityTagIds: 'String'
+    contextTagIds: 'String'
+    id: 'String'
+    notes: 'String'
+    sourceTemplateId: 'String'
+    title: 'String'
+  }
+  ServiceTargetSelector: { // field return type name
+    kind: 'ServiceTargetSelectorKind'
+    tagIds: 'String'
+    targetLineItemIds: 'String'
+    targetProductId: 'String'
   }
   ServiceTask: { // field return type name
     completed: 'Boolean'
@@ -6833,6 +8789,86 @@ export interface NexusGenFieldTypeNames {
     relation: 'String'
     type: 'String'
   }
+  StudioCatalogCreateProductResult: { // field return type name
+    catalogPath: 'String'
+    product: 'StudioCatalogProductSummary'
+  }
+  StudioCatalogEnsureLogisticsServiceProductsResult: { // field return type name
+    catalogPath: 'String'
+    products: 'StudioCatalogSeededProduct'
+  }
+  StudioCatalogInitResult: { // field return type name
+    catalogPath: 'String'
+  }
+  StudioCatalogProductSummary: { // field return type name
+    categoryPath: 'String'
+    id: 'String'
+    kind: 'StudioCatalogProductKind'
+    name: 'String'
+    origin: 'StudioCatalogProductOrigin'
+    path: 'String'
+    status: 'StudioCatalogProductStatus'
+    tags: 'String'
+  }
+  StudioCatalogSeededProduct: { // field return type name
+    product: 'StudioCatalogProductSummary'
+    status: 'StudioCatalogSeedStatus'
+  }
+  StudioCatalogValidateResult: { // field return type name
+    errors: 'StudioCatalogValidationIssue'
+    warnings: 'StudioCatalogValidationIssue'
+  }
+  StudioCatalogValidationIssue: { // field return type name
+    message: 'String'
+    path: 'String'
+  }
+  StudioConversation: { // field return type name
+    createdAt: 'DateTime'
+    createdBy: 'String'
+    id: 'String'
+    lastMessageAt: 'DateTime'
+    messageCount: 'Int'
+    pinnedCatalogPath: 'String'
+    title: 'String'
+    updatedAt: 'DateTime'
+    updatedBy: 'String'
+    workingSet: 'JSONObject'
+    workspaceId: 'String'
+  }
+  StudioConversationListResult: { // field return type name
+    items: 'StudioConversation'
+    page: 'PaginationInfo'
+  }
+  StudioConversationMessage: { // field return type name
+    content: 'String'
+    conversationId: 'String'
+    createdAt: 'DateTime'
+    createdBy: 'String'
+    id: 'String'
+    metadata: 'JSONObject'
+    role: 'StudioConversationRole'
+  }
+  StudioConversationMessageListResult: { // field return type name
+    items: 'StudioConversationMessage'
+    page: 'PaginationInfo'
+  }
+  StudioFsNode: { // field return type name
+    etag: 'String'
+    mimeType: 'String'
+    name: 'String'
+    path: 'String'
+    sizeBytes: 'Int'
+    type: 'StudioFsNodeType'
+    updatedAt: 'DateTime'
+  }
+  StudioFsReadResult: { // field return type name
+    content: 'String'
+    etag: 'String'
+    mimeType: 'String'
+  }
+  StudioFsWriteResult: { // field return type name
+    etag: 'String'
+  }
   SubmissionSalesOrder: { // field return type name
     created_at: 'String'
     deleted_at: 'DateTime'
@@ -6847,6 +8883,13 @@ export interface NexusGenFieldTypeNames {
   }
   Subscription: { // field return type name
     currentTime: 'CurrentTimeEvent'
+  }
+  SyncMaterialLogisticsAddOnsResult: { // field return type name
+    deliveryLineItem: 'LineItem'
+    materialLineItemId: 'ID'
+    pickupLineItem: 'LineItem'
+    serviceAddOns: 'LineItem'
+    warnings: 'String'
   }
   TaxAnalysisResult: { // field return type name
     taxes: 'TaxObligation'
@@ -7038,6 +9081,54 @@ export interface NexusGenFieldTypeNames {
     updatedAt: 'String'
     updatedBy: 'String'
   }
+  WorkspaceAttributeType: { // field return type name
+    allowedUnits: 'String'
+    appliesTo: 'GlobalAttributeAppliesTo'
+    auditStatus: 'GlobalAttributeAuditStatus'
+    canonicalUnit: 'String'
+    canonicalValueSetId: 'String'
+    createdAt: 'DateTime'
+    createdBy: 'String'
+    dimension: 'GlobalAttributeDimension'
+    globalAttributeTypeId: 'ID'
+    id: 'ID'
+    kind: 'GlobalAttributeKind'
+    name: 'String'
+    notes: 'String'
+    source: 'String'
+    status: 'GlobalAttributeStatus'
+    synonyms: 'String'
+    updatedAt: 'DateTime'
+    updatedBy: 'String'
+    usageHints: 'GlobalAttributeUsageHint'
+    validationRules: 'JSONObject'
+    valueType: 'GlobalAttributeValueType'
+    workspaceId: 'ID'
+  }
+  WorkspaceAttributeTypeListResult: { // field return type name
+    items: 'WorkspaceAttributeType'
+    page: 'PaginationInfo'
+  }
+  WorkspaceAttributeValue: { // field return type name
+    attributeTypeId: 'ID'
+    auditStatus: 'GlobalAttributeAuditStatus'
+    codes: 'JSONObject'
+    createdAt: 'DateTime'
+    createdBy: 'String'
+    globalAttributeValueId: 'String'
+    id: 'ID'
+    source: 'String'
+    status: 'GlobalAttributeStatus'
+    synonyms: 'String'
+    updatedAt: 'DateTime'
+    updatedBy: 'String'
+    value: 'String'
+    workspaceId: 'ID'
+  }
+  WorkspaceAttributeValueListResult: { // field return type name
+    items: 'WorkspaceAttributeValue'
+    page: 'PaginationInfo'
+  }
   WorkspaceMember: { // field return type name
     roles: 'WorkspaceUserRole'
     user: 'User'
@@ -7047,6 +9138,48 @@ export interface NexusGenFieldTypeNames {
     description: 'String'
     label: 'String'
     role: 'WorkspaceUserRole'
+  }
+  WorkspaceTag: { // field return type name
+    auditStatus: 'GlobalTagAuditStatus'
+    createdAt: 'DateTime'
+    createdBy: 'String'
+    displayName: 'String'
+    globalTagId: 'ID'
+    id: 'ID'
+    label: 'String'
+    notes: 'String'
+    pos: 'GlobalTagPartOfSpeech'
+    source: 'String'
+    status: 'GlobalTagStatus'
+    synonyms: 'String'
+    updatedAt: 'DateTime'
+    updatedBy: 'String'
+    workspaceId: 'ID'
+  }
+  WorkspaceTagListResult: { // field return type name
+    items: 'WorkspaceTag'
+    page: 'PaginationInfo'
+  }
+  WorkspaceUnitDefinition: { // field return type name
+    canonicalUnitCode: 'String'
+    code: 'String'
+    createdAt: 'DateTime'
+    createdBy: 'String'
+    dimension: 'GlobalAttributeDimension'
+    globalUnitCode: 'String'
+    id: 'ID'
+    name: 'String'
+    offset: 'Float'
+    source: 'String'
+    status: 'GlobalUnitStatus'
+    toCanonicalFactor: 'Float'
+    updatedAt: 'DateTime'
+    updatedBy: 'String'
+    workspaceId: 'ID'
+  }
+  WorkspaceUnitDefinitionListResult: { // field return type name
+    items: 'WorkspaceUnitDefinition'
+    page: 'PaginationInfo'
   }
   WriteRelationshipResult: { // field return type name
     message: 'String'
@@ -7118,6 +9251,12 @@ export interface NexusGenArgTypes {
     createGlobalAttributeValue: { // args
       input: NexusGenInputs['CreateGlobalAttributeValueInput']; // CreateGlobalAttributeValueInput!
     }
+    createGlobalTag: { // args
+      input: NexusGenInputs['CreateGlobalTagInput']; // CreateGlobalTagInput!
+    }
+    createGlobalTagRelation: { // args
+      input: NexusGenInputs['CreateGlobalTagRelationInput']; // CreateGlobalTagRelationInput!
+    }
     createGlobalUnitDefinition: { // args
       input: NexusGenInputs['CreateGlobalUnitDefinitionInput']; // CreateGlobalUnitDefinitionInput!
     }
@@ -7127,6 +9266,27 @@ export interface NexusGenArgTypes {
       resourceType: string; // String!
       subjectId: string; // String!
       subjectType: string; // String!
+    }
+    mergeGlobalTag: { // args
+      input: NexusGenInputs['MergeGlobalTagInput']; // MergeGlobalTagInput!
+    }
+    promoteWorkspaceAttributeTypeToGlobal: { // args
+      input: NexusGenInputs['PromoteWorkspaceAttributeTypeToGlobalInput']; // PromoteWorkspaceAttributeTypeToGlobalInput!
+    }
+    promoteWorkspaceAttributeTypesToGlobal: { // args
+      input: NexusGenInputs['PromoteWorkspaceAttributeTypesToGlobalInput']; // PromoteWorkspaceAttributeTypesToGlobalInput!
+    }
+    promoteWorkspaceAttributeValueToGlobal: { // args
+      input: NexusGenInputs['PromoteWorkspaceAttributeValueToGlobalInput']; // PromoteWorkspaceAttributeValueToGlobalInput!
+    }
+    promoteWorkspaceAttributeValuesToGlobal: { // args
+      input: NexusGenInputs['PromoteWorkspaceAttributeValuesToGlobalInput']; // PromoteWorkspaceAttributeValuesToGlobalInput!
+    }
+    promoteWorkspaceTagToGlobal: { // args
+      input: NexusGenInputs['PromoteWorkspaceTagToGlobalInput']; // PromoteWorkspaceTagToGlobalInput!
+    }
+    promoteWorkspaceUnitDefinitionToGlobal: { // args
+      input: NexusGenInputs['PromoteWorkspaceUnitDefinitionToGlobalInput']; // PromoteWorkspaceUnitDefinitionToGlobalInput!
     }
     removeRolesFromUser: { // args
       roleIds: string; // String!
@@ -7159,6 +9319,10 @@ export interface NexusGenArgTypes {
       id: string; // ID!
       input: NexusGenInputs['UpdateGlobalAttributeValueInput']; // UpdateGlobalAttributeValueInput!
     }
+    updateGlobalTag: { // args
+      id: string; // ID!
+      input: NexusGenInputs['UpdateGlobalTagInput']; // UpdateGlobalTagInput!
+    }
     updateGlobalUnitDefinition: { // args
       code: string; // String!
       input: NexusGenInputs['UpdateGlobalUnitDefinitionInput']; // UpdateGlobalUnitDefinitionInput!
@@ -7179,6 +9343,9 @@ export interface NexusGenArgTypes {
     getGlobalAttributeValueById: { // args
       id: string; // ID!
     }
+    getGlobalTagById: { // args
+      id: string; // ID!
+    }
     getGlobalUnitDefinitionByCode: { // args
       code: string; // String!
     }
@@ -7197,6 +9364,14 @@ export interface NexusGenArgTypes {
     }
     listGlobalAttributeValues: { // args
       filter?: NexusGenInputs['ListGlobalAttributeValuesFilter'] | null; // ListGlobalAttributeValuesFilter
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
+    }
+    listGlobalTagRelations: { // args
+      filter?: NexusGenInputs['ListGlobalTagRelationsFilter'] | null; // ListGlobalTagRelationsFilter
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
+    }
+    listGlobalTags: { // args
+      filter?: NexusGenInputs['ListGlobalTagsFilter'] | null; // ListGlobalTagsFilter
       page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
     }
     listGlobalUnitDefinitions: { // args
@@ -7268,6 +9443,9 @@ export interface NexusGenArgTypes {
       searchDocumentId: string; // String!
       workspaceId: string; // String!
     }
+    addStudioConversationMessage: { // args
+      input: NexusGenInputs['AddStudioConversationMessageInput']; // AddStudioConversationMessageInput!
+    }
     addTaxLineItem: { // args
       input: NexusGenInputs['AddTaxLineItemInput']; // AddTaxLineItemInput!
     }
@@ -7316,6 +9494,12 @@ export interface NexusGenArgTypes {
     createGlobalAttributeValue: { // args
       input: NexusGenInputs['CreateGlobalAttributeValueInput']; // CreateGlobalAttributeValueInput!
     }
+    createGlobalTag: { // args
+      input: NexusGenInputs['CreateGlobalTagInput']; // CreateGlobalTagInput!
+    }
+    createGlobalTagRelation: { // args
+      input: NexusGenInputs['CreateGlobalTagRelationInput']; // CreateGlobalTagRelationInput!
+    }
     createGlobalUnitDefinition: { // args
       input: NexusGenInputs['CreateGlobalUnitDefinitionInput']; // CreateGlobalUnitDefinitionInput!
     }
@@ -7334,6 +9518,9 @@ export interface NexusGenArgTypes {
     }
     createInvoice: { // args
       input: NexusGenInputs['CreateInvoiceInput']; // CreateInvoiceInput!
+    }
+    createLineItem: { // args
+      input: NexusGenInputs['LineItemInput']; // LineItemInput!
     }
     createNote: { // args
       input: NexusGenInputs['NoteInput']; // NoteInput!
@@ -7404,6 +9591,15 @@ export interface NexusGenArgTypes {
     createServiceFulfilment: { // args
       input: NexusGenInputs['CreateServiceFulfilmentInput']; // CreateServiceFulfilmentInput!
     }
+    createServiceFulfilmentFromLineItem: { // args
+      input: NexusGenInputs['CreateServiceFulfilmentFromLineItemInput']; // CreateServiceFulfilmentFromLineItemInput!
+    }
+    createServicePrice: { // args
+      input: NexusGenInputs['CreateServicePriceInput']; // CreateServicePriceInput!
+    }
+    createStudioConversation: { // args
+      input: NexusGenInputs['CreateStudioConversationInput']; // CreateStudioConversationInput!
+    }
     createTransaction: { // args
       input: NexusGenInputs['TransactionInput']; // TransactionInput!
     }
@@ -7438,6 +9634,9 @@ export interface NexusGenArgTypes {
     deleteInvoice: { // args
       id: string; // String!
     }
+    deleteLineItem: { // args
+      id: string; // String!
+    }
     deleteNote: { // args
       id: string; // String!
     }
@@ -7456,6 +9655,9 @@ export interface NexusGenArgTypes {
     deleteResourceMapTag: { // args
       cascade?: boolean | null; // Boolean
       id: string; // ID!
+    }
+    deleteStudioConversation: { // args
+      id: string; // String!
     }
     deleteWorkflowConfigurationById: { // args
       id: string; // ID!
@@ -7476,6 +9678,9 @@ export interface NexusGenArgTypes {
     }
     ingestGlobalAttributeString: { // args
       input: NexusGenInputs['IngestGlobalAttributeStringInput']; // IngestGlobalAttributeStringInput!
+    }
+    ingestGlobalTagString: { // args
+      input: NexusGenInputs['IngestGlobalTagStringInput']; // IngestGlobalTagStringInput!
     }
     inviteUserToWorkspace: { // args
       email: string; // String!
@@ -7519,6 +9724,18 @@ export interface NexusGenArgTypes {
       newValue: number | null; // Int
       templateId: string; // String!
     }
+    resolveGlobalOrWorkspaceAttributeType: { // args
+      input: NexusGenInputs['ResolveGlobalOrWorkspaceAttributeTypeInput']; // ResolveGlobalOrWorkspaceAttributeTypeInput!
+    }
+    resolveGlobalOrWorkspaceAttributeValue: { // args
+      input: NexusGenInputs['ResolveGlobalOrWorkspaceAttributeValueInput']; // ResolveGlobalOrWorkspaceAttributeValueInput!
+    }
+    resolveGlobalOrWorkspaceTag: { // args
+      input: NexusGenInputs['ResolveGlobalOrWorkspaceTagInput']; // ResolveGlobalOrWorkspaceTagInput!
+    }
+    resolveGlobalOrWorkspaceUnitDefinition: { // args
+      input: NexusGenInputs['ResolveGlobalOrWorkspaceUnitDefinitionInput']; // ResolveGlobalOrWorkspaceUnitDefinitionInput!
+    }
     sendQuote: { // args
       input: NexusGenInputs['SendQuoteInput']; // SendQuoteInput!
     }
@@ -7557,6 +9774,39 @@ export interface NexusGenArgTypes {
     softDeleteSalesOrderLineItem: { // args
       id?: string | null; // String
     }
+    studioCatalogCompile: { // args
+      input: NexusGenInputs['StudioCatalogCompileInput']; // StudioCatalogCompileInput!
+    }
+    studioCatalogCreateProduct: { // args
+      input: NexusGenInputs['StudioCatalogCreateProductInput']; // StudioCatalogCreateProductInput!
+    }
+    studioCatalogEnsureLogisticsServiceProducts: { // args
+      input: NexusGenInputs['StudioCatalogEnsureLogisticsServiceProductsInput']; // StudioCatalogEnsureLogisticsServiceProductsInput!
+    }
+    studioCatalogInit: { // args
+      input: NexusGenInputs['StudioCatalogInitInput']; // StudioCatalogInitInput!
+    }
+    studioCatalogPreview: { // args
+      input: NexusGenInputs['StudioCatalogCompileInput']; // StudioCatalogCompileInput!
+    }
+    studioCatalogValidate: { // args
+      input: NexusGenInputs['StudioCatalogValidateInput']; // StudioCatalogValidateInput!
+    }
+    studioFsDelete: { // args
+      input: NexusGenInputs['StudioFsDeleteInput']; // StudioFsDeleteInput!
+    }
+    studioFsMkdir: { // args
+      input: NexusGenInputs['StudioFsMkdirInput']; // StudioFsMkdirInput!
+    }
+    studioFsMove: { // args
+      input: NexusGenInputs['StudioFsMoveInput']; // StudioFsMoveInput!
+    }
+    studioFsUpload: { // args
+      input: NexusGenInputs['StudioFsUploadInput']; // StudioFsUploadInput!
+    }
+    studioFsWrite: { // args
+      input: NexusGenInputs['StudioFsWriteInput']; // StudioFsWriteInput!
+    }
     submitIntakeFormSubmission: { // args
       id: string; // String!
     }
@@ -7565,6 +9815,9 @@ export interface NexusGenArgTypes {
     }
     submitSalesOrder: { // args
       id: string; // ID!
+    }
+    syncMaterialLogisticsAddOns: { // args
+      input: NexusGenInputs['SyncMaterialLogisticsAddOnsInput']; // SyncMaterialLogisticsAddOnsInput!
     }
     toggleSearchFavorite: { // args
       searchDocumentId: string; // String!
@@ -7624,6 +9877,10 @@ export interface NexusGenArgTypes {
       id: string; // ID!
       input: NexusGenInputs['UpdateGlobalAttributeValueInput']; // UpdateGlobalAttributeValueInput!
     }
+    updateGlobalTag: { // args
+      id: string; // ID!
+      input: NexusGenInputs['UpdateGlobalTagInput']; // UpdateGlobalTagInput!
+    }
     updateGlobalUnitDefinition: { // args
       code: string; // String!
       input: NexusGenInputs['UpdateGlobalUnitDefinitionInput']; // UpdateGlobalUnitDefinitionInput!
@@ -7651,6 +9908,10 @@ export interface NexusGenArgTypes {
     updateInventorySerialisedId: { // args
       id: string; // String!
       input: NexusGenInputs['UpdateInventorySerialisedIdInput']; // UpdateInventorySerialisedIdInput!
+    }
+    updateLineItem: { // args
+      id: string; // String!
+      input: NexusGenInputs['UpdateLineItemInput']; // UpdateLineItemInput!
     }
     updateNote: { // args
       id: string; // String!
@@ -7764,6 +10025,16 @@ export interface NexusGenArgTypes {
     updateSalesOrderLineItem: { // args
       input?: NexusGenInputs['UpdateSalesOrderLineItemInput'] | null; // UpdateSalesOrderLineItemInput
     }
+    updateServiceFulfilmentTaskStatus: { // args
+      input: NexusGenInputs['UpdateServiceFulfilmentTaskStatusInput']; // UpdateServiceFulfilmentTaskStatusInput!
+    }
+    updateServicePrice: { // args
+      input: NexusGenInputs['UpdateServicePriceInput']; // UpdateServicePriceInput!
+    }
+    updateStudioConversation: { // args
+      id: string; // String!
+      input: NexusGenInputs['UpdateStudioConversationInput']; // UpdateStudioConversationInput!
+    }
     updateTaxLineItem: { // args
       input: NexusGenInputs['UpdateTaxLineItemInput']; // UpdateTaxLineItemInput!
     }
@@ -7796,6 +10067,18 @@ export interface NexusGenArgTypes {
       id: string; // String!
       input: NexusGenInputs['UserUpsertInput']; // UserUpsertInput!
     }
+    upsertWorkspaceAttributeType: { // args
+      input: NexusGenInputs['UpsertWorkspaceAttributeTypeInput']; // UpsertWorkspaceAttributeTypeInput!
+    }
+    upsertWorkspaceAttributeValue: { // args
+      input: NexusGenInputs['UpsertWorkspaceAttributeValueInput']; // UpsertWorkspaceAttributeValueInput!
+    }
+    upsertWorkspaceTag: { // args
+      input: NexusGenInputs['UpsertWorkspaceTagInput']; // UpsertWorkspaceTagInput!
+    }
+    upsertWorkspaceUnitDefinition: { // args
+      input: NexusGenInputs['UpsertWorkspaceUnitDefinitionInput']; // UpsertWorkspaceUnitDefinitionInput!
+    }
   }
   PriceBook: {
     listPrices: { // args
@@ -7815,6 +10098,9 @@ export interface NexusGenArgTypes {
     calculateSubTotal: { // args
       durationInDays: number; // Int!
       priceId: string; // ID!
+    }
+    computeServiceRequirementEnvelope: { // args
+      serviceLineItemId: string; // String!
     }
     getBrandByDomain: { // args
       domain: string; // String!
@@ -7845,6 +10131,9 @@ export interface NexusGenArgTypes {
     getGlobalAttributeTypeById: { // args
       id: string; // ID!
     }
+    getGlobalTagById: { // args
+      id: string; // ID!
+    }
     getIntakeFormById: { // args
       id: string; // String!
     }
@@ -7862,6 +10151,9 @@ export interface NexusGenArgTypes {
     }
     getInventoryReservationById: { // args
       id: string; // ID!
+    }
+    getLineItemById: { // args
+      id: string; // String!
     }
     getNoteById: { // args
       id: string; // String!
@@ -7912,14 +10204,29 @@ export interface NexusGenArgTypes {
       contentType: NexusGenEnums['SupportedContentType']; // SupportedContentType!
       originalFilename?: string | null; // String
     }
+    getStudioConversationById: { // args
+      id: string; // String!
+    }
     getUsersById: { // args
       userIds: string[]; // [String!]!
     }
     getWorkflowConfigurationById: { // args
       id: string; // ID!
     }
+    getWorkspaceAttributeTypeById: { // args
+      id: string; // ID!
+    }
+    getWorkspaceAttributeValueById: { // args
+      id: string; // ID!
+    }
     getWorkspaceById: { // args
       id: string; // String!
+    }
+    getWorkspaceTagById: { // args
+      id: string; // ID!
+    }
+    getWorkspaceUnitDefinitionById: { // args
+      id: string; // ID!
     }
     inventoryById: { // args
       id: string; // String!
@@ -7962,6 +10269,14 @@ export interface NexusGenArgTypes {
     }
     listGlobalAttributeValues: { // args
       filter?: NexusGenInputs['ListGlobalAttributeValuesFilter'] | null; // ListGlobalAttributeValuesFilter
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
+    }
+    listGlobalTagRelations: { // args
+      filter?: NexusGenInputs['ListGlobalTagRelationsFilter'] | null; // ListGlobalTagRelationsFilter
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
+    }
+    listGlobalTags: { // args
+      filter?: NexusGenInputs['ListGlobalTagsFilter'] | null; // ListGlobalTagsFilter
       page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
     }
     listGlobalUnitDefinitions: { // args
@@ -8008,6 +10323,13 @@ export interface NexusGenArgTypes {
     }
     listJoinableWorkspaces: { // args
       page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
+    }
+    listLineItems: { // args
+      filter: NexusGenInputs['ListLineItemsFilter']; // ListLineItemsFilter!
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
+    }
+    listLogisticsServiceGroups: { // args
+      filter: NexusGenInputs['ListLogisticsServiceGroupsFilter']; // ListLogisticsServiceGroupsFilter!
     }
     listNotesByEntityId: { // args
       parent_entity_id: string; // String!
@@ -8081,6 +10403,14 @@ export interface NexusGenArgTypes {
       offset?: number | null; // Int
       workspaceId: string; // String!
     }
+    listStudioConversationMessages: { // args
+      conversationId: string; // String!
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
+    }
+    listStudioConversations: { // args
+      filter: NexusGenInputs['ListStudioConversationsFilter']; // ListStudioConversationsFilter!
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
+    }
     listTopLevelProjects: { // args
       workspaceId: string; // String!
     }
@@ -8094,8 +10424,24 @@ export interface NexusGenArgTypes {
     listWorkflowConfigurations: { // args
       page?: NexusGenInputs['ListWorkflowConfigurationsPage'] | null; // ListWorkflowConfigurationsPage
     }
+    listWorkspaceAttributeTypes: { // args
+      filter: NexusGenInputs['ListWorkspaceAttributeTypesFilter']; // ListWorkspaceAttributeTypesFilter!
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
+    }
+    listWorkspaceAttributeValues: { // args
+      filter: NexusGenInputs['ListWorkspaceAttributeValuesFilter']; // ListWorkspaceAttributeValuesFilter!
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
+    }
     listWorkspaceMembers: { // args
       workspaceId: string; // String!
+    }
+    listWorkspaceTags: { // args
+      filter: NexusGenInputs['ListWorkspaceTagsFilter']; // ListWorkspaceTagsFilter!
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
+    }
+    listWorkspaceUnitDefinitions: { // args
+      filter: NexusGenInputs['ListWorkspaceUnitDefinitionsFilter']; // ListWorkspaceUnitDefinitionsFilter!
+      page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
     }
     listWorkspaces: { // args
       page?: NexusGenInputs['PageInfoInput'] | null; // PageInfoInput
@@ -8117,6 +10463,15 @@ export interface NexusGenArgTypes {
       page: number | null; // Int
       pageSize: number | null; // Int
       searchText?: string | null; // String
+      workspaceId: string; // String!
+    }
+    studioFsList: { // args
+      input: NexusGenInputs['StudioFsListInput']; // StudioFsListInput!
+    }
+    studioFsRead: { // args
+      input: NexusGenInputs['StudioFsReadInput']; // StudioFsReadInput!
+    }
+    studioFsRoots: { // args
       workspaceId: string; // String!
     }
     usersSearch: { // args
@@ -8142,7 +10497,7 @@ export interface NexusGenAbstractTypeMembers {
   Contact: "BusinessContact" | "PersonContact"
   Fulfilment: "RentalFulfilment" | "SaleFulfilment" | "ServiceFulfilment"
   InventoryReservation: "FulfilmentReservation"
-  Price: "RentalPrice" | "SalePrice"
+  Price: "RentalPrice" | "SalePrice" | "ServicePrice"
   PurchaseOrderLineItem: "RentalPurchaseOrderLineItem" | "SalePurchaseOrderLineItem"
   QuoteRevisionLineItem: "QuoteRevisionRentalLineItem" | "QuoteRevisionSaleLineItem" | "QuoteRevisionServiceLineItem"
   RFQLineItem: "RFQRentalLineItem" | "RFQSaleLineItem" | "RFQServiceLineItem"

@@ -16,6 +16,7 @@ import * as pimCategoriesSchema from './pim-categories';
 import * as pricesSchema from './prices';
 import * as projectsSchema from './projects';
 import * as salesOrdersSchema from './sales-orders';
+import * as lineItemsSchema from './line-items';
 import * as assetSchedulesSchema from './asset-schedules';
 import * as resourceMapSchema from './resource-map';
 import * as purchaseOrdersSchema from './purchase-orders';
@@ -42,6 +43,11 @@ import * as rentalViewsSchema from './rental-views';
 import * as quotingSchema from './quoting';
 import * as globalAttributesSchema from './global-attributes';
 import * as globalAttributesAdminSchema from './global-attributes-admin';
+import * as globalTagsSchema from './global-tags';
+import * as globalTagsAdminSchema from './global-tags-admin';
+import * as studioConversationsSchema from './studio-conversations';
+import * as studioFsSchema from './studio-fs';
+import * as workspaceVocabularySchema from './workspace-vocabulary';
 
 export const buildNexusSchema = (opts: { envConfig: EnvConfig }) => {
   const { envConfig } = opts;
@@ -70,6 +76,7 @@ export const buildNexusSchema = (opts: { envConfig: EnvConfig }) => {
       pricesSchema,
       projectsSchema,
       salesOrdersSchema,
+      lineItemsSchema,
       assetSchedulesSchema,
       resourceMapSchema,
       purchaseOrdersSchema,
@@ -96,6 +103,11 @@ export const buildNexusSchema = (opts: { envConfig: EnvConfig }) => {
       quotingSchema,
       globalAttributesSchema,
       globalAttributesAdminSchema,
+      globalTagsSchema,
+      globalTagsAdminSchema,
+      studioConversationsSchema,
+      studioFsSchema,
+      workspaceVocabularySchema,
     ],
     shouldGenerateArtifacts: envConfig.GENERATE_NEXUS_ARTIFACTS,
     outputs: {

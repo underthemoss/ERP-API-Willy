@@ -12,6 +12,56 @@ import { PaginationInfo } from './common';
 import { dropNullKeys } from '../utils';
 import { PimCategory } from '../../services/pim_categories';
 
+type PricingSpecInputShape = {
+  kind?: 'UNIT' | 'TIME' | 'RENTAL_RATE_TABLE';
+  unitCode?: string | null;
+  rateInCents?: number | null;
+  pricePerDayInCents?: number | null;
+  pricePerWeekInCents?: number | null;
+  pricePerMonthInCents?: number | null;
+};
+
+const normalizePricingSpecInput = (input?: PricingSpecInputShape | null) => {
+  if (!input) return undefined;
+  if (!input.kind) {
+    throw new Error('pricingSpec.kind is required');
+  }
+  if (input.kind === 'UNIT' || input.kind === 'TIME') {
+    if (!input.unitCode) {
+      throw new Error(`pricingSpec.unitCode is required for ${input.kind}`);
+    }
+    if (input.rateInCents === null || input.rateInCents === undefined) {
+      throw new Error(`pricingSpec.rateInCents is required for ${input.kind}`);
+    }
+    return {
+      kind: input.kind,
+      unitCode: input.unitCode,
+      rateInCents: input.rateInCents,
+    };
+  }
+  if (input.kind === 'RENTAL_RATE_TABLE') {
+    if (
+      input.pricePerDayInCents === null ||
+      input.pricePerDayInCents === undefined ||
+      input.pricePerWeekInCents === null ||
+      input.pricePerWeekInCents === undefined ||
+      input.pricePerMonthInCents === null ||
+      input.pricePerMonthInCents === undefined
+    ) {
+      throw new Error(
+        'pricingSpec pricePerDayInCents/pricePerWeekInCents/pricePerMonthInCents are required for RENTAL_RATE_TABLE',
+      );
+    }
+    return {
+      kind: input.kind,
+      pricePerDayInCents: input.pricePerDayInCents,
+      pricePerWeekInCents: input.pricePerWeekInCents,
+      pricePerMonthInCents: input.pricePerMonthInCents,
+    };
+  }
+  throw new Error(`Unsupported pricingSpec.kind: ${input.kind}`);
+};
+
 // === Price Books ===
 export const PriceBook = objectType({
   name: 'PriceBook',
@@ -149,18 +199,70 @@ export const ListPriceBooksPage = inputObjectType({
 
 // === Enums ===
 
+export const CatalogProductKind = enumType({
+  name: 'CatalogProductKind',
+  members: ['MATERIAL_PRODUCT', 'SERVICE_PRODUCT', 'ASSEMBLY_PRODUCT'],
+});
+
+export const PricingSpecKind = enumType({
+  name: 'PricingSpecKind',
+  members: ['UNIT', 'TIME', 'RENTAL_RATE_TABLE'],
+});
+
 export const PriceTypeEnum = enumType({
   name: 'PriceType',
-  members: ['RENTAL', 'SALE'],
+  members: ['RENTAL', 'SALE', 'SERVICE'],
 });
 
 // === Object Types ===
+
+export const PriceCatalogRef = objectType({
+  name: 'PriceCatalogRef',
+  definition(t) {
+    t.nonNull.field('kind', { type: CatalogProductKind });
+    t.nonNull.id('id');
+  },
+});
+
+export const PriceCatalogRefInput = inputObjectType({
+  name: 'PriceCatalogRefInput',
+  definition(t) {
+    t.nonNull.field('kind', { type: CatalogProductKind });
+    t.nonNull.id('id');
+  },
+});
+
+export const PricingSpec = objectType({
+  name: 'PricingSpec',
+  definition(t) {
+    t.nonNull.field('kind', { type: PricingSpecKind });
+    t.string('unitCode');
+    t.int('rateInCents');
+    t.int('pricePerDayInCents');
+    t.int('pricePerWeekInCents');
+    t.int('pricePerMonthInCents');
+  },
+});
+
+export const PricingSpecInput = inputObjectType({
+  name: 'PricingSpecInput',
+  definition(t) {
+    t.nonNull.field('kind', { type: PricingSpecKind });
+    t.string('unitCode');
+    t.int('rateInCents');
+    t.int('pricePerDayInCents');
+    t.int('pricePerWeekInCents');
+    t.int('pricePerMonthInCents');
+  },
+});
 
 export const RentalPrice = objectType({
   name: 'RentalPrice',
   definition(t) {
     t.nonNull.id('id');
     t.nonNull.id('workspaceId');
+    t.field('catalogRef', { type: PriceCatalogRef });
+    t.field('pricingSpec', { type: PricingSpec });
     t.string('pimProductId');
     t.id('parentPriceId');
     t.field('parentPrice', {
@@ -175,7 +277,7 @@ export const RentalPrice = objectType({
     t.float('parentPriceIdPercentageFactor');
     t.string('name');
     t.nonNull.string('createdBy');
-    t.nonNull.string('pimCategoryId');
+    t.string('pimCategoryId');
     t.field('pimCategory', {
       type: 'PimCategory',
       resolve: (parent, _, ctx) => {
@@ -187,8 +289,8 @@ export const RentalPrice = objectType({
         );
       },
     });
-    t.nonNull.string('pimCategoryPath');
-    t.nonNull.string('pimCategoryName');
+    t.string('pimCategoryPath');
+    t.string('pimCategoryName');
     t.id('pimProductId');
     t.field('pimProduct', {
       type: 'PimProduct',
@@ -238,6 +340,8 @@ export const SalePrice = objectType({
   definition(t) {
     t.nonNull.id('id');
     t.nonNull.id('workspaceId');
+    t.field('catalogRef', { type: PriceCatalogRef });
+    t.field('pricingSpec', { type: PricingSpec });
     t.id('parentPriceId');
     t.field('parentPrice', {
       type: Price,
@@ -251,7 +355,7 @@ export const SalePrice = objectType({
     t.float('parentPriceIdPercentageFactor');
     t.string('name');
     t.nonNull.string('createdBy');
-    t.nonNull.string('pimCategoryId');
+    t.string('pimCategoryId');
     t.field('pimCategory', {
       type: 'PimCategory',
       resolve: (parent, _, ctx) => {
@@ -263,8 +367,8 @@ export const SalePrice = objectType({
         );
       },
     });
-    t.nonNull.string('pimCategoryPath');
-    t.nonNull.string('pimCategoryName');
+    t.string('pimCategoryPath');
+    t.string('pimCategoryName');
     // --- Feature parity with RentalPrice: add pimProductId and pimProduct
     t.id('pimProductId');
     t.field('pimProduct', {
@@ -296,12 +400,81 @@ export const SalePrice = objectType({
   },
 });
 
+export const ServicePrice = objectType({
+  name: 'ServicePrice',
+  definition(t) {
+    t.nonNull.id('id');
+    t.nonNull.id('workspaceId');
+    t.field('catalogRef', { type: PriceCatalogRef });
+    t.field('pricingSpec', { type: PricingSpec });
+    t.id('parentPriceId');
+    t.field('parentPrice', {
+      type: Price,
+      resolve: (parent, _, ctx) => {
+        if (!parent.parentPriceId) {
+          return null;
+        }
+        return ctx.dataloaders.prices.getPriceById.load(parent.parentPriceId);
+      },
+    });
+    t.float('parentPriceIdPercentageFactor');
+    t.string('name');
+    t.nonNull.string('createdBy');
+    t.string('pimCategoryId');
+    t.field('pimCategory', {
+      type: 'PimCategory',
+      resolve: (parent, _, ctx) => {
+        if (!parent.pimCategoryId) {
+          return null;
+        }
+        return ctx.dataloaders.pimCategories.getPimCategoriesById.load(
+          parent.pimCategoryId,
+        );
+      },
+    });
+    t.string('pimCategoryPath');
+    t.string('pimCategoryName');
+    t.id('pimProductId');
+    t.field('pimProduct', {
+      type: 'PimProduct',
+      resolve: (parent, _, ctx) => {
+        if (!parent.pimProductId) {
+          return null;
+        }
+        return ctx.dataloaders.pimProducts.getPimProductsById.load(
+          parent.pimProductId,
+        );
+      },
+    });
+    t.id('priceBookId');
+    t.field('priceBook', {
+      type: PriceBook,
+      resolve: (parent, _, ctx) => {
+        if (!parent.priceBookId) {
+          return null;
+        }
+        return ctx.dataloaders.prices.getPriceBookById.load(parent.priceBookId);
+      },
+    });
+    t.nonNull.field('priceType', { type: PriceTypeEnum });
+    t.nonNull.field('createdAt', { type: 'DateTime' });
+    t.nonNull.field('updatedAt', { type: 'DateTime' });
+  },
+});
+
 export const Price = unionType({
   name: 'Price',
-  resolveType: (item) =>
-    item.priceType === 'RENTAL' ? 'RentalPrice' : 'SalePrice',
+  resolveType: (item) => {
+    if (item.priceType === 'RENTAL') {
+      return 'RentalPrice';
+    }
+    if (item.priceType === 'SERVICE') {
+      return 'ServicePrice';
+    }
+    return 'SalePrice';
+  },
   definition(t) {
-    t.members(RentalPrice, SalePrice);
+    t.members(RentalPrice, SalePrice, ServicePrice);
   },
 });
 
@@ -320,7 +493,9 @@ export const CreateRentalPriceInput = inputObjectType({
   definition(t) {
     t.nonNull.id('workspaceId');
     t.string('name');
-    t.nonNull.string('pimCategoryId');
+    t.string('pimCategoryId');
+    t.field('catalogRef', { type: PriceCatalogRefInput });
+    t.field('pricingSpec', { type: PricingSpecInput });
     t.nonNull.int('pricePerDayInCents');
     t.nonNull.int('pricePerWeekInCents');
     t.nonNull.int('pricePerMonthInCents');
@@ -334,9 +509,24 @@ export const CreateSalePriceInput = inputObjectType({
   definition(t) {
     t.nonNull.id('workspaceId');
     t.string('name');
-    t.nonNull.string('pimCategoryId');
+    t.string('pimCategoryId');
+    t.field('catalogRef', { type: PriceCatalogRefInput });
+    t.field('pricingSpec', { type: PricingSpecInput });
     t.nonNull.int('unitCostInCents');
     t.field('discounts', { type: 'JSON' });
+    t.id('pimProductId');
+    t.id('priceBookId');
+  },
+});
+
+export const CreateServicePriceInput = inputObjectType({
+  name: 'CreateServicePriceInput',
+  definition(t) {
+    t.nonNull.id('workspaceId');
+    t.string('name');
+    t.nonNull.field('catalogRef', { type: PriceCatalogRefInput });
+    t.nonNull.field('pricingSpec', { type: PricingSpecInput });
+    t.string('pimCategoryId');
     t.id('pimProductId');
     t.id('priceBookId');
   },
@@ -348,6 +538,8 @@ export const UpdateRentalPriceInput = inputObjectType({
     t.nonNull.id('id');
     t.string('name');
     t.string('pimCategoryId');
+    t.field('catalogRef', { type: PriceCatalogRefInput });
+    t.field('pricingSpec', { type: PricingSpecInput });
     t.int('pricePerDayInCents');
     t.int('pricePerWeekInCents');
     t.int('pricePerMonthInCents');
@@ -361,8 +553,22 @@ export const UpdateSalePriceInput = inputObjectType({
     t.nonNull.id('id');
     t.string('name');
     t.string('pimCategoryId');
+    t.field('catalogRef', { type: PriceCatalogRefInput });
+    t.field('pricingSpec', { type: PricingSpecInput });
     t.int('unitCostInCents');
     t.field('discounts', { type: 'JSON' });
+    t.id('pimProductId');
+  },
+});
+
+export const UpdateServicePriceInput = inputObjectType({
+  name: 'UpdateServicePriceInput',
+  definition(t) {
+    t.nonNull.id('id');
+    t.string('name');
+    t.field('pricingSpec', { type: PricingSpecInput });
+    t.field('catalogRef', { type: PriceCatalogRefInput });
+    t.string('pimCategoryId');
     t.id('pimProductId');
   },
 });
@@ -379,6 +585,8 @@ export const ListPricesFilter = inputObjectType({
   definition(t) {
     t.nonNull.id('workspaceId');
     t.string('pimCategoryId');
+    t.string('catalogRefId');
+    t.field('catalogRefKind', { type: CatalogProductKind });
     t.string('priceBookId');
     t.field('priceType', { type: PriceTypeEnum });
     t.string('name');
@@ -616,16 +824,36 @@ export const PriceMutation = extendType({
         input: nonNull(arg({ type: CreateRentalPriceInput })),
       },
       async resolve(_, { input }, ctx) {
-        const pimCategory =
-          await ctx.services.pimCategoriesService.getPimCategoryById(
-            input.pimCategoryId,
-            ctx.user,
-          );
+        if (!input.pimCategoryId && !input.catalogRef) {
+          throw new Error('pimCategoryId or catalogRef is required');
+        }
 
-        if (!pimCategory) {
+        const pricingSpec = normalizePricingSpecInput(
+          input.pricingSpec as PricingSpecInputShape,
+        );
+
+        if (pricingSpec && pricingSpec.kind !== 'RENTAL_RATE_TABLE') {
           throw new Error(
-            `PIM Category with ID ${input.pimCategoryId} not found`,
+            'Rental prices only support RENTAL_RATE_TABLE pricingSpec',
           );
+        }
+
+        let pimCategoryName: string | undefined;
+        let pimCategoryPath: string | undefined;
+        if (input.pimCategoryId) {
+          const pimCategory =
+            await ctx.services.pimCategoriesService.getPimCategoryById(
+              input.pimCategoryId,
+              ctx.user,
+            );
+
+          if (!pimCategory) {
+            throw new Error(
+              `PIM Category with ID ${input.pimCategoryId} not found`,
+            );
+          }
+          pimCategoryName = pimCategory.name;
+          pimCategoryPath = pimCategory.path;
         }
 
         if (input.pimProductId) {
@@ -644,14 +872,16 @@ export const PriceMutation = extendType({
           {
             workspaceId: input.workspaceId,
             name: input.name ?? undefined,
-            pimCategoryId: input.pimCategoryId,
-            pimCategoryName: pimCategory.name,
-            pimCategoryPath: pimCategory.path,
+            pimCategoryId: input.pimCategoryId ?? undefined,
+            pimCategoryName,
+            pimCategoryPath,
             pricePerDayInCents: input.pricePerDayInCents,
             pricePerWeekInCents: input.pricePerWeekInCents,
             pricePerMonthInCents: input.pricePerMonthInCents,
             priceBookId: input.priceBookId ?? undefined,
             pimProductId: input.pimProductId ?? undefined,
+            catalogRef: input.catalogRef ?? undefined,
+            pricingSpec,
           },
           ctx.user,
         );
@@ -664,16 +894,34 @@ export const PriceMutation = extendType({
         input: nonNull(arg({ type: CreateSalePriceInput })),
       },
       async resolve(_, { input }, ctx) {
-        const pimCategory =
-          await ctx.services.pimCategoriesService.getPimCategoryById(
-            input.pimCategoryId,
-            ctx.user,
-          );
+        if (!input.pimCategoryId && !input.catalogRef) {
+          throw new Error('pimCategoryId or catalogRef is required');
+        }
 
-        if (!pimCategory) {
-          throw new Error(
-            `PIM Category with ID ${input.pimCategoryId} not found`,
-          );
+        const pricingSpec = normalizePricingSpecInput(
+          input.pricingSpec as PricingSpecInputShape,
+        );
+
+        if (pricingSpec && pricingSpec.kind !== 'UNIT') {
+          throw new Error('Sale prices only support UNIT pricingSpec');
+        }
+
+        let pimCategoryName: string | undefined;
+        let pimCategoryPath: string | undefined;
+        if (input.pimCategoryId) {
+          const pimCategory =
+            await ctx.services.pimCategoriesService.getPimCategoryById(
+              input.pimCategoryId,
+              ctx.user,
+            );
+
+          if (!pimCategory) {
+            throw new Error(
+              `PIM Category with ID ${input.pimCategoryId} not found`,
+            );
+          }
+          pimCategoryName = pimCategory.name;
+          pimCategoryPath = pimCategory.path;
         }
 
         if (input.pimProductId) {
@@ -692,13 +940,46 @@ export const PriceMutation = extendType({
           {
             workspaceId: input.workspaceId,
             name: input.name ?? undefined,
-            pimCategoryId: input.pimCategoryId,
-            pimCategoryName: pimCategory.name,
-            pimCategoryPath: pimCategory.path,
+            pimCategoryId: input.pimCategoryId ?? undefined,
+            pimCategoryName,
+            pimCategoryPath,
             unitCostInCents: input.unitCostInCents,
             discounts: input.discounts,
             priceBookId: input.priceBookId ?? undefined,
             pimProductId: input.pimProductId ?? undefined,
+            catalogRef: input.catalogRef ?? undefined,
+            pricingSpec,
+          },
+          ctx.user,
+        );
+      },
+    });
+
+    t.field('createServicePrice', {
+      type: ServicePrice,
+      args: {
+        input: nonNull(arg({ type: CreateServicePriceInput })),
+      },
+      async resolve(_, { input }, ctx) {
+        const pricingSpec = normalizePricingSpecInput(
+          input.pricingSpec as PricingSpecInputShape,
+        );
+
+        if (!pricingSpec || pricingSpec.kind === 'RENTAL_RATE_TABLE') {
+          throw new Error('Service prices require UNIT or TIME pricingSpec');
+        }
+
+        return ctx.services.pricesService.createServicePrice(
+          {
+            workspaceId: input.workspaceId,
+            name: input.name ?? undefined,
+            pimCategoryId: input.pimCategoryId ?? undefined,
+            pimCategoryName: undefined,
+            pimCategoryPath: undefined,
+            pimProductId: input.pimProductId ?? undefined,
+            priceBookId: input.priceBookId ?? undefined,
+            catalogRef: input.catalogRef ?? undefined,
+            pricingSpec,
           },
           ctx.user,
         );
@@ -722,6 +1003,18 @@ export const PriceMutation = extendType({
         input: nonNull(arg({ type: UpdateRentalPriceInput })),
       },
       async resolve(_, { input }, ctx) {
+        const pricingSpec = input.pricingSpec
+          ? normalizePricingSpecInput(
+              input.pricingSpec as PricingSpecInputShape,
+            )
+          : undefined;
+
+        if (pricingSpec && pricingSpec.kind !== 'RENTAL_RATE_TABLE') {
+          throw new Error(
+            'Rental prices only support RENTAL_RATE_TABLE pricingSpec',
+          );
+        }
+
         if (input.pimProductId) {
           const pimProduct =
             await ctx.dataloaders.pimProducts.getPimProductsById.load(
@@ -761,6 +1054,8 @@ export const PriceMutation = extendType({
             pricePerDayInCents: input.pricePerDayInCents ?? undefined,
             pricePerWeekInCents: input.pricePerWeekInCents ?? undefined,
             pricePerMonthInCents: input.pricePerMonthInCents ?? undefined,
+            pricingSpec,
+            catalogRef: input.catalogRef ?? undefined,
             pimProductId: input.pimProductId ?? undefined,
             pimCategoryId: input.pimCategoryId ?? undefined,
             pimCategoryName,
@@ -777,6 +1072,16 @@ export const PriceMutation = extendType({
         input: nonNull(arg({ type: UpdateSalePriceInput })),
       },
       async resolve(_, { input }, ctx) {
+        const pricingSpec = input.pricingSpec
+          ? normalizePricingSpecInput(
+              input.pricingSpec as PricingSpecInputShape,
+            )
+          : undefined;
+
+        if (pricingSpec && pricingSpec.kind !== 'UNIT') {
+          throw new Error('Sale prices only support UNIT pricingSpec');
+        }
+
         if (input.pimProductId) {
           const pimProduct =
             await ctx.dataloaders.pimProducts.getPimProductsById.load(
@@ -815,6 +1120,74 @@ export const PriceMutation = extendType({
             name: input.name ?? undefined,
             unitCostInCents: input.unitCostInCents ?? undefined,
             discounts: input.discounts ?? undefined,
+            pricingSpec,
+            catalogRef: input.catalogRef ?? undefined,
+            pimProductId: input.pimProductId ?? undefined,
+            pimCategoryId: input.pimCategoryId ?? undefined,
+            pimCategoryName,
+            pimCategoryPath,
+          },
+          ctx.user,
+        );
+      },
+    });
+
+    t.field('updateServicePrice', {
+      type: ServicePrice,
+      args: {
+        input: nonNull(arg({ type: UpdateServicePriceInput })),
+      },
+      async resolve(_, { input }, ctx) {
+        const pricingSpec = input.pricingSpec
+          ? normalizePricingSpecInput(
+              input.pricingSpec as PricingSpecInputShape,
+            )
+          : undefined;
+
+        if (pricingSpec && pricingSpec.kind === 'RENTAL_RATE_TABLE') {
+          throw new Error(
+            'Service prices only support UNIT or TIME pricingSpec',
+          );
+        }
+
+        if (input.pimProductId) {
+          const pimProduct =
+            await ctx.dataloaders.pimProducts.getPimProductsById.load(
+              input.pimProductId,
+            );
+          if (!pimProduct) {
+            throw new Error(
+              `PIM Product with ID ${input.pimProductId} not found`,
+            );
+          }
+        }
+
+        let pimCategoryName: string | undefined;
+        let pimCategoryPath: string | undefined;
+
+        if (input.pimCategoryId) {
+          const pimCategory =
+            await ctx.services.pimCategoriesService.getPimCategoryById(
+              input.pimCategoryId,
+              ctx.user,
+            );
+
+          if (!pimCategory) {
+            throw new Error(
+              `PIM Category with ID ${input.pimCategoryId} not found`,
+            );
+          }
+
+          pimCategoryName = pimCategory.name;
+          pimCategoryPath = pimCategory.path;
+        }
+
+        return ctx.services.pricesService.updateServicePrice(
+          {
+            id: input.id,
+            name: input.name ?? undefined,
+            pricingSpec: pricingSpec ?? undefined,
+            catalogRef: input.catalogRef ?? undefined,
             pimProductId: input.pimProductId ?? undefined,
             pimCategoryId: input.pimCategoryId ?? undefined,
             pimCategoryName,

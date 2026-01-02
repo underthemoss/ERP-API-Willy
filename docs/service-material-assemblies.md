@@ -17,16 +17,26 @@ The goal is to support:
 
 ### Service Products
 Service products represent work performed. They are classified by:
-- service taxonomy tags (flat at creation)
-- activity tags (flat)
+- tags (flat at creation)
+- optional activity tags (flat; UI should prefer verb-like tags)
+- optional targets that describe what the activity is applied to
+
+Activity tags are not a separate tag type; they are the same global tags used in
+a specific attachment point.
+
+Targets are selectors for the object-of-action. They can be:
+- tag-based (semantic class)
+- product-based (archetype reference)
 
 Service products are priced by unit (QUDT), flat, time, or tiered models.
 
 ### Material Products
 Material products represent physical goods. They are classified by:
-- material taxonomy tags (flat at creation)
+- tags (flat at creation)
 - physics attributes (normalized units)
-- brand attributes (non-physical key/value metadata)
+- brand attributes (non-physical identity metadata)
+  NOTE: brand attributes must be typed via GlobalAttributeType.kind=BRAND,
+  not ad-hoc key/value pairs.
 
 ### Assemblies
 Assemblies are composite products. They can include:
@@ -40,14 +50,25 @@ Assemblies can be priced by roll-up (sum of components) or override.
 
 ## Global Tags and Attributes
 
-Tags and attribute definitions are global. This enables:
-- consistent decomposition across workspaces
-- centralized curation in an admin/global environment
-- agent access to a shared library of tags and attributes
+Tags and attribute definitions are **canonically global**. This enables:
+- consistent decomposition across workspaces (shared ontology)
+- centralized curation (global library stays clean)
+- agent/human reuse (the same atoms mean the same thing everywhere)
 
-Users can either:
-- type a string that is decomposed into global tags, or
-- pick from the global library directly.
+To preserve velocity without polluting the canonical layer, we intentionally
+support a **workspace-local draft overlay**:
+- Workspace draft tags / attribute types / attribute values / units can be
+  created immediately during product capture.
+- The system resolves to an existing global atom when possible; otherwise it
+  creates/updates a workspace draft atom.
+- Draft atoms can later be **promoted** to global after review/curation.
+
+In agentic flows, do **not** “spray create” global atoms. Use reuse-first
+resolution (global if match exists, else workspace draft).
+
+References:
+- Canonical thesis: `docs/global-vocabulary.md`
+- Draft overlay + promotion: `docs/workspace-vocabulary.md`
 
 ## Tagging Model (Flat, Emergent Structure)
 
@@ -59,7 +80,7 @@ Optional later:
 - hierarchy can emerge from relationships, not from creation rules
 
 Suggested relation shape:
-- `ServiceTaxonomyRelation` / `MaterialTaxonomyRelation`
+- `GlobalTagRelation`
   - `from_tag_id`
   - `to_tag_id`
   - `relation_type` (BROADER, NARROWER, RELATED, ALIAS)
@@ -77,15 +98,16 @@ Suggested relation shape:
 - `workspace_id`
 - `name`
 - `description`
-- `service_taxonomy_tag_ids[]` (flat)
-- `activity_tag_ids[]` (flat)
+- `tag_ids[]` (flat)
+- `activity_tag_ids[]` (flat, optional)
+- `target_specs[]` (optional disjunction: tag selector or product_id)
 - `default_unit_code` (QUDT, e.g. `unit:H`, `unit:MI`, `unit:EA`)
 - `pricing_model` (UNIT, FLAT, TIME, TIERED)
 - `status`
 
 ### Example
 Service: "Rock Delivery"
-- service taxonomy tags: `logistics`, `materials`
+- tags: `logistics`, `materials`
 - activity tags: `delivery`, `hauling`
 - default unit: `unit:MI`
 - pricing: $4 / mile
@@ -95,7 +117,7 @@ Service: "Rock Delivery"
 ## Material Product Composition
 
 Material products are built from:
-- material taxonomy tags
+- tags
 - physics attributes (QUDT)
 - brand attributes (non-physics)
 
@@ -108,7 +130,8 @@ Examples:
 - model
 - brand
 
-Brand attributes are key/value pairs. They are not physical properties.
+Brand attributes are typed values that reference GlobalAttributeType.kind=BRAND.
+They are not physical properties.
 
 ### Physical Attributes (Normalized Units)
 Examples:
@@ -116,10 +139,12 @@ Examples:
 - weight, density, volume
 - color (optical property)
 
-Physical attributes are numeric, normalized to canonical units, and filterable by range.
+Physical attributes are numeric, normalized to canonical units, and filterable
+by range.
 
 ### Context Tags for Physical Attributes
-Physical attributes can be scoped by taxonomy tags to express context:
+Physical attributes can be scoped by tags via `context_tag_ids[]` to express
+context (context is determined by placement, not by tag facet/type):
 - "weight + bucket" == weight attribute with context tag `bucket`
 - "thickness + door panel" == thickness attribute with context tag `door_panel`
 
@@ -131,17 +156,12 @@ Physical attributes can be scoped by taxonomy tags to express context:
 - `name`
 - `description`
 - `brand_id`
-- `material_taxonomy_tag_ids[]` (flat)
+- `tag_ids[]` (flat)
 - `physical_attributes[]`
 - `brand_attributes[]`
 - `pim_product_id?`
 
-`PhysicalAttributeType`
-- `id`
-- `name` (weight, length, thickness)
-- `dimension` (MASS, LENGTH, AREA, VOLUME, DENSITY)
-- `allowed_unit_codes[]`
-- `canonical_unit_code`
+Physical attribute types are GlobalAttributeType entries with kind=PHYSICAL.
 
 `PhysicalAttributeValue`
 - `attribute_type_id`
@@ -151,14 +171,14 @@ Physical attributes can be scoped by taxonomy tags to express context:
 - `context_tag_ids[]` (optional)
 
 `BrandAttributeValue`
-- `key`
+- `attribute_type_id` (GlobalAttributeType.kind=BRAND)
 - `value`
-- `value_type` (optional)
+- `value_ref_id` (optional, when value_type=REF)
 
 ### Example
 Material: "White Oak Door Panel"
-- material taxonomy tags: `wood`, `white_oak`, `panel`
-- brand attributes: `manufacturer=Acme`, `sku=WO-24x30`
+- tags: `wood`, `white_oak`, `panel`
+- brand attributes (typed): `manufacturer=Acme`, `sku=WO-24x30`
 - physical attributes:
   - width: `24` `unit:IN` (context `door_panel`)
   - height: `30` `unit:IN` (context `door_panel`)
@@ -182,10 +202,13 @@ predefined kits. They can include services and materials.
 - `status`
 - `pricing_mode` (ROLLUP, OVERRIDE)
 
+`CatalogRef`
+- `kind` (MATERIAL_PRODUCT | SERVICE_PRODUCT | ASSEMBLY_PRODUCT | PIM_PRODUCT | PIM_CATEGORY)
+- `id`
+
 `AssemblyLine`
 - `assembly_id`
-- `component_type` (MATERIAL, SERVICE, ASSEMBLY)
-- `component_id`
+- `component_ref` (`CatalogRef`)
 - `quantity`
 - `unit_code`
 - `optional` (boolean)
@@ -227,6 +250,16 @@ Allowances:
 Delivery:
 - service product with `unit:MI` or `unit:JOB`
 
+### Service Line Item Targeting
+Service line items can reference the material (or assembly) lines they act on
+using a target selector:
+- kind: tags | product | line_item
+- target_line_item_ids[] when the service is bound to specific material lines
+
+This keeps pricing clean while enabling orchestration and fulfillment
+automation (drop-off inherits from the targeted material line; pickup is
+resolved later from assigned inventory). See `docs/quote.md`.
+
 ---
 
 ## Buyer vs Seller Precision in Demand and Fulfillment
@@ -249,7 +282,7 @@ can be captured as preferences or optional constraints.
 
 ### Role of Taxonomy and Attributes
 Taxonomy tags + normalized attributes provide the precision-flexibility balance:
-- tags describe the category and capability
+- tags describe the category and implied capability
 - attributes constrain ranges (weight, size, capacity)
 - optional preferences can refine without restricting eligibility
 

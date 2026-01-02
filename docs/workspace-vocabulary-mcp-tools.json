@@ -1,0 +1,510 @@
+{
+  "version": "1",
+  "tools": [
+    {
+      "name": "list_workspace_tags",
+      "description": "Lists workspace-scoped (draft) tags. These can later be promoted to the global tag library.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": { "type": "string", "description": "Workspace ID" },
+          "searchTerm": { "type": "string", "description": "Optional search term" },
+          "pos": {
+            "type": "string",
+            "description": "Optional part-of-speech filter",
+            "enum": ["NOUN", "VERB"]
+          },
+          "status": {
+            "type": "string",
+            "description": "Optional status filter",
+            "enum": ["ACTIVE", "PROPOSED", "DEPRECATED"]
+          },
+          "promotedToGlobal": {
+            "type": "boolean",
+            "description": "Optional filter for tags already promoted to global"
+          },
+          "pageNumber": { "type": "integer", "description": "Page number (1-based)" },
+          "pageSize": { "type": "integer", "description": "Page size" }
+        },
+        "required": ["workspaceId"]
+      }
+    },
+    {
+      "name": "upsert_workspace_tag",
+      "description": "Creates or updates a workspace-scoped (draft) tag with idempotent semantics (label/synonym match).",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": { "type": "string", "description": "Workspace ID" },
+          "label": {
+            "type": "string",
+            "description": "Canonical tag label (snake_case recommended)"
+          },
+          "displayName": { "type": "string", "description": "Optional UI-friendly label" },
+          "pos": {
+            "type": "string",
+            "description": "Optional part-of-speech hint",
+            "enum": ["NOUN", "VERB"]
+          },
+          "synonyms": { "type": "array", "items": { "type": "string" } },
+          "status": {
+            "type": "string",
+            "description": "Optional governance status",
+            "enum": ["ACTIVE", "PROPOSED", "DEPRECATED"]
+          },
+          "auditStatus": {
+            "type": "string",
+            "description": "Optional audit status",
+            "enum": ["PENDING_REVIEW", "REVIEWED", "FLAGGED"]
+          },
+          "notes": { "type": "string", "description": "Optional notes" },
+          "source": { "type": "string", "description": "Optional provenance source" }
+        },
+        "required": ["workspaceId", "label"]
+      }
+    },
+    {
+      "name": "list_workspace_attribute_types",
+      "description": "Lists workspace-scoped (draft) attribute types. These can later be promoted to the global attribute type library.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": { "type": "string", "description": "Workspace ID" },
+          "searchTerm": { "type": "string", "description": "Optional search term" },
+          "kind": {
+            "type": "string",
+            "description": "Optional kind filter",
+            "enum": ["PHYSICAL", "BRAND"]
+          },
+          "valueType": {
+            "type": "string",
+            "description": "Optional value type filter",
+            "enum": ["NUMBER", "STRING", "ENUM", "BOOLEAN", "REF"]
+          },
+          "dimension": {
+            "type": "string",
+            "description": "Optional dimension filter (PHYSICAL only)",
+            "enum": [
+              "LENGTH",
+              "MASS",
+              "AREA",
+              "VOLUME",
+              "TIME",
+              "ANGLE",
+              "FREQUENCY",
+              "ACCELERATION",
+              "DENSITY",
+              "TEMPERATURE",
+              "SPEED",
+              "FORCE",
+              "TORQUE",
+              "FLOW_RATE",
+              "ENERGY",
+              "POWER",
+              "PRESSURE",
+              "VOLTAGE",
+              "CURRENT",
+              "RESISTANCE"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Optional status filter",
+            "enum": ["ACTIVE", "PROPOSED", "DEPRECATED"]
+          },
+          "promotedToGlobal": {
+            "type": "boolean",
+            "description": "Optional filter for types already promoted to global"
+          },
+          "pageNumber": { "type": "integer", "description": "Page number (1-based)" },
+          "pageSize": { "type": "integer", "description": "Page size" }
+        },
+        "required": ["workspaceId"]
+      }
+    },
+    {
+      "name": "upsert_workspace_attribute_type",
+      "description": "Creates or updates a workspace-scoped (draft) attribute type with idempotent semantics (name/synonym match).",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": { "type": "string", "description": "Workspace ID" },
+          "name": { "type": "string", "description": "Canonical attribute type name (e.g., power)" },
+          "kind": { "type": "string", "description": "Attribute kind", "enum": ["PHYSICAL", "BRAND"] },
+          "valueType": {
+            "type": "string",
+            "description": "Attribute value type",
+            "enum": ["NUMBER", "STRING", "ENUM", "BOOLEAN", "REF"]
+          },
+          "dimension": {
+            "type": "string",
+            "description": "Optional dimension (PHYSICAL only)",
+            "enum": [
+              "LENGTH",
+              "MASS",
+              "AREA",
+              "VOLUME",
+              "TIME",
+              "ANGLE",
+              "FREQUENCY",
+              "ACCELERATION",
+              "DENSITY",
+              "TEMPERATURE",
+              "SPEED",
+              "FORCE",
+              "TORQUE",
+              "FLOW_RATE",
+              "ENERGY",
+              "POWER",
+              "PRESSURE",
+              "VOLTAGE",
+              "CURRENT",
+              "RESISTANCE"
+            ]
+          },
+          "canonicalUnit": { "type": "string", "description": "Optional canonical unit code (PHYSICAL only)" },
+          "allowedUnits": { "type": "array", "items": { "type": "string" }, "description": "Optional allowed unit codes" },
+          "canonicalValueSetId": { "type": "string", "description": "Optional value set ID" },
+          "synonyms": { "type": "array", "items": { "type": "string" } },
+          "status": {
+            "type": "string",
+            "description": "Optional governance status",
+            "enum": ["ACTIVE", "PROPOSED", "DEPRECATED"]
+          },
+          "auditStatus": {
+            "type": "string",
+            "description": "Optional audit status",
+            "enum": ["PENDING_REVIEW", "REVIEWED", "FLAGGED"]
+          },
+          "appliesTo": {
+            "type": "string",
+            "description": "Optional applicability",
+            "enum": ["MATERIAL", "SERVICE", "RESOURCE", "BOTH"]
+          },
+          "usageHints": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["JOB_PARAMETER", "RESOURCE_PROPERTY", "BOTH"] }
+          },
+          "notes": { "type": "string", "description": "Optional notes" },
+          "validationRules": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "min": { "type": "number" },
+              "max": { "type": "number" },
+              "precision": { "type": "number" }
+            }
+          },
+          "source": { "type": "string", "description": "Optional provenance source" }
+        },
+        "required": ["workspaceId", "name", "kind", "valueType"]
+      }
+    },
+    {
+      "name": "list_workspace_unit_definitions",
+      "description": "Lists workspace-scoped (draft) unit definitions. These can later be promoted to the global unit library.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": { "type": "string", "description": "Workspace ID" },
+          "searchTerm": { "type": "string", "description": "Optional search term" },
+          "dimension": {
+            "type": "string",
+            "description": "Optional dimension filter",
+            "enum": [
+              "LENGTH",
+              "MASS",
+              "AREA",
+              "VOLUME",
+              "TIME",
+              "ANGLE",
+              "FREQUENCY",
+              "ACCELERATION",
+              "DENSITY",
+              "TEMPERATURE",
+              "SPEED",
+              "FORCE",
+              "TORQUE",
+              "FLOW_RATE",
+              "ENERGY",
+              "POWER",
+              "PRESSURE",
+              "VOLTAGE",
+              "CURRENT",
+              "RESISTANCE"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Optional status filter",
+            "enum": ["ACTIVE", "DEPRECATED"]
+          },
+          "promotedToGlobal": {
+            "type": "boolean",
+            "description": "Optional filter for unit definitions already promoted to global"
+          },
+          "pageNumber": { "type": "integer", "description": "Page number (1-based)" },
+          "pageSize": { "type": "integer", "description": "Page size" }
+        },
+        "required": ["workspaceId"]
+      }
+    },
+    {
+      "name": "upsert_workspace_unit_definition",
+      "description": "Creates or updates a workspace-scoped (draft) unit definition with idempotent semantics (workspaceId+code match).",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": { "type": "string", "description": "Workspace ID" },
+          "code": { "type": "string", "description": "Unit code (e.g., LB, KW)" },
+          "name": { "type": "string", "description": "Optional unit name" },
+          "dimension": {
+            "type": "string",
+            "description": "Optional dimension",
+            "enum": [
+              "LENGTH",
+              "MASS",
+              "AREA",
+              "VOLUME",
+              "TIME",
+              "ANGLE",
+              "FREQUENCY",
+              "ACCELERATION",
+              "DENSITY",
+              "TEMPERATURE",
+              "SPEED",
+              "FORCE",
+              "TORQUE",
+              "FLOW_RATE",
+              "ENERGY",
+              "POWER",
+              "PRESSURE",
+              "VOLTAGE",
+              "CURRENT",
+              "RESISTANCE"
+            ]
+          },
+          "canonicalUnitCode": { "type": "string", "description": "Optional canonical unit code" },
+          "toCanonicalFactor": { "type": "number", "description": "Optional multiplier to canonical unit" },
+          "offset": { "type": "number", "description": "Optional offset to canonical unit" },
+          "status": {
+            "type": "string",
+            "description": "Optional governance status",
+            "enum": ["ACTIVE", "DEPRECATED"]
+          },
+          "source": { "type": "string", "description": "Optional provenance source" }
+        },
+        "required": ["workspaceId", "code"]
+      }
+    },
+    {
+      "name": "list_workspace_attribute_values",
+      "description": "Lists workspace-scoped (draft) attribute values. These can later be promoted to the global attribute value library.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": { "type": "string", "description": "Workspace ID" },
+          "attributeTypeId": { "type": "string", "description": "Optional attribute type ID filter" },
+          "searchTerm": { "type": "string", "description": "Optional search term" },
+          "status": {
+            "type": "string",
+            "description": "Optional status filter",
+            "enum": ["ACTIVE", "PROPOSED", "DEPRECATED"]
+          },
+          "auditStatus": {
+            "type": "string",
+            "description": "Optional audit status filter",
+            "enum": ["PENDING_REVIEW", "REVIEWED", "FLAGGED"]
+          },
+          "promotedToGlobal": {
+            "type": "boolean",
+            "description": "Optional filter for attribute values already promoted to global"
+          },
+          "pageNumber": { "type": "integer", "description": "Page number (1-based)" },
+          "pageSize": { "type": "integer", "description": "Page size" }
+        },
+        "required": ["workspaceId"]
+      }
+    },
+    {
+      "name": "upsert_workspace_attribute_value",
+      "description": "Creates or updates a workspace-scoped (draft) attribute value with idempotent semantics (workspaceId+attributeTypeId+value/synonym match).",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": { "type": "string", "description": "Workspace ID" },
+          "attributeTypeId": { "type": "string", "description": "Attribute type ID" },
+          "value": { "type": "string", "description": "Attribute value" },
+          "synonyms": { "type": "array", "items": { "type": "string" } },
+          "codes": { "type": "object", "description": "Optional codes payload (JSON)" },
+          "status": {
+            "type": "string",
+            "description": "Optional governance status",
+            "enum": ["ACTIVE", "PROPOSED", "DEPRECATED"]
+          },
+          "auditStatus": {
+            "type": "string",
+            "description": "Optional audit status",
+            "enum": ["PENDING_REVIEW", "REVIEWED", "FLAGGED"]
+          },
+          "source": { "type": "string", "description": "Optional provenance source" }
+        },
+        "required": ["workspaceId", "attributeTypeId", "value"]
+      }
+    },
+    {
+      "name": "resolve_global_or_workspace_tag",
+      "description": "Resolves a tag using reuse-first semantics: returns an existing global tag if found; otherwise upserts a workspace-scoped draft tag.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": { "type": "string", "description": "Workspace ID" },
+          "label": { "type": "string", "description": "Tag label (snake_case recommended)" },
+          "displayName": { "type": "string", "description": "Optional UI-friendly label" },
+          "pos": { "type": "string", "enum": ["NOUN", "VERB"] },
+          "synonyms": { "type": "array", "items": { "type": "string" } },
+          "status": { "type": "string", "enum": ["ACTIVE", "PROPOSED", "DEPRECATED"] },
+          "auditStatus": { "type": "string", "enum": ["PENDING_REVIEW", "REVIEWED", "FLAGGED"] },
+          "notes": { "type": "string", "description": "Optional notes" },
+          "source": { "type": "string", "description": "Optional provenance source" },
+          "preferGlobal": { "type": "boolean", "description": "If false, always upsert workspace tag" }
+        },
+        "required": ["workspaceId", "label"]
+      }
+    },
+    {
+      "name": "resolve_global_or_workspace_attribute_type",
+      "description": "Resolves an attribute type using reuse-first semantics: returns an existing global type if found; otherwise upserts a workspace-scoped draft type (BRAND only by default; PHYSICAL types must exist globally unless preferGlobal=false).",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": { "type": "string", "description": "Workspace ID" },
+          "name": { "type": "string", "description": "Attribute type name (e.g., power)" },
+          "kind": { "type": "string", "enum": ["PHYSICAL", "BRAND"] },
+          "valueType": { "type": "string", "enum": ["NUMBER", "STRING", "ENUM", "BOOLEAN", "REF"] },
+          "dimension": {
+            "type": "string",
+            "enum": [
+              "LENGTH",
+              "MASS",
+              "AREA",
+              "VOLUME",
+              "TIME",
+              "ANGLE",
+              "FREQUENCY",
+              "ACCELERATION",
+              "DENSITY",
+              "TEMPERATURE",
+              "SPEED",
+              "FORCE",
+              "TORQUE",
+              "FLOW_RATE",
+              "ENERGY",
+              "POWER",
+              "PRESSURE",
+              "VOLTAGE",
+              "CURRENT",
+              "RESISTANCE"
+            ]
+          },
+          "canonicalUnit": { "type": "string", "description": "Optional canonical unit code" },
+          "allowedUnits": { "type": "array", "items": { "type": "string" } },
+          "canonicalValueSetId": { "type": "string", "description": "Optional value set ID" },
+          "synonyms": { "type": "array", "items": { "type": "string" } },
+          "status": { "type": "string", "enum": ["ACTIVE", "PROPOSED", "DEPRECATED"] },
+          "auditStatus": { "type": "string", "enum": ["PENDING_REVIEW", "REVIEWED", "FLAGGED"] },
+          "appliesTo": { "type": "string", "enum": ["MATERIAL", "SERVICE", "RESOURCE", "BOTH"] },
+          "usageHints": { "type": "array", "items": { "type": "string", "enum": ["JOB_PARAMETER", "RESOURCE_PROPERTY", "BOTH"] } },
+          "notes": { "type": "string", "description": "Optional notes" },
+          "validationRules": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "min": { "type": "number" },
+              "max": { "type": "number" },
+              "precision": { "type": "number" }
+            }
+          },
+          "source": { "type": "string", "description": "Optional provenance source" },
+          "preferGlobal": { "type": "boolean", "description": "If false, always upsert workspace type (discouraged for PHYSICAL)" }
+        },
+        "required": ["workspaceId", "name", "kind", "valueType"]
+      }
+    },
+    {
+      "name": "resolve_global_or_workspace_attribute_value",
+      "description": "Resolves an attribute value using reuse-first semantics: returns an existing global value if found; otherwise upserts a workspace-scoped draft value.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": { "type": "string", "description": "Workspace ID" },
+          "attributeTypeId": { "type": "string", "description": "Attribute type ID" },
+          "value": { "type": "string", "description": "Attribute value" },
+          "synonyms": { "type": "array", "items": { "type": "string" } },
+          "codes": { "type": "object", "description": "Optional codes payload (JSON)" },
+          "status": { "type": "string", "enum": ["ACTIVE", "PROPOSED", "DEPRECATED"] },
+          "auditStatus": { "type": "string", "enum": ["PENDING_REVIEW", "REVIEWED", "FLAGGED"] },
+          "source": { "type": "string", "description": "Optional provenance source" },
+          "preferGlobal": { "type": "boolean", "description": "If false, always upsert workspace value" }
+        },
+        "required": ["workspaceId", "attributeTypeId", "value"]
+      }
+    },
+    {
+      "name": "resolve_global_or_workspace_unit_definition",
+      "description": "Resolves a unit definition using reuse-first semantics: returns an existing global unit if found; if preferGlobal=true (default) errors when unknown (preferred), and if preferGlobal=false it upserts a workspace-scoped draft unit.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": { "type": "string", "description": "Workspace ID" },
+          "code": { "type": "string", "description": "Unit code/alias (e.g., lb, lbs, LB)" },
+          "name": { "type": "string", "description": "Optional unit name" },
+          "dimension": {
+            "type": "string",
+            "enum": [
+              "LENGTH",
+              "MASS",
+              "AREA",
+              "VOLUME",
+              "TIME",
+              "ANGLE",
+              "FREQUENCY",
+              "ACCELERATION",
+              "DENSITY",
+              "TEMPERATURE",
+              "SPEED",
+              "FORCE",
+              "TORQUE",
+              "FLOW_RATE",
+              "ENERGY",
+              "POWER",
+              "PRESSURE",
+              "VOLTAGE",
+              "CURRENT",
+              "RESISTANCE"
+            ]
+          },
+          "canonicalUnitCode": { "type": "string", "description": "Optional canonical unit code" },
+          "toCanonicalFactor": { "type": "number", "description": "Optional multiplier to canonical unit" },
+          "offset": { "type": "number", "description": "Optional offset to canonical unit" },
+          "status": { "type": "string", "enum": ["ACTIVE", "DEPRECATED"] },
+          "source": { "type": "string", "description": "Optional provenance source" },
+          "preferGlobal": { "type": "boolean", "description": "If false, upsert a workspace unit definition (discouraged; prefer seeding global units)" }
+        },
+        "required": ["workspaceId", "code"]
+      }
+    }
+  ]
+}

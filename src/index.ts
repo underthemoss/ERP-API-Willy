@@ -1,3 +1,4 @@
+import './lib/avsc-compat';
 import Fastify from 'fastify';
 import fastifyCookie from '@fastify/cookie';
 import { MongoClient, ServerApiVersion } from 'mongodb';
@@ -19,11 +20,14 @@ import { createPricesService } from './services/prices';
 import { createPimCategoriesService } from './services/pim_categories';
 import { createProjectsService } from './services/projects';
 import { createNotesService } from './services/notes';
+import { createStudioConversationsService } from './services/studio_conversations';
+import { createStudioFsService } from './services/studio_fs';
 import { createSalesOrdersService } from './services/sales_orders';
 import { createAssetSchedulesService } from './services/asset_schedules';
 import { createPulseService } from './services/pulse_cron_jobs';
 import { createPurchaseOrdersService } from './services/purchase_orders';
 import { createFileService } from './services/file_service';
+import { createLineItemsService } from './services/line_items';
 import { createPdfService } from './services/pdf_service';
 import { createPriceEngineService } from './services/price_engine';
 import { createWorkflowConfigurationService } from './services/workflow_configuration';
@@ -52,10 +56,13 @@ import imageGeneratorPlugin from './plugins/image-generator';
 import agentPlugin from './plugins/agent';
 import { pdfViewerPlugin } from './plugins/pdf-viewer';
 import mcpPlugin from './plugins/mcp';
+import studioPlugin from './plugins/studio';
 import { startCurrentTimePublisher } from './services/simple-pubsub';
 import { createOpenSearchService } from './services/opensearch';
 import { createJWTService } from './services/jwt';
 import { createGlobalAttributesService } from './services/global_attributes';
+import { createGlobalTagsService } from './services/global_tags';
+import { createWorkspaceVocabularyService } from './services/workspace_vocabulary';
 
 async function startMainMode() {
   const startTime = Date.now();
@@ -88,7 +95,6 @@ async function startMainMode() {
         return null;
       }
       try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const { KafkaJS } = require('@confluentinc/kafka-javascript');
         return new KafkaJS.Kafka({
           kafkaJS: {
@@ -156,12 +162,14 @@ async function startMainMode() {
     pimProductsService,
     pimCategoriesService,
     globalAttributesService,
+    globalTagsService,
     fileService,
     assetSchedulesService,
     brandfetchService,
     workflowConfigurationService,
     inventoryService,
     contactsService,
+    lineItemsService,
     priceEngineService,
     domainsService,
     llmService,
@@ -169,7 +177,11 @@ async function startMainMode() {
     viewService,
   ] = await Promise.all([
     createUsersService({ envConfig, mongoClient }),
-    createAssetsService({ envConfig, mongoClient, kafkaClient: kafkaClient as any }),
+    createAssetsService({
+      envConfig,
+      mongoClient,
+      kafkaClient: kafkaClient as any,
+    }),
     createCompaniesService({
       envConfig,
       mongoClient,
@@ -187,6 +199,7 @@ async function startMainMode() {
       kafkaClient: kafkaClient as any,
     }),
     Promise.resolve(createGlobalAttributesService({ envConfig, mongoClient })),
+    Promise.resolve(createGlobalTagsService({ envConfig, mongoClient })),
     createFileService({ mongoClient, envConfig, authZ }),
     createAssetSchedulesService({ mongoClient }),
     createBrandfetchService({ envConfig, mongoClient }),
@@ -203,12 +216,21 @@ async function startMainMode() {
       authZ,
       resourceMapResourcesService,
     }),
+    Promise.resolve(createLineItemsService({ mongoClient, authZ })),
     createPriceEngineService({}),
     Promise.resolve(new DomainsService()),
     Promise.resolve(new LlmService()),
     Promise.resolve(createImageGeneratorService(envConfig)),
     Promise.resolve(createViewService({ mongoClient })),
   ]);
+
+  const workspaceVocabularyService = createWorkspaceVocabularyService({
+    envConfig,
+    mongoClient,
+    authZ,
+    globalTagsService,
+    globalAttributesService,
+  });
 
   // T3UsersService doesn't return a value but needs to be awaited
   await createT3UsersService({
@@ -223,11 +245,13 @@ async function startMainMode() {
 
   // Wave 3: Initialize services with dependencies in parallel
   logger.info('Initializing dependent services...');
+  const studioFsService = createStudioFsService({ mongoClient, authz: authZ });
   const [
     workspaceService,
     pricesService,
     projectsService,
     notesService,
+    studioConversationsService,
     auth0ManagementService,
     sendGridAdminService,
     searchService,
@@ -238,6 +262,7 @@ async function startMainMode() {
       authZ,
       usersService,
       emailService,
+      studioFsService,
     }),
     Promise.resolve(
       createPricesService({
@@ -250,6 +275,13 @@ async function startMainMode() {
     ),
     createProjectsService({ mongoClient, authZ }),
     createNotesService({ mongoClient, authz: authZ }),
+    Promise.resolve(
+      createStudioConversationsService({
+        mongoClient,
+        authz: authZ,
+        studioFsService,
+      }),
+    ),
     Promise.resolve(createAuth0ManagementService({ envConfig, authZ })),
     Promise.resolve(
       createSendGridAdminService({ envConfig, authZ, mongoClient }),
@@ -262,6 +294,7 @@ async function startMainMode() {
     envConfig,
     mongoClient,
     authZ,
+    lineItemsService,
     emailService,
     priceEngineService,
     pricesService,
@@ -288,6 +321,7 @@ async function startMainMode() {
     mongoClient,
     priceEngineService,
     pricesService,
+    lineItemsService,
     authZ,
   });
 
@@ -302,19 +336,21 @@ async function startMainMode() {
       mongoClient,
       priceEngineService,
       pricesService,
+      lineItemsService,
       authZ,
     }),
     createChargeService({ envConfig, mongoClient, authz: authZ }),
   ]);
 
-  const fulfilmentService = await createFulfilmentService({
-    mongoClient,
-    salesOrdersService,
-    pricesService,
-    priceEngineService,
-    chargeService,
-    pulseService,
-    authZ,
+	  const fulfilmentService = await createFulfilmentService({
+	    mongoClient,
+	    salesOrdersService,
+	    lineItemsService,
+	    pricesService,
+	    priceEngineService,
+	    chargeService,
+	    pulseService,
+	    authZ,
     systemUser: SYSTEM_USER_JWT_PAYLOAD,
     inventoryService,
   });
@@ -329,6 +365,7 @@ async function startMainMode() {
       pimProductsService,
       pimCategoriesService,
       fulfilmentService,
+      lineItemsService,
     }),
     Promise.resolve(
       createInvoiceService({ mongoClient, chargeService, authZ }),
@@ -345,15 +382,20 @@ async function startMainMode() {
 
   fastify.register(fastifyCookie);
 
+  // Enable cookie-based auth flows in local dev (needed for <img src> endpoints).
+  const allowCredentials = true;
+
   await fastify.register(cors, {
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
 
+      const normalizedOrigin = origin.replace(/\/$/, '');
       const allowedOrigins = [
         'http://localhost:3000',
         'http://localhost:3001',
-        'http://localhost:5000',
+        'http://localhost:5001',
+        'http://127.0.0.1:3000',
         'https://staging-erp.estrack.com',
         'https://erp.estrack.com',
         'https://api.equipmentshare.com',
@@ -362,27 +404,39 @@ async function startMainMode() {
         'https://es-erp-env-staging-equipmentshare.vercel.app',
       ];
       // Check if origin is in the allowed list
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.includes(normalizedOrigin)) {
         return callback(null, true);
       }
 
       // Check if origin matches any Vercel app pattern
       // Pattern: https://*equipmentshare.vercel.app (anything before equipmentshare)
       const vercelPattern = /^https:\/\/.*equipmentshare\.vercel\.app$/;
-      if (vercelPattern.test(origin)) {
+      if (vercelPattern.test(normalizedOrigin)) {
         return callback(null, true);
       }
 
       if (
         envConfig.LEVEL !== 'prod' &&
-        origin.startsWith('https://studio.apollographql.com')
+        normalizedOrigin.startsWith('https://studio.apollographql.com')
       ) {
         return callback(null, true);
       }
       // Reject all other origins
       callback(new Error('Not allowed by CORS'), false);
     },
-    credentials: true,
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Authorization',
+      'Content-Type',
+      'If-Match',
+      'If-None-Match',
+      'X-Requested-With',
+      // Used by the frontend when calling non-GraphQL endpoints (e.g. SearchKit proxy).
+      'x-workspace-id',
+    ],
+    exposedHeaders: ['ETag'],
+    credentials: allowCredentials,
+    maxAge: 86400,
   });
 
   fastify.register(authPlugin, {
@@ -423,6 +477,12 @@ async function startMainMode() {
   // Register Agent plugin (AI chat with OpenAI)
   fastify.register(agentPlugin, {
     openaiApiKey: envConfig.OPENAI_API_KEY,
+    studioConversationsService,
+  });
+
+  // Register Studio FS plugin
+  fastify.register(studioPlugin, {
+    studioFsService,
   });
 
   // Register MCP plugin (Model Context Protocol server)
@@ -446,6 +506,7 @@ async function startMainMode() {
       pimCategoriesService,
       projectsService,
       salesOrdersService,
+      lineItemsService,
       purchaseOrdersService,
       assetSchedulesService,
       pulseService,
@@ -472,6 +533,10 @@ async function startMainMode() {
       quotingService,
       jwtService,
       globalAttributesService,
+      globalTagsService,
+      workspaceVocabularyService,
+      studioConversationsService,
+      studioFsService,
     },
   });
 

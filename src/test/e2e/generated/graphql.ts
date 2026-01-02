@@ -50,6 +50,13 @@ export type AddInvoiceChargesInput = {
   invoiceId: Scalars['ID']['input'];
 };
 
+export type AddStudioConversationMessageInput = {
+  content: Scalars['String']['input'];
+  conversationId: Scalars['String']['input'];
+  metadata?: InputMaybe<Scalars['JSONObject']['input']>;
+  role: StudioConversationRole;
+};
+
 export type AddTaxLineItemInput = {
   description: Scalars['String']['input'];
   invoiceId: Scalars['ID']['input'];
@@ -66,9 +73,18 @@ export type AdminMutationNamespace = {
   collectionSnapshot: CollectionSnapshotResult;
   createGlobalAttributeType?: Maybe<GlobalAttributeType>;
   createGlobalAttributeValue?: Maybe<GlobalAttributeValue>;
+  createGlobalTag?: Maybe<GlobalTag>;
+  createGlobalTagRelation?: Maybe<GlobalTagRelation>;
   createGlobalUnitDefinition?: Maybe<GlobalUnitDefinition>;
   /** Delete a specific SpiceDB relationship */
   deleteRelationship: DeleteRelationshipResult;
+  mergeGlobalTag?: Maybe<GlobalTag>;
+  promoteWorkspaceAttributeTypeToGlobal?: Maybe<GlobalAttributeType>;
+  promoteWorkspaceAttributeTypesToGlobal?: Maybe<PromoteWorkspaceAttributeTypesToGlobalResult>;
+  promoteWorkspaceAttributeValueToGlobal?: Maybe<GlobalAttributeValue>;
+  promoteWorkspaceAttributeValuesToGlobal?: Maybe<PromoteWorkspaceAttributeValuesToGlobalResult>;
+  promoteWorkspaceTagToGlobal?: Maybe<GlobalTag>;
+  promoteWorkspaceUnitDefinitionToGlobal?: Maybe<GlobalUnitDefinition>;
   /** Remove roles from a user (Admin only) */
   removeRolesFromUser?: Maybe<Scalars['Boolean']['output']>;
   /** Send an email using the professional HTML template (Admin only) */
@@ -77,6 +93,7 @@ export type AdminMutationNamespace = {
   sendTestEmail: SendTestEmailResult;
   updateGlobalAttributeType?: Maybe<GlobalAttributeType>;
   updateGlobalAttributeValue?: Maybe<GlobalAttributeValue>;
+  updateGlobalTag?: Maybe<GlobalTag>;
   updateGlobalUnitDefinition?: Maybe<GlobalUnitDefinition>;
   /** Create or update a SpiceDB relationship */
   writeRelationship: WriteRelationshipResult;
@@ -104,6 +121,16 @@ export type AdminMutationNamespaceCreateGlobalAttributeValueArgs = {
 };
 
 
+export type AdminMutationNamespaceCreateGlobalTagArgs = {
+  input: CreateGlobalTagInput;
+};
+
+
+export type AdminMutationNamespaceCreateGlobalTagRelationArgs = {
+  input: CreateGlobalTagRelationInput;
+};
+
+
 export type AdminMutationNamespaceCreateGlobalUnitDefinitionArgs = {
   input: CreateGlobalUnitDefinitionInput;
 };
@@ -115,6 +142,41 @@ export type AdminMutationNamespaceDeleteRelationshipArgs = {
   resourceType: Scalars['String']['input'];
   subjectId: Scalars['String']['input'];
   subjectType: Scalars['String']['input'];
+};
+
+
+export type AdminMutationNamespaceMergeGlobalTagArgs = {
+  input: MergeGlobalTagInput;
+};
+
+
+export type AdminMutationNamespacePromoteWorkspaceAttributeTypeToGlobalArgs = {
+  input: PromoteWorkspaceAttributeTypeToGlobalInput;
+};
+
+
+export type AdminMutationNamespacePromoteWorkspaceAttributeTypesToGlobalArgs = {
+  input: PromoteWorkspaceAttributeTypesToGlobalInput;
+};
+
+
+export type AdminMutationNamespacePromoteWorkspaceAttributeValueToGlobalArgs = {
+  input: PromoteWorkspaceAttributeValueToGlobalInput;
+};
+
+
+export type AdminMutationNamespacePromoteWorkspaceAttributeValuesToGlobalArgs = {
+  input: PromoteWorkspaceAttributeValuesToGlobalInput;
+};
+
+
+export type AdminMutationNamespacePromoteWorkspaceTagToGlobalArgs = {
+  input: PromoteWorkspaceTagToGlobalInput;
+};
+
+
+export type AdminMutationNamespacePromoteWorkspaceUnitDefinitionToGlobalArgs = {
+  input: PromoteWorkspaceUnitDefinitionToGlobalInput;
 };
 
 
@@ -159,6 +221,12 @@ export type AdminMutationNamespaceUpdateGlobalAttributeValueArgs = {
 };
 
 
+export type AdminMutationNamespaceUpdateGlobalTagArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateGlobalTagInput;
+};
+
+
 export type AdminMutationNamespaceUpdateGlobalUnitDefinitionArgs = {
   code: Scalars['String']['input'];
   input: UpdateGlobalUnitDefinitionInput;
@@ -178,6 +246,7 @@ export type AdminQueryNamespace = {
   __typename?: 'AdminQueryNamespace';
   getGlobalAttributeTypeById?: Maybe<GlobalAttributeType>;
   getGlobalAttributeValueById?: Maybe<GlobalAttributeValue>;
+  getGlobalTagById?: Maybe<GlobalTag>;
   getGlobalUnitDefinitionByCode?: Maybe<GlobalUnitDefinition>;
   /** Get a single Auth0 user by ID (Admin only) */
   getUserById?: Maybe<Auth0User>;
@@ -187,6 +256,8 @@ export type AdminQueryNamespace = {
   listAvailableRelations: Array<AvailableRelation>;
   listGlobalAttributeTypes?: Maybe<GlobalAttributeTypeListResult>;
   listGlobalAttributeValues?: Maybe<GlobalAttributeValueListResult>;
+  listGlobalTagRelations?: Maybe<GlobalTagRelationListResult>;
+  listGlobalTags?: Maybe<GlobalTagListResult>;
   listGlobalUnitDefinitions?: Maybe<GlobalUnitDefinitionListResult>;
   /** List SpiceDB relationships with optional filters */
   listRelationships: ListRelationshipsResult;
@@ -213,6 +284,11 @@ export type AdminQueryNamespaceGetGlobalAttributeTypeByIdArgs = {
 
 
 export type AdminQueryNamespaceGetGlobalAttributeValueByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type AdminQueryNamespaceGetGlobalTagByIdArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -245,6 +321,18 @@ export type AdminQueryNamespaceListGlobalAttributeTypesArgs = {
 
 export type AdminQueryNamespaceListGlobalAttributeValuesArgs = {
   filter?: InputMaybe<ListGlobalAttributeValuesFilter>;
+  page?: InputMaybe<PageInfoInput>;
+};
+
+
+export type AdminQueryNamespaceListGlobalTagRelationsArgs = {
+  filter?: InputMaybe<ListGlobalTagRelationsFilter>;
+  page?: InputMaybe<PageInfoInput>;
+};
+
+
+export type AdminQueryNamespaceListGlobalTagsArgs = {
+  filter?: InputMaybe<ListGlobalTagsFilter>;
   page?: InputMaybe<PageInfoInput>;
 };
 
@@ -694,6 +782,12 @@ export type CancelInvoiceInput = {
   invoiceId: Scalars['String']['input'];
 };
 
+export enum CatalogProductKind {
+  AssemblyProduct = 'ASSEMBLY_PRODUCT',
+  MaterialProduct = 'MATERIAL_PRODUCT',
+  ServiceProduct = 'SERVICE_PRODUCT'
+}
+
 export type Charge = {
   __typename?: 'Charge';
   amountInCents: Scalars['Int']['output'];
@@ -818,6 +912,25 @@ export type CreateGlobalAttributeValueInput = {
   value: Scalars['String']['input'];
 };
 
+export type CreateGlobalTagInput = {
+  auditStatus?: InputMaybe<GlobalTagAuditStatus>;
+  displayName?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  pos?: InputMaybe<GlobalTagPartOfSpeech>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalTagStatus>;
+  synonyms?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+export type CreateGlobalTagRelationInput = {
+  confidence?: InputMaybe<Scalars['Float']['input']>;
+  fromTagId: Scalars['String']['input'];
+  relationType: GlobalTagRelationType;
+  source?: InputMaybe<Scalars['String']['input']>;
+  toTagId: Scalars['String']['input'];
+};
+
 export type CreateGlobalUnitDefinitionInput = {
   canonicalUnitCode?: InputMaybe<Scalars['String']['input']>;
   code: Scalars['String']['input'];
@@ -936,13 +1049,15 @@ export type CreateRentalFulfilmentInput = {
 };
 
 export type CreateRentalPriceInput = {
+  catalogRef?: InputMaybe<PriceCatalogRefInput>;
   name?: InputMaybe<Scalars['String']['input']>;
-  pimCategoryId: Scalars['String']['input'];
+  pimCategoryId?: InputMaybe<Scalars['String']['input']>;
   pimProductId?: InputMaybe<Scalars['ID']['input']>;
   priceBookId?: InputMaybe<Scalars['ID']['input']>;
   pricePerDayInCents: Scalars['Int']['input'];
   pricePerMonthInCents: Scalars['Int']['input'];
   pricePerWeekInCents: Scalars['Int']['input'];
+  pricingSpec?: InputMaybe<PricingSpecInput>;
   workspaceId: Scalars['ID']['input'];
 };
 
@@ -997,11 +1112,13 @@ export type CreateSaleFulfilmentInput = {
 };
 
 export type CreateSalePriceInput = {
+  catalogRef?: InputMaybe<PriceCatalogRefInput>;
   discounts?: InputMaybe<Scalars['JSON']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
-  pimCategoryId: Scalars['String']['input'];
+  pimCategoryId?: InputMaybe<Scalars['String']['input']>;
   pimProductId?: InputMaybe<Scalars['ID']['input']>;
   priceBookId?: InputMaybe<Scalars['ID']['input']>;
+  pricingSpec?: InputMaybe<PricingSpecInput>;
   unitCostInCents: Scalars['Int']['input'];
   workspaceId: Scalars['ID']['input'];
 };
@@ -1033,6 +1150,14 @@ export type CreateSaleSalesOrderLineItemInput = {
   so_quantity?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type CreateServiceFulfilmentFromLineItemInput = {
+  assignedToId?: InputMaybe<Scalars['ID']['input']>;
+  lineItemId: Scalars['ID']['input'];
+  serviceDate?: InputMaybe<Scalars['DateTime']['input']>;
+  workflowColumnId?: InputMaybe<Scalars['ID']['input']>;
+  workflowId?: InputMaybe<Scalars['ID']['input']>;
+};
+
 export type CreateServiceFulfilmentInput = {
   assignedToId?: InputMaybe<Scalars['String']['input']>;
   /** If salesOrderLineItemId is not provided, these fields are required */
@@ -1043,6 +1168,23 @@ export type CreateServiceFulfilmentInput = {
   unitCostInCents: Scalars['Int']['input'];
   workflowColumnId?: InputMaybe<Scalars['ID']['input']>;
   workflowId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type CreateServicePriceInput = {
+  catalogRef: PriceCatalogRefInput;
+  name?: InputMaybe<Scalars['String']['input']>;
+  pimCategoryId?: InputMaybe<Scalars['String']['input']>;
+  pimProductId?: InputMaybe<Scalars['ID']['input']>;
+  priceBookId?: InputMaybe<Scalars['ID']['input']>;
+  pricingSpec: PricingSpecInput;
+  workspaceId: Scalars['ID']['input'];
+};
+
+export type CreateStudioConversationInput = {
+  pinnedCatalogPath?: InputMaybe<Scalars['String']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+  workingSet?: InputMaybe<Scalars['JSONObject']['input']>;
+  workspaceId: Scalars['String']['input'];
 };
 
 export type CreateWorkflowConfigurationInput = {
@@ -1239,17 +1381,25 @@ export enum GlobalAttributeAuditStatus {
 }
 
 export enum GlobalAttributeDimension {
+  Acceleration = 'ACCELERATION',
+  Angle = 'ANGLE',
   Area = 'AREA',
+  Current = 'CURRENT',
   Density = 'DENSITY',
   Energy = 'ENERGY',
+  FlowRate = 'FLOW_RATE',
   Force = 'FORCE',
+  Frequency = 'FREQUENCY',
   Length = 'LENGTH',
   Mass = 'MASS',
   Power = 'POWER',
   Pressure = 'PRESSURE',
+  Resistance = 'RESISTANCE',
   Speed = 'SPEED',
   Temperature = 'TEMPERATURE',
   Time = 'TIME',
+  Torque = 'TORQUE',
+  Voltage = 'VOLTAGE',
   Volume = 'VOLUME'
 }
 
@@ -1363,6 +1513,80 @@ export enum GlobalAttributeValueType {
   String = 'STRING'
 }
 
+export type GlobalTag = {
+  __typename?: 'GlobalTag';
+  auditStatus?: Maybe<GlobalTagAuditStatus>;
+  createdAt?: Maybe<Scalars['DateTime']['output']>;
+  createdBy?: Maybe<Scalars['String']['output']>;
+  displayName?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  mergedIntoId?: Maybe<Scalars['String']['output']>;
+  notes?: Maybe<Scalars['String']['output']>;
+  pos: GlobalTagPartOfSpeech;
+  source?: Maybe<Scalars['String']['output']>;
+  status: GlobalTagStatus;
+  synonyms?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  updatedAt?: Maybe<Scalars['DateTime']['output']>;
+  updatedBy?: Maybe<Scalars['String']['output']>;
+};
+
+export enum GlobalTagAuditStatus {
+  Flagged = 'FLAGGED',
+  PendingReview = 'PENDING_REVIEW',
+  Reviewed = 'REVIEWED'
+}
+
+export type GlobalTagIngestionResult = {
+  __typename?: 'GlobalTagIngestionResult';
+  parsed: Scalars['JSONObject']['output'];
+  tag: GlobalTag;
+};
+
+export type GlobalTagListResult = {
+  __typename?: 'GlobalTagListResult';
+  items: Array<GlobalTag>;
+  page: PaginationInfo;
+};
+
+export enum GlobalTagPartOfSpeech {
+  Noun = 'NOUN',
+  Verb = 'VERB'
+}
+
+export type GlobalTagRelation = {
+  __typename?: 'GlobalTagRelation';
+  confidence?: Maybe<Scalars['Float']['output']>;
+  createdAt?: Maybe<Scalars['DateTime']['output']>;
+  createdBy?: Maybe<Scalars['String']['output']>;
+  fromTagId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  relationType: GlobalTagRelationType;
+  source?: Maybe<Scalars['String']['output']>;
+  toTagId: Scalars['String']['output'];
+  updatedAt?: Maybe<Scalars['DateTime']['output']>;
+  updatedBy?: Maybe<Scalars['String']['output']>;
+};
+
+export type GlobalTagRelationListResult = {
+  __typename?: 'GlobalTagRelationListResult';
+  items: Array<GlobalTagRelation>;
+  page: PaginationInfo;
+};
+
+export enum GlobalTagRelationType {
+  Alias = 'ALIAS',
+  Broader = 'BROADER',
+  Narrower = 'NARROWER',
+  Related = 'RELATED'
+}
+
+export enum GlobalTagStatus {
+  Active = 'ACTIVE',
+  Deprecated = 'DEPRECATED',
+  Proposed = 'PROPOSED'
+}
+
 export type GlobalUnitDefinition = {
   __typename?: 'GlobalUnitDefinition';
   canonicalUnitCode?: Maybe<Scalars['String']['output']>;
@@ -1406,6 +1630,12 @@ export type IngestGlobalAttributeStringInput = {
   unitCode?: InputMaybe<Scalars['String']['input']>;
   value?: InputMaybe<Scalars['String']['input']>;
   valueType?: InputMaybe<GlobalAttributeValueType>;
+};
+
+export type IngestGlobalTagStringInput = {
+  posHint?: InputMaybe<GlobalTagPartOfSpeech>;
+  raw: Scalars['String']['input'];
+  source?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type IntakeForm = {
@@ -1711,12 +1941,265 @@ export type InvoicesResponse = {
   items: Array<Invoice>;
 };
 
+export type LineItem = {
+  __typename?: 'LineItem';
+  constraints?: Maybe<Array<Maybe<LineItemConstraint>>>;
+  createdAt: Scalars['DateTime']['output'];
+  customPriceName?: Maybe<Scalars['String']['output']>;
+  delivery?: Maybe<LineItemDelivery>;
+  deliveryChargeInCents?: Maybe<Scalars['Int']['output']>;
+  description: Scalars['String']['output'];
+  documentRef: LineItemDocumentRef;
+  id: Scalars['ID']['output'];
+  inputs?: Maybe<Array<Maybe<LineItemInputValue>>>;
+  notes?: Maybe<Scalars['String']['output']>;
+  placeRef?: Maybe<LineItemPlaceRef>;
+  pricingRef?: Maybe<LineItemPricingRef>;
+  pricingSpecSnapshot?: Maybe<PricingSpec>;
+  productRef?: Maybe<LineItemProductRef>;
+  quantity: Scalars['String']['output'];
+  rateInCentsSnapshot?: Maybe<Scalars['Int']['output']>;
+  scopeTasks?: Maybe<Array<Maybe<ServiceScopeTask>>>;
+  sourceLineItemId?: Maybe<Scalars['ID']['output']>;
+  state: LineItemState;
+  subtotalInCents?: Maybe<Scalars['Int']['output']>;
+  targetSelectors?: Maybe<Array<Maybe<LineItemTargetSelector>>>;
+  timeWindow?: Maybe<LineItemTimeWindow>;
+  type: LineItemType;
+  unitCode?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+  workspaceId: Scalars['String']['output'];
+};
+
+export type LineItemConstraint = {
+  __typename?: 'LineItemConstraint';
+  data?: Maybe<LineItemConstraintData>;
+  kind: LineItemConstraintKind;
+  strength: LineItemConstraintStrength;
+};
+
+export type LineItemConstraintAttribute = {
+  __typename?: 'LineItemConstraintAttribute';
+  attributeTypeId: Scalars['ID']['output'];
+  contextTags?: Maybe<Array<Scalars['String']['output']>>;
+  op: LineItemConstraintAttributeOp;
+  unitCode?: Maybe<Scalars['String']['output']>;
+  value: Scalars['JSONObject']['output'];
+};
+
+export type LineItemConstraintAttributeInput = {
+  attributeTypeId: Scalars['ID']['input'];
+  contextTags?: InputMaybe<Array<Scalars['String']['input']>>;
+  op: LineItemConstraintAttributeOp;
+  unitCode?: InputMaybe<Scalars['String']['input']>;
+  value: Scalars['JSONObject']['input'];
+};
+
+export enum LineItemConstraintAttributeOp {
+  Eq = 'EQ',
+  Gt = 'GT',
+  Gte = 'GTE',
+  In = 'IN',
+  Lt = 'LT',
+  Lte = 'LTE',
+  Neq = 'NEQ',
+  NotIn = 'NOT_IN'
+}
+
+export type LineItemConstraintBrand = {
+  __typename?: 'LineItemConstraintBrand';
+  brandId?: Maybe<Scalars['ID']['output']>;
+  manufacturerId?: Maybe<Scalars['ID']['output']>;
+};
+
+export type LineItemConstraintBrandInput = {
+  brandId?: InputMaybe<Scalars['ID']['input']>;
+  manufacturerId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type LineItemConstraintData = {
+  __typename?: 'LineItemConstraintData';
+  attribute?: Maybe<LineItemConstraintAttribute>;
+  brand?: Maybe<LineItemConstraintBrand>;
+  location?: Maybe<LineItemConstraintLocation>;
+  other?: Maybe<LineItemConstraintOther>;
+  schedule?: Maybe<LineItemConstraintSchedule>;
+  tag?: Maybe<LineItemConstraintTag>;
+};
+
+export type LineItemConstraintDataInput = {
+  attribute?: InputMaybe<LineItemConstraintAttributeInput>;
+  brand?: InputMaybe<LineItemConstraintBrandInput>;
+  location?: InputMaybe<LineItemConstraintLocationInput>;
+  other?: InputMaybe<LineItemConstraintOtherInput>;
+  schedule?: InputMaybe<LineItemConstraintScheduleInput>;
+  tag?: InputMaybe<LineItemConstraintTagInput>;
+};
+
+export type LineItemConstraintInput = {
+  data: LineItemConstraintDataInput;
+  kind: LineItemConstraintKind;
+  strength: LineItemConstraintStrength;
+};
+
+export enum LineItemConstraintKind {
+  Attribute = 'ATTRIBUTE',
+  Brand = 'BRAND',
+  Location = 'LOCATION',
+  Other = 'OTHER',
+  Schedule = 'SCHEDULE',
+  Tag = 'TAG'
+}
+
+export type LineItemConstraintLocation = {
+  __typename?: 'LineItemConstraintLocation';
+  placeRef: LineItemPlaceRef;
+};
+
+export type LineItemConstraintLocationInput = {
+  placeRef: LineItemPlaceRefInput;
+};
+
+export type LineItemConstraintOther = {
+  __typename?: 'LineItemConstraintOther';
+  note: Scalars['String']['output'];
+};
+
+export type LineItemConstraintOtherInput = {
+  note: Scalars['String']['input'];
+};
+
+export type LineItemConstraintSchedule = {
+  __typename?: 'LineItemConstraintSchedule';
+  endAt?: Maybe<Scalars['DateTime']['output']>;
+  startAt?: Maybe<Scalars['DateTime']['output']>;
+};
+
+export type LineItemConstraintScheduleInput = {
+  endAt?: InputMaybe<Scalars['DateTime']['input']>;
+  startAt?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
+export enum LineItemConstraintStrength {
+  Excluded = 'EXCLUDED',
+  Preferred = 'PREFERRED',
+  Required = 'REQUIRED'
+}
+
+export type LineItemConstraintTag = {
+  __typename?: 'LineItemConstraintTag';
+  tagIds: Array<Scalars['ID']['output']>;
+};
+
+export type LineItemConstraintTagInput = {
+  tagIds: Array<Scalars['ID']['input']>;
+};
+
 export type LineItemCostOptionDetails = {
   __typename?: 'LineItemCostOptionDetails';
   exactSplitDistribution: LineItemRentalPeriod;
   optimalSplit: LineItemRentalPeriod;
   plainText: Scalars['String']['output'];
   rates: LineItemPricing;
+};
+
+export type LineItemDelivery = {
+  __typename?: 'LineItemDelivery';
+  location?: Maybe<Scalars['String']['output']>;
+  method?: Maybe<LineItemDeliveryMethod>;
+  notes?: Maybe<Scalars['String']['output']>;
+};
+
+export type LineItemDeliveryInput = {
+  location?: InputMaybe<Scalars['String']['input']>;
+  method?: InputMaybe<LineItemDeliveryMethod>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+};
+
+export enum LineItemDeliveryMethod {
+  Delivery = 'DELIVERY',
+  Pickup = 'PICKUP'
+}
+
+export type LineItemDocumentRef = {
+  __typename?: 'LineItemDocumentRef';
+  id: Scalars['ID']['output'];
+  revisionId?: Maybe<Scalars['ID']['output']>;
+  type: LineItemDocumentType;
+};
+
+export type LineItemDocumentRefInput = {
+  id: Scalars['ID']['input'];
+  revisionId?: InputMaybe<Scalars['ID']['input']>;
+  type: LineItemDocumentType;
+};
+
+export enum LineItemDocumentType {
+  IntakeSubmission = 'INTAKE_SUBMISSION',
+  PurchaseOrder = 'PURCHASE_ORDER',
+  QuoteRevision = 'QUOTE_REVISION',
+  SalesOrder = 'SALES_ORDER',
+  WorkOrder = 'WORK_ORDER'
+}
+
+export type LineItemInput = {
+  constraints?: InputMaybe<Array<InputMaybe<LineItemConstraintInput>>>;
+  customPriceName?: InputMaybe<Scalars['String']['input']>;
+  delivery?: InputMaybe<LineItemDeliveryInput>;
+  deliveryChargeInCents?: InputMaybe<Scalars['Int']['input']>;
+  description: Scalars['String']['input'];
+  documentRef: LineItemDocumentRefInput;
+  inputs?: InputMaybe<Array<InputMaybe<LineItemInputValueInput>>>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  placeRef?: InputMaybe<LineItemPlaceRefInput>;
+  pricingRef?: InputMaybe<LineItemPricingRefInput>;
+  pricingSpecSnapshot?: InputMaybe<PricingSpecInput>;
+  productRef?: InputMaybe<LineItemProductRefInput>;
+  quantity: Scalars['String']['input'];
+  rateInCentsSnapshot?: InputMaybe<Scalars['Int']['input']>;
+  scopeTasks?: InputMaybe<Array<InputMaybe<ServiceScopeTaskInput>>>;
+  sourceLineItemId?: InputMaybe<Scalars['ID']['input']>;
+  subtotalInCents?: InputMaybe<Scalars['Int']['input']>;
+  targetSelectors?: InputMaybe<Array<InputMaybe<LineItemTargetSelectorInput>>>;
+  timeWindow?: InputMaybe<LineItemTimeWindowInput>;
+  type: LineItemType;
+  unitCode?: InputMaybe<Scalars['String']['input']>;
+  workspaceId: Scalars['String']['input'];
+};
+
+export type LineItemInputValue = {
+  __typename?: 'LineItemInputValue';
+  attributeTypeId: Scalars['String']['output'];
+  contextTags?: Maybe<Array<Scalars['String']['output']>>;
+  unitCode?: Maybe<Scalars['String']['output']>;
+  value: Scalars['JSONObject']['output'];
+};
+
+export type LineItemInputValueInput = {
+  attributeTypeId: Scalars['String']['input'];
+  contextTags?: InputMaybe<Array<Scalars['String']['input']>>;
+  unitCode?: InputMaybe<Scalars['String']['input']>;
+  value: Scalars['JSONObject']['input'];
+};
+
+export enum LineItemPlaceKind {
+  Address = 'ADDRESS',
+  Branch = 'BRANCH',
+  Geofence = 'GEOFENCE',
+  Jobsite = 'JOBSITE',
+  Other = 'OTHER',
+  Yard = 'YARD'
+}
+
+export type LineItemPlaceRef = {
+  __typename?: 'LineItemPlaceRef';
+  id: Scalars['ID']['output'];
+  kind: LineItemPlaceKind;
+};
+
+export type LineItemPlaceRefInput = {
+  id: Scalars['ID']['input'];
+  kind: LineItemPlaceKind;
 };
 
 export type LineItemPriceForecast = {
@@ -1745,6 +2228,39 @@ export type LineItemPricing = {
   pricePer28DaysInCents: Scalars['Int']['output'];
 };
 
+export type LineItemPricingRef = {
+  __typename?: 'LineItemPricingRef';
+  priceBookId?: Maybe<Scalars['ID']['output']>;
+  priceId?: Maybe<Scalars['ID']['output']>;
+  priceType?: Maybe<LineItemType>;
+};
+
+export type LineItemPricingRefInput = {
+  priceBookId?: InputMaybe<Scalars['ID']['input']>;
+  priceId?: InputMaybe<Scalars['ID']['input']>;
+  priceType?: InputMaybe<LineItemType>;
+};
+
+export enum LineItemProductKind {
+  AssemblyProduct = 'ASSEMBLY_PRODUCT',
+  CatalogProduct = 'CATALOG_PRODUCT',
+  MaterialProduct = 'MATERIAL_PRODUCT',
+  PimCategory = 'PIM_CATEGORY',
+  PimProduct = 'PIM_PRODUCT',
+  ServiceProduct = 'SERVICE_PRODUCT'
+}
+
+export type LineItemProductRef = {
+  __typename?: 'LineItemProductRef';
+  kind: LineItemProductKind;
+  productId: Scalars['ID']['output'];
+};
+
+export type LineItemProductRefInput = {
+  kind: LineItemProductKind;
+  productId: Scalars['ID']['input'];
+};
+
 export type LineItemRentalPeriod = {
   __typename?: 'LineItemRentalPeriod';
   days1: Scalars['Int']['output'];
@@ -1752,15 +2268,58 @@ export type LineItemRentalPeriod = {
   days28: Scalars['Int']['output'];
 };
 
+export enum LineItemState {
+  Cancelled = 'CANCELLED',
+  Completed = 'COMPLETED',
+  InProgress = 'IN_PROGRESS',
+  Planned = 'PLANNED',
+  Proposed = 'PROPOSED'
+}
+
 export enum LineItemStatus {
   Confirmed = 'CONFIRMED',
   Draft = 'DRAFT',
   Submitted = 'SUBMITTED'
 }
 
+export type LineItemTargetSelector = {
+  __typename?: 'LineItemTargetSelector';
+  kind: LineItemTargetSelectorKind;
+  tagIds?: Maybe<Array<Scalars['String']['output']>>;
+  targetLineItemIds?: Maybe<Array<Scalars['String']['output']>>;
+  targetProductId?: Maybe<Scalars['String']['output']>;
+};
+
+export type LineItemTargetSelectorInput = {
+  kind: LineItemTargetSelectorKind;
+  tagIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  targetLineItemIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  targetProductId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export enum LineItemTargetSelectorKind {
+  LineItem = 'line_item',
+  Product = 'product',
+  Tags = 'tags'
+}
+
+export type LineItemTimeWindow = {
+  __typename?: 'LineItemTimeWindow';
+  endAt?: Maybe<Scalars['DateTime']['output']>;
+  startAt?: Maybe<Scalars['DateTime']['output']>;
+};
+
+export type LineItemTimeWindowInput = {
+  endAt?: InputMaybe<Scalars['DateTime']['input']>;
+  startAt?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
 export enum LineItemType {
   Rental = 'RENTAL',
-  Sale = 'SALE'
+  Sale = 'SALE',
+  Service = 'SERVICE',
+  Transfer = 'TRANSFER',
+  Work = 'WORK'
 }
 
 export type ListAssetsPage = {
@@ -1846,6 +2405,18 @@ export type ListGlobalAttributeValuesFilter = {
   status?: InputMaybe<GlobalAttributeStatus>;
 };
 
+export type ListGlobalTagRelationsFilter = {
+  fromTagId?: InputMaybe<Scalars['String']['input']>;
+  relationType?: InputMaybe<GlobalTagRelationType>;
+  toTagId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ListGlobalTagsFilter = {
+  pos?: InputMaybe<GlobalTagPartOfSpeech>;
+  searchTerm?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalTagStatus>;
+};
+
 export type ListGlobalUnitsFilter = {
   dimension?: InputMaybe<GlobalAttributeDimension>;
   searchTerm?: InputMaybe<Scalars['String']['input']>;
@@ -1898,6 +2469,26 @@ export type ListInvoicesPage = {
 export type ListInvoicesQuery = {
   filter: ListInvoicesFilter;
   page?: InputMaybe<ListInvoicesPage>;
+};
+
+export type ListLineItemsFilter = {
+  documentId?: InputMaybe<Scalars['String']['input']>;
+  documentType?: InputMaybe<LineItemDocumentType>;
+  revisionId?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<LineItemType>;
+  workspaceId: Scalars['String']['input'];
+};
+
+export type ListLineItemsResult = {
+  __typename?: 'ListLineItemsResult';
+  items: Array<LineItem>;
+  page: PaginationInfo;
+};
+
+export type ListLogisticsServiceGroupsFilter = {
+  documentRef: LineItemDocumentRefInput;
+  productId?: InputMaybe<LogisticsServiceProductId>;
+  workspaceId: Scalars['ID']['input'];
 };
 
 export type ListPersonContactsResult = {
@@ -1958,6 +2549,8 @@ export type ListPriceBooksResult = {
 
 export type ListPricesFilter = {
   businessContactId?: InputMaybe<Scalars['String']['input']>;
+  catalogRefId?: InputMaybe<Scalars['String']['input']>;
+  catalogRefKind?: InputMaybe<CatalogProductKind>;
   name?: InputMaybe<Scalars['String']['input']>;
   pimCategoryId?: InputMaybe<Scalars['String']['input']>;
   priceBookId?: InputMaybe<Scalars['String']['input']>;
@@ -2054,6 +2647,11 @@ export type ListRentalViewsResult = {
   page: PaginationInfo;
 };
 
+export type ListStudioConversationsFilter = {
+  searchTerm?: InputMaybe<Scalars['String']['input']>;
+  workspaceId: Scalars['String']['input'];
+};
+
 export type ListTransactionResult = {
   __typename?: 'ListTransactionResult';
   items: Array<Transaction>;
@@ -2076,10 +2674,47 @@ export type ListWorkflowConfigurationsResult = {
   page: PaginationInfo;
 };
 
+export type ListWorkspaceAttributeTypesFilter = {
+  appliesTo?: InputMaybe<GlobalAttributeAppliesTo>;
+  dimension?: InputMaybe<GlobalAttributeDimension>;
+  kind?: InputMaybe<GlobalAttributeKind>;
+  promotedToGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  searchTerm?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalAttributeStatus>;
+  usageHint?: InputMaybe<GlobalAttributeUsageHint>;
+  valueType?: InputMaybe<GlobalAttributeValueType>;
+  workspaceId: Scalars['ID']['input'];
+};
+
+export type ListWorkspaceAttributeValuesFilter = {
+  attributeTypeId?: InputMaybe<Scalars['ID']['input']>;
+  auditStatus?: InputMaybe<GlobalAttributeAuditStatus>;
+  promotedToGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  searchTerm?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalAttributeStatus>;
+  workspaceId: Scalars['ID']['input'];
+};
+
 export type ListWorkspaceMembersResult = {
   __typename?: 'ListWorkspaceMembersResult';
   items: Array<WorkspaceMember>;
   page: PaginationInfo;
+};
+
+export type ListWorkspaceTagsFilter = {
+  pos?: InputMaybe<GlobalTagPartOfSpeech>;
+  promotedToGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  searchTerm?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalTagStatus>;
+  workspaceId: Scalars['ID']['input'];
+};
+
+export type ListWorkspaceUnitDefinitionsFilter = {
+  dimension?: InputMaybe<GlobalAttributeDimension>;
+  promotedToGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  searchTerm?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalUnitStatus>;
+  workspaceId: Scalars['ID']['input'];
 };
 
 export type ListWorkspacesResult = {
@@ -2099,6 +2734,17 @@ export type LlmSuggestTaxObligationsArgs = {
   invoiceDescription: Scalars['String']['input'];
 };
 
+export type LogisticsServiceAddOnSelectionInput = {
+  enabled: Scalars['Boolean']['input'];
+  priceId?: InputMaybe<Scalars['String']['input']>;
+  serviceLineItemId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export enum LogisticsServiceProductId {
+  SvcDelivery = 'svc_delivery',
+  SvcPickup = 'svc_pickup'
+}
+
 export type MarkInvoiceAsPaidInput = {
   date: Scalars['DateTime']['input'];
   invoiceId: Scalars['String']['input'];
@@ -2109,12 +2755,19 @@ export type MarkInvoiceAsSentInput = {
   invoiceId: Scalars['String']['input'];
 };
 
+export type MergeGlobalTagInput = {
+  reason?: InputMaybe<Scalars['String']['input']>;
+  sourceTagId: Scalars['String']['input'];
+  targetTagId: Scalars['String']['input'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   acceptQuote: AcceptQuoteResult;
   addFileToEntity: File;
   addInvoiceCharges: Invoice;
   addSearchRecent: SearchUserState;
+  addStudioConversationMessage: StudioConversationMessage;
   addTaxLineItem: Invoice;
   /** Admin mutations (Admin only) */
   admin?: Maybe<AdminMutationNamespace>;
@@ -2133,6 +2786,8 @@ export type Mutation = {
   createGlobalAttributeRelation?: Maybe<GlobalAttributeRelation>;
   createGlobalAttributeType?: Maybe<GlobalAttributeType>;
   createGlobalAttributeValue?: Maybe<GlobalAttributeValue>;
+  createGlobalTag?: Maybe<GlobalTag>;
+  createGlobalTagRelation?: Maybe<GlobalTagRelation>;
   createGlobalUnitDefinition?: Maybe<GlobalUnitDefinition>;
   /** Create a new intake form */
   createIntakeForm?: Maybe<IntakeForm>;
@@ -2142,6 +2797,7 @@ export type Mutation = {
   createIntakeFormSubmissionLineItem?: Maybe<IntakeFormLineItem>;
   createInventory: Inventory;
   createInvoice: Invoice;
+  createLineItem: LineItem;
   createNote?: Maybe<Note>;
   /** Generate and save a PDF for an entity by path and entity_id */
   createPdfFromPageAndAttachToEntityId?: Maybe<CreatePdfResult>;
@@ -2165,6 +2821,9 @@ export type Mutation = {
   createSaleSalesOrderLineItem?: Maybe<SaleSalesOrderLineItem>;
   createSalesOrder?: Maybe<SalesOrder>;
   createServiceFulfilment?: Maybe<ServiceFulfilment>;
+  createServiceFulfilmentFromLineItem?: Maybe<ServiceFulfilment>;
+  createServicePrice?: Maybe<ServicePrice>;
+  createStudioConversation: StudioConversation;
   createTransaction?: Maybe<Transaction>;
   createWorkflowConfiguration?: Maybe<WorkflowConfiguration>;
   createWorkspace?: Maybe<Workspace>;
@@ -2176,18 +2835,21 @@ export type Mutation = {
   deleteIntakeFormSubmissionLineItem?: Maybe<Scalars['Boolean']['output']>;
   deleteInventory: Scalars['Boolean']['output'];
   deleteInvoice: Scalars['Boolean']['output'];
+  deleteLineItem: LineItem;
   deleteNote?: Maybe<Note>;
   deletePriceBookById?: Maybe<Scalars['Boolean']['output']>;
   deletePriceById?: Maybe<Scalars['Boolean']['output']>;
   deleteProject?: Maybe<Project>;
   deleteReferenceNumberTemplate?: Maybe<Scalars['Boolean']['output']>;
   deleteResourceMapTag?: Maybe<ResourceMapResource>;
+  deleteStudioConversation: Scalars['Boolean']['output'];
   deleteWorkflowConfigurationById?: Maybe<Scalars['Boolean']['output']>;
   exportPrices?: Maybe<File>;
   generateReferenceNumber?: Maybe<GenerateReferenceNumberResult>;
   getSignedReadUrl?: Maybe<Scalars['String']['output']>;
   importPrices?: Maybe<ImportPricesResult>;
   ingestGlobalAttributeString?: Maybe<GlobalAttributeIngestionResult>;
+  ingestGlobalTagString?: Maybe<GlobalTagIngestionResult>;
   inviteUserToWorkspace?: Maybe<WorkspaceMember>;
   joinWorkspace?: Maybe<Workspace>;
   markInvoiceAsPaid: Invoice;
@@ -2200,6 +2862,10 @@ export type Mutation = {
   removeUserFromWorkspace?: Maybe<Scalars['Boolean']['output']>;
   renameFile: File;
   resetSequenceNumber?: Maybe<Scalars['Boolean']['output']>;
+  resolveGlobalOrWorkspaceAttributeType?: Maybe<ResolvedWorkspaceAttributeTypeResult>;
+  resolveGlobalOrWorkspaceAttributeValue?: Maybe<ResolvedWorkspaceAttributeValueResult>;
+  resolveGlobalOrWorkspaceTag?: Maybe<ResolvedWorkspaceTagResult>;
+  resolveGlobalOrWorkspaceUnitDefinition?: Maybe<ResolvedWorkspaceUnitDefinitionResult>;
   runNightlyRentalChargesJob: Array<RentalFulfilment>;
   runNightlyRentalChargesJobAsync?: Maybe<Scalars['Boolean']['output']>;
   sendQuote: Quote;
@@ -2218,12 +2884,24 @@ export type Mutation = {
   softDeletePurchaseOrderLineItem?: Maybe<PurchaseOrderLineItem>;
   softDeleteSalesOrder?: Maybe<SalesOrder>;
   softDeleteSalesOrderLineItem?: Maybe<SalesOrderLineItem>;
+  studioCatalogCompile: Scalars['JSONObject']['output'];
+  studioCatalogCreateProduct: StudioCatalogCreateProductResult;
+  studioCatalogEnsureLogisticsServiceProducts: StudioCatalogEnsureLogisticsServiceProductsResult;
+  studioCatalogInit: StudioCatalogInitResult;
+  studioCatalogPreview: Scalars['JSONObject']['output'];
+  studioCatalogValidate: StudioCatalogValidateResult;
+  studioFsDelete: Scalars['Boolean']['output'];
+  studioFsMkdir: Scalars['JSONObject']['output'];
+  studioFsMove: Scalars['JSONObject']['output'];
+  studioFsUpload: StudioFsWriteResult;
+  studioFsWrite: StudioFsWriteResult;
   /** Submit an intake form submission (changes status from DRAFT to SUBMITTED) */
   submitIntakeFormSubmission?: Maybe<IntakeFormSubmission>;
   submitPurchaseOrder?: Maybe<PurchaseOrder>;
   submitSalesOrder?: Maybe<SalesOrder>;
   /** Sync the current authenticated user to the database and assign domain permissions. This replicates the Auth0 post-login webhook logic for local development. Safe to call in any environment - idempotent operation. */
   syncCurrentUser?: Maybe<User>;
+  syncMaterialLogisticsAddOns: SyncMaterialLogisticsAddOnsResult;
   toggleSearchFavorite: SearchUserState;
   touchAllContacts?: Maybe<TouchAllContactsResult>;
   unarchiveWorkspace?: Maybe<Workspace>;
@@ -2239,6 +2917,7 @@ export type Mutation = {
   updateFulfilmentColumn?: Maybe<FulfilmentBase>;
   updateGlobalAttributeType?: Maybe<GlobalAttributeType>;
   updateGlobalAttributeValue?: Maybe<GlobalAttributeValue>;
+  updateGlobalTag?: Maybe<GlobalTag>;
   updateGlobalUnitDefinition?: Maybe<GlobalUnitDefinition>;
   /** Update an existing intake form */
   updateIntakeForm?: Maybe<IntakeForm>;
@@ -2249,6 +2928,7 @@ export type Mutation = {
   updateInventoryActualReturnDate?: Maybe<Inventory>;
   updateInventoryExpectedReturnDate?: Maybe<Inventory>;
   updateInventorySerialisedId?: Maybe<Inventory>;
+  updateLineItem: LineItem;
   updateNote?: Maybe<Note>;
   updatePersonBusiness?: Maybe<PersonContact>;
   updatePersonContact?: Maybe<PersonContact>;
@@ -2283,6 +2963,9 @@ export type Mutation = {
   updateSalesOrder?: Maybe<SalesOrder>;
   /** @deprecated use updateSaleSalesOrderLineItem */
   updateSalesOrderLineItem?: Maybe<SalesOrderLineItem>;
+  updateServiceFulfilmentTaskStatus?: Maybe<ServiceFulfilment>;
+  updateServicePrice?: Maybe<ServicePrice>;
+  updateStudioConversation: StudioConversation;
   updateTaxLineItem: Invoice;
   updateWorkflowConfiguration?: Maybe<WorkflowConfiguration>;
   updateWorkspaceAccessType?: Maybe<Workspace>;
@@ -2290,6 +2973,10 @@ export type Mutation = {
   updateWorkspaceUserRoles?: Maybe<WorkspaceMember>;
   upsertPimCategory?: Maybe<PimCategory>;
   upsertUser?: Maybe<User>;
+  upsertWorkspaceAttributeType?: Maybe<WorkspaceAttributeType>;
+  upsertWorkspaceAttributeValue?: Maybe<WorkspaceAttributeValue>;
+  upsertWorkspaceTag?: Maybe<WorkspaceTag>;
+  upsertWorkspaceUnitDefinition?: Maybe<WorkspaceUnitDefinition>;
 };
 
 
@@ -2316,6 +3003,11 @@ export type MutationAddInvoiceChargesArgs = {
 export type MutationAddSearchRecentArgs = {
   searchDocumentId: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
+};
+
+
+export type MutationAddStudioConversationMessageArgs = {
+  input: AddStudioConversationMessageInput;
 };
 
 
@@ -2397,6 +3089,16 @@ export type MutationCreateGlobalAttributeValueArgs = {
 };
 
 
+export type MutationCreateGlobalTagArgs = {
+  input: CreateGlobalTagInput;
+};
+
+
+export type MutationCreateGlobalTagRelationArgs = {
+  input: CreateGlobalTagRelationInput;
+};
+
+
 export type MutationCreateGlobalUnitDefinitionArgs = {
   input: CreateGlobalUnitDefinitionInput;
 };
@@ -2425,6 +3127,11 @@ export type MutationCreateInventoryArgs = {
 
 export type MutationCreateInvoiceArgs = {
   input: CreateInvoiceInput;
+};
+
+
+export type MutationCreateLineItemArgs = {
+  input: LineItemInput;
 };
 
 
@@ -2541,6 +3248,21 @@ export type MutationCreateServiceFulfilmentArgs = {
 };
 
 
+export type MutationCreateServiceFulfilmentFromLineItemArgs = {
+  input: CreateServiceFulfilmentFromLineItemInput;
+};
+
+
+export type MutationCreateServicePriceArgs = {
+  input: CreateServicePriceInput;
+};
+
+
+export type MutationCreateStudioConversationArgs = {
+  input: CreateStudioConversationInput;
+};
+
+
 export type MutationCreateTransactionArgs = {
   input: TransactionInput;
 };
@@ -2593,6 +3315,11 @@ export type MutationDeleteInvoiceArgs = {
 };
 
 
+export type MutationDeleteLineItemArgs = {
+  id: Scalars['String']['input'];
+};
+
+
 export type MutationDeleteNoteArgs = {
   id: Scalars['String']['input'];
 };
@@ -2621,6 +3348,11 @@ export type MutationDeleteReferenceNumberTemplateArgs = {
 export type MutationDeleteResourceMapTagArgs = {
   cascade?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteStudioConversationArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -2653,6 +3385,11 @@ export type MutationImportPricesArgs = {
 
 export type MutationIngestGlobalAttributeStringArgs = {
   input: IngestGlobalAttributeStringInput;
+};
+
+
+export type MutationIngestGlobalTagStringArgs = {
+  input: IngestGlobalTagStringInput;
 };
 
 
@@ -2722,6 +3459,26 @@ export type MutationResetSequenceNumberArgs = {
 };
 
 
+export type MutationResolveGlobalOrWorkspaceAttributeTypeArgs = {
+  input: ResolveGlobalOrWorkspaceAttributeTypeInput;
+};
+
+
+export type MutationResolveGlobalOrWorkspaceAttributeValueArgs = {
+  input: ResolveGlobalOrWorkspaceAttributeValueInput;
+};
+
+
+export type MutationResolveGlobalOrWorkspaceTagArgs = {
+  input: ResolveGlobalOrWorkspaceTagInput;
+};
+
+
+export type MutationResolveGlobalOrWorkspaceUnitDefinitionArgs = {
+  input: ResolveGlobalOrWorkspaceUnitDefinitionInput;
+};
+
+
 export type MutationSendQuoteArgs = {
   input: SendQuoteInput;
 };
@@ -2782,6 +3539,61 @@ export type MutationSoftDeleteSalesOrderLineItemArgs = {
 };
 
 
+export type MutationStudioCatalogCompileArgs = {
+  input: StudioCatalogCompileInput;
+};
+
+
+export type MutationStudioCatalogCreateProductArgs = {
+  input: StudioCatalogCreateProductInput;
+};
+
+
+export type MutationStudioCatalogEnsureLogisticsServiceProductsArgs = {
+  input: StudioCatalogEnsureLogisticsServiceProductsInput;
+};
+
+
+export type MutationStudioCatalogInitArgs = {
+  input: StudioCatalogInitInput;
+};
+
+
+export type MutationStudioCatalogPreviewArgs = {
+  input: StudioCatalogCompileInput;
+};
+
+
+export type MutationStudioCatalogValidateArgs = {
+  input: StudioCatalogValidateInput;
+};
+
+
+export type MutationStudioFsDeleteArgs = {
+  input: StudioFsDeleteInput;
+};
+
+
+export type MutationStudioFsMkdirArgs = {
+  input: StudioFsMkdirInput;
+};
+
+
+export type MutationStudioFsMoveArgs = {
+  input: StudioFsMoveInput;
+};
+
+
+export type MutationStudioFsUploadArgs = {
+  input: StudioFsUploadInput;
+};
+
+
+export type MutationStudioFsWriteArgs = {
+  input: StudioFsWriteInput;
+};
+
+
 export type MutationSubmitIntakeFormSubmissionArgs = {
   id: Scalars['String']['input'];
 };
@@ -2794,6 +3606,11 @@ export type MutationSubmitPurchaseOrderArgs = {
 
 export type MutationSubmitSalesOrderArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationSyncMaterialLogisticsAddOnsArgs = {
+  input: SyncMaterialLogisticsAddOnsInput;
 };
 
 
@@ -2885,6 +3702,12 @@ export type MutationUpdateGlobalAttributeValueArgs = {
 };
 
 
+export type MutationUpdateGlobalTagArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateGlobalTagInput;
+};
+
+
 export type MutationUpdateGlobalUnitDefinitionArgs = {
   code: Scalars['String']['input'];
   input: UpdateGlobalUnitDefinitionInput;
@@ -2924,6 +3747,12 @@ export type MutationUpdateInventoryExpectedReturnDateArgs = {
 export type MutationUpdateInventorySerialisedIdArgs = {
   id: Scalars['String']['input'];
   input: UpdateInventorySerialisedIdInput;
+};
+
+
+export type MutationUpdateLineItemArgs = {
+  id: Scalars['String']['input'];
+  input: UpdateLineItemInput;
 };
 
 
@@ -3103,6 +3932,22 @@ export type MutationUpdateSalesOrderLineItemArgs = {
 };
 
 
+export type MutationUpdateServiceFulfilmentTaskStatusArgs = {
+  input: UpdateServiceFulfilmentTaskStatusInput;
+};
+
+
+export type MutationUpdateServicePriceArgs = {
+  input: UpdateServicePriceInput;
+};
+
+
+export type MutationUpdateStudioConversationArgs = {
+  id: Scalars['String']['input'];
+  input: UpdateStudioConversationInput;
+};
+
+
 export type MutationUpdateTaxLineItemArgs = {
   input: UpdateTaxLineItemInput;
 };
@@ -3146,6 +3991,26 @@ export type MutationUpsertPimCategoryArgs = {
 export type MutationUpsertUserArgs = {
   id: Scalars['String']['input'];
   input: UserUpsertInput;
+};
+
+
+export type MutationUpsertWorkspaceAttributeTypeArgs = {
+  input: UpsertWorkspaceAttributeTypeInput;
+};
+
+
+export type MutationUpsertWorkspaceAttributeValueArgs = {
+  input: UpsertWorkspaceAttributeValueInput;
+};
+
+
+export type MutationUpsertWorkspaceTagArgs = {
+  input: UpsertWorkspaceTagInput;
+};
+
+
+export type MutationUpsertWorkspaceUnitDefinitionArgs = {
+  input: UpsertWorkspaceUnitDefinitionInput;
 };
 
 export type Note = {
@@ -3357,7 +4222,7 @@ export type PimProduct = {
   year?: Maybe<Scalars['String']['output']>;
 };
 
-export type Price = RentalPrice | SalePrice;
+export type Price = RentalPrice | SalePrice | ServicePrice;
 
 export type PriceBook = {
   __typename?: 'PriceBook';
@@ -3391,9 +4256,46 @@ export type PriceBookListPricesArgs = {
   page: ListPricesPage;
 };
 
+export type PriceCatalogRef = {
+  __typename?: 'PriceCatalogRef';
+  id: Scalars['ID']['output'];
+  kind: CatalogProductKind;
+};
+
+export type PriceCatalogRefInput = {
+  id: Scalars['ID']['input'];
+  kind: CatalogProductKind;
+};
+
 export enum PriceType {
   Rental = 'RENTAL',
-  Sale = 'SALE'
+  Sale = 'SALE',
+  Service = 'SERVICE'
+}
+
+export type PricingSpec = {
+  __typename?: 'PricingSpec';
+  kind: PricingSpecKind;
+  pricePerDayInCents?: Maybe<Scalars['Int']['output']>;
+  pricePerMonthInCents?: Maybe<Scalars['Int']['output']>;
+  pricePerWeekInCents?: Maybe<Scalars['Int']['output']>;
+  rateInCents?: Maybe<Scalars['Int']['output']>;
+  unitCode?: Maybe<Scalars['String']['output']>;
+};
+
+export type PricingSpecInput = {
+  kind: PricingSpecKind;
+  pricePerDayInCents?: InputMaybe<Scalars['Int']['input']>;
+  pricePerMonthInCents?: InputMaybe<Scalars['Int']['input']>;
+  pricePerWeekInCents?: InputMaybe<Scalars['Int']['input']>;
+  rateInCents?: InputMaybe<Scalars['Int']['input']>;
+  unitCode?: InputMaybe<Scalars['String']['input']>;
+};
+
+export enum PricingSpecKind {
+  RentalRateTable = 'RENTAL_RATE_TABLE',
+  Time = 'TIME',
+  Unit = 'UNIT'
 }
 
 export type Project = {
@@ -3508,6 +4410,56 @@ export enum ProjectStatusEnum {
   WarrantyMaintenance = 'WARRANTY_MAINTENANCE'
 }
 
+export type PromoteWorkspaceAttributeTypeToGlobalInput = {
+  targetGlobalAttributeTypeId?: InputMaybe<Scalars['ID']['input']>;
+  workspaceAttributeTypeId: Scalars['ID']['input'];
+};
+
+export type PromoteWorkspaceAttributeTypesToGlobalInput = {
+  workspaceAttributeTypeIds: Array<Scalars['ID']['input']>;
+};
+
+export type PromoteWorkspaceAttributeTypesToGlobalResult = {
+  __typename?: 'PromoteWorkspaceAttributeTypesToGlobalResult';
+  items: Array<PromotedWorkspaceAttributeType>;
+};
+
+export type PromoteWorkspaceAttributeValueToGlobalInput = {
+  targetGlobalAttributeValueId?: InputMaybe<Scalars['ID']['input']>;
+  workspaceAttributeValueId: Scalars['ID']['input'];
+};
+
+export type PromoteWorkspaceAttributeValuesToGlobalInput = {
+  workspaceAttributeValueIds: Array<Scalars['ID']['input']>;
+};
+
+export type PromoteWorkspaceAttributeValuesToGlobalResult = {
+  __typename?: 'PromoteWorkspaceAttributeValuesToGlobalResult';
+  items: Array<PromotedWorkspaceAttributeValue>;
+};
+
+export type PromoteWorkspaceTagToGlobalInput = {
+  targetGlobalTagId?: InputMaybe<Scalars['ID']['input']>;
+  workspaceTagId: Scalars['ID']['input'];
+};
+
+export type PromoteWorkspaceUnitDefinitionToGlobalInput = {
+  targetGlobalUnitCode?: InputMaybe<Scalars['String']['input']>;
+  workspaceUnitDefinitionId: Scalars['ID']['input'];
+};
+
+export type PromotedWorkspaceAttributeType = {
+  __typename?: 'PromotedWorkspaceAttributeType';
+  globalAttributeType: GlobalAttributeType;
+  workspaceAttributeTypeId: Scalars['ID']['output'];
+};
+
+export type PromotedWorkspaceAttributeValue = {
+  __typename?: 'PromotedWorkspaceAttributeValue';
+  globalAttributeValue: GlobalAttributeValue;
+  workspaceAttributeValueId: Scalars['ID']['output'];
+};
+
 export type PurchaseOrder = {
   __typename?: 'PurchaseOrder';
   comments: Array<Note>;
@@ -3524,6 +4476,8 @@ export type PurchaseOrder = {
   intakeFormSubmission?: Maybe<IntakeFormSubmission>;
   /** All inventory items associated with this purchase order */
   inventory: Array<Inventory>;
+  /** Canonical line items for this purchase order (source of truth). */
+  lineItems: Array<LineItem>;
   line_items?: Maybe<Array<Maybe<PurchaseOrderLineItem>>>;
   /** Pricing summary for the sales order */
   pricing?: Maybe<PurchaseOrderPricing>;
@@ -3618,6 +4572,7 @@ export type Query = {
   admin?: Maybe<AdminQueryNamespace>;
   bulkCalculateSubTotal: Array<LineItemPriceForecast>;
   calculateSubTotal: LineItemPriceForecast;
+  computeServiceRequirementEnvelope: ServiceRequirementEnvelope;
   getBrandByDomain?: Maybe<Brand>;
   getBrandById?: Maybe<Brand>;
   getBrandsByIds?: Maybe<Array<Maybe<Brand>>>;
@@ -3628,6 +4583,7 @@ export type Query = {
   getDefaultTemplates: Array<ReferenceNumberTemplate>;
   getFulfilmentById?: Maybe<Fulfilment>;
   getGlobalAttributeTypeById?: Maybe<GlobalAttributeType>;
+  getGlobalTagById?: Maybe<GlobalTag>;
   /** Get a single intake form by ID */
   getIntakeFormById?: Maybe<IntakeForm>;
   /** Get a single intake form submission by ID */
@@ -3639,6 +4595,7 @@ export type Query = {
   /** Get a single intake form submission line item by ID */
   getIntakeFormSubmissionLineItem?: Maybe<IntakeFormLineItem>;
   getInventoryReservationById?: Maybe<InventoryReservation>;
+  getLineItemById?: Maybe<LineItem>;
   getNoteById?: Maybe<Note>;
   getPimCategoryById?: Maybe<PimCategory>;
   getPimProductById?: Maybe<PimProduct>;
@@ -3656,9 +4613,14 @@ export type Query = {
   getSearchDocumentById?: Maybe<SearchDocument>;
   getSearchUserState?: Maybe<SearchUserState>;
   getSignedUploadUrl: SignedUploadUrl;
+  getStudioConversationById?: Maybe<StudioConversation>;
   getUsersById?: Maybe<Array<Maybe<User>>>;
   getWorkflowConfigurationById?: Maybe<WorkflowConfiguration>;
+  getWorkspaceAttributeTypeById?: Maybe<WorkspaceAttributeType>;
+  getWorkspaceAttributeValueById?: Maybe<WorkspaceAttributeValue>;
   getWorkspaceById?: Maybe<Workspace>;
+  getWorkspaceTagById?: Maybe<WorkspaceTag>;
+  getWorkspaceUnitDefinitionById?: Maybe<WorkspaceUnitDefinition>;
   helloWorld?: Maybe<Scalars['String']['output']>;
   inventoryById?: Maybe<Inventory>;
   invoiceById?: Maybe<Invoice>;
@@ -3671,6 +4633,8 @@ export type Query = {
   listGlobalAttributeRelations?: Maybe<GlobalAttributeRelationListResult>;
   listGlobalAttributeTypes?: Maybe<GlobalAttributeTypeListResult>;
   listGlobalAttributeValues?: Maybe<GlobalAttributeValueListResult>;
+  listGlobalTagRelations?: Maybe<GlobalTagRelationListResult>;
+  listGlobalTags?: Maybe<GlobalTagListResult>;
   listGlobalUnitDefinitions?: Maybe<GlobalUnitDefinitionListResult>;
   /** List all line items for an intake form submission */
   listIntakeFormSubmissionLineItems: Array<IntakeFormLineItem>;
@@ -3687,6 +4651,8 @@ export type Query = {
   listInventoryReservations: InventoryReservationsResponse;
   listInvoices: InvoicesResponse;
   listJoinableWorkspaces: ListWorkspacesResult;
+  listLineItems?: Maybe<ListLineItemsResult>;
+  listLogisticsServiceGroups: Array<LineItem>;
   /** List intake form submissions created by the authenticated user that have no buyer workspace assigned. */
   listMyOrphanedSubmissions: Array<IntakeFormSubmission>;
   listNotesByEntityId: Array<Note>;
@@ -3719,12 +4685,18 @@ export type Query = {
   listSalesOrders?: Maybe<SalesOrderListResult>;
   /** Lists all possible scope_of_work codes and their descriptions, including recommended usage and stage meaning. */
   listScopeOfWorkCodes?: Maybe<Array<Maybe<ScopeOfWorkCode>>>;
+  listStudioConversationMessages?: Maybe<StudioConversationMessageListResult>;
+  listStudioConversations?: Maybe<StudioConversationListResult>;
   /** Lists all top-level projects (where parent_project is null). */
   listTopLevelProjects?: Maybe<Array<Maybe<Project>>>;
   listTransactions: ListTransactionResult;
   listUserResourcePermissions: ListUserPermissionsResult;
   listWorkflowConfigurations?: Maybe<ListWorkflowConfigurationsResult>;
+  listWorkspaceAttributeTypes?: Maybe<WorkspaceAttributeTypeListResult>;
+  listWorkspaceAttributeValues?: Maybe<WorkspaceAttributeValueListResult>;
   listWorkspaceMembers: ListWorkspaceMembersResult;
+  listWorkspaceTags?: Maybe<WorkspaceTagListResult>;
+  listWorkspaceUnitDefinitions?: Maybe<WorkspaceUnitDefinitionListResult>;
   listWorkspaces: ListWorkspacesResult;
   llm?: Maybe<Llm>;
   quoteById?: Maybe<Quote>;
@@ -3732,6 +4704,9 @@ export type Query = {
   rfqById?: Maybe<Rfq>;
   searchBrands?: Maybe<Array<Maybe<BrandSearchResult>>>;
   searchDocuments: SearchDocumentsResult;
+  studioFsList: Array<StudioFsNode>;
+  studioFsRead: StudioFsReadResult;
+  studioFsRoots: Array<Scalars['String']['output']>;
   usersSearch?: Maybe<Array<Maybe<User>>>;
   validEnterpriseDomain: ValidEnterpriseDomainResult;
 };
@@ -3745,6 +4720,11 @@ export type QueryBulkCalculateSubTotalArgs = {
 export type QueryCalculateSubTotalArgs = {
   durationInDays: Scalars['Int']['input'];
   priceId: Scalars['ID']['input'];
+};
+
+
+export type QueryComputeServiceRequirementEnvelopeArgs = {
+  serviceLineItemId: Scalars['String']['input'];
 };
 
 
@@ -3795,6 +4775,11 @@ export type QueryGetGlobalAttributeTypeByIdArgs = {
 };
 
 
+export type QueryGetGlobalTagByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type QueryGetIntakeFormByIdArgs = {
   id: Scalars['String']['input'];
 };
@@ -3822,6 +4807,11 @@ export type QueryGetIntakeFormSubmissionLineItemArgs = {
 
 export type QueryGetInventoryReservationByIdArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryGetLineItemByIdArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -3906,6 +4896,11 @@ export type QueryGetSignedUploadUrlArgs = {
 };
 
 
+export type QueryGetStudioConversationByIdArgs = {
+  id: Scalars['String']['input'];
+};
+
+
 export type QueryGetUsersByIdArgs = {
   userIds: Array<Scalars['String']['input']>;
 };
@@ -3916,8 +4911,28 @@ export type QueryGetWorkflowConfigurationByIdArgs = {
 };
 
 
+export type QueryGetWorkspaceAttributeTypeByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryGetWorkspaceAttributeValueByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type QueryGetWorkspaceByIdArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type QueryGetWorkspaceTagByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryGetWorkspaceUnitDefinitionByIdArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -3986,6 +5001,18 @@ export type QueryListGlobalAttributeValuesArgs = {
 };
 
 
+export type QueryListGlobalTagRelationsArgs = {
+  filter?: InputMaybe<ListGlobalTagRelationsFilter>;
+  page?: InputMaybe<PageInfoInput>;
+};
+
+
+export type QueryListGlobalTagsArgs = {
+  filter?: InputMaybe<ListGlobalTagsFilter>;
+  page?: InputMaybe<PageInfoInput>;
+};
+
+
 export type QueryListGlobalUnitDefinitionsArgs = {
   filter?: InputMaybe<ListGlobalUnitsFilter>;
   page?: InputMaybe<PageInfoInput>;
@@ -4050,6 +5077,17 @@ export type QueryListInvoicesArgs = {
 
 export type QueryListJoinableWorkspacesArgs = {
   page?: InputMaybe<PageInfoInput>;
+};
+
+
+export type QueryListLineItemsArgs = {
+  filter: ListLineItemsFilter;
+  page?: InputMaybe<PageInfoInput>;
+};
+
+
+export type QueryListLogisticsServiceGroupsArgs = {
+  filter: ListLogisticsServiceGroupsFilter;
 };
 
 
@@ -4163,6 +5201,18 @@ export type QueryListSalesOrdersArgs = {
 };
 
 
+export type QueryListStudioConversationMessagesArgs = {
+  conversationId: Scalars['String']['input'];
+  page?: InputMaybe<PageInfoInput>;
+};
+
+
+export type QueryListStudioConversationsArgs = {
+  filter: ListStudioConversationsFilter;
+  page?: InputMaybe<PageInfoInput>;
+};
+
+
 export type QueryListTopLevelProjectsArgs = {
   workspaceId: Scalars['String']['input'];
 };
@@ -4184,8 +5234,32 @@ export type QueryListWorkflowConfigurationsArgs = {
 };
 
 
+export type QueryListWorkspaceAttributeTypesArgs = {
+  filter: ListWorkspaceAttributeTypesFilter;
+  page?: InputMaybe<PageInfoInput>;
+};
+
+
+export type QueryListWorkspaceAttributeValuesArgs = {
+  filter: ListWorkspaceAttributeValuesFilter;
+  page?: InputMaybe<PageInfoInput>;
+};
+
+
 export type QueryListWorkspaceMembersArgs = {
   workspaceId: Scalars['String']['input'];
+};
+
+
+export type QueryListWorkspaceTagsArgs = {
+  filter: ListWorkspaceTagsFilter;
+  page?: InputMaybe<PageInfoInput>;
+};
+
+
+export type QueryListWorkspaceUnitDefinitionsArgs = {
+  filter: ListWorkspaceUnitDefinitionsFilter;
+  page?: InputMaybe<PageInfoInput>;
 };
 
 
@@ -4223,6 +5297,21 @@ export type QuerySearchDocumentsArgs = {
 };
 
 
+export type QueryStudioFsListArgs = {
+  input: StudioFsListInput;
+};
+
+
+export type QueryStudioFsReadArgs = {
+  input: StudioFsReadInput;
+};
+
+
+export type QueryStudioFsRootsArgs = {
+  workspaceId: Scalars['String']['input'];
+};
+
+
 export type QueryUsersSearchArgs = {
   searchTerm?: InputMaybe<Scalars['String']['input']>;
 };
@@ -4234,6 +5323,8 @@ export type QueryValidEnterpriseDomainArgs = {
 
 export type Quote = {
   __typename?: 'Quote';
+  /** Seller-provided confirmation when accepting on behalf of the buyer (e.g., "Approved by phone on 2025-01-03") */
+  approvalConfirmation?: Maybe<Scalars['String']['output']>;
   /** Buyer's full legal name as provided when accepting the quote */
   buyerAcceptedFullLegalName?: Maybe<Scalars['String']['output']>;
   buyerUserId?: Maybe<Scalars['String']['output']>;
@@ -4266,10 +5357,89 @@ export type Quote = {
   validUntil?: Maybe<Scalars['DateTime']['output']>;
 };
 
+export type QuoteLineItemConstraint = {
+  __typename?: 'QuoteLineItemConstraint';
+  payload?: Maybe<Scalars['JSONObject']['output']>;
+  strength: QuoteLineItemConstraintStrength;
+};
+
+export type QuoteLineItemConstraintInput = {
+  payload?: InputMaybe<Scalars['JSONObject']['input']>;
+  strength: QuoteLineItemConstraintStrength;
+};
+
+export enum QuoteLineItemConstraintStrength {
+  Excluded = 'EXCLUDED',
+  Preferred = 'PREFERRED',
+  Required = 'REQUIRED'
+}
+
 export enum QuoteLineItemDeliveryMethod {
   Delivery = 'DELIVERY',
   Pickup = 'PICKUP'
 }
+
+export type QuoteLineItemInputValue = {
+  __typename?: 'QuoteLineItemInputValue';
+  attributeTypeId: Scalars['String']['output'];
+  contextTags?: Maybe<Array<Scalars['String']['output']>>;
+  unitCode?: Maybe<Scalars['String']['output']>;
+  value: Scalars['JSONObject']['output'];
+};
+
+export type QuoteLineItemInputValueInput = {
+  attributeTypeId: Scalars['String']['input'];
+  contextTags?: InputMaybe<Array<Scalars['String']['input']>>;
+  unitCode?: InputMaybe<Scalars['String']['input']>;
+  value: Scalars['JSONObject']['input'];
+};
+
+export type QuoteLineItemPricingRef = {
+  __typename?: 'QuoteLineItemPricingRef';
+  priceBookId?: Maybe<Scalars['String']['output']>;
+  priceId?: Maybe<Scalars['String']['output']>;
+  priceType?: Maybe<QuoteLineItemPricingType>;
+};
+
+export type QuoteLineItemPricingRefInput = {
+  priceBookId?: InputMaybe<Scalars['String']['input']>;
+  priceId?: InputMaybe<Scalars['String']['input']>;
+  priceType?: InputMaybe<QuoteLineItemPricingType>;
+};
+
+export enum QuoteLineItemPricingType {
+  Rental = 'RENTAL',
+  Sale = 'SALE',
+  Service = 'SERVICE'
+}
+
+export enum QuoteLineItemProductKind {
+  AssemblyProduct = 'ASSEMBLY_PRODUCT',
+  MaterialProduct = 'MATERIAL_PRODUCT',
+  ServiceProduct = 'SERVICE_PRODUCT'
+}
+
+export type QuoteLineItemProductRef = {
+  __typename?: 'QuoteLineItemProductRef';
+  kind: QuoteLineItemProductKind;
+  productId: Scalars['String']['output'];
+};
+
+export type QuoteLineItemProductRefInput = {
+  kind: QuoteLineItemProductKind;
+  productId: Scalars['String']['input'];
+};
+
+export type QuoteLineItemTimeWindow = {
+  __typename?: 'QuoteLineItemTimeWindow';
+  endAt?: Maybe<Scalars['DateTime']['output']>;
+  startAt?: Maybe<Scalars['DateTime']['output']>;
+};
+
+export type QuoteLineItemTimeWindowInput = {
+  endAt?: InputMaybe<Scalars['DateTime']['input']>;
+  startAt?: InputMaybe<Scalars['DateTime']['input']>;
+};
 
 export enum QuoteLineItemType {
   Rental = 'RENTAL',
@@ -4279,6 +5449,8 @@ export enum QuoteLineItemType {
 
 export type QuoteRevision = {
   __typename?: 'QuoteRevision';
+  /** Canonical line items stored in the unified line_items collection for this quote revision. */
+  canonicalLineItems: Array<LineItem>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: Scalars['String']['output'];
   createdByUser?: Maybe<User>;
@@ -4297,72 +5469,114 @@ export type QuoteRevision = {
 export type QuoteRevisionLineItem = QuoteRevisionRentalLineItem | QuoteRevisionSaleLineItem | QuoteRevisionServiceLineItem;
 
 export type QuoteRevisionLineItemInput = {
+  constraints?: InputMaybe<Array<InputMaybe<QuoteLineItemConstraintInput>>>;
   deliveryLocation?: InputMaybe<Scalars['String']['input']>;
   deliveryMethod?: InputMaybe<QuoteLineItemDeliveryMethod>;
   deliveryNotes?: InputMaybe<Scalars['String']['input']>;
   description: Scalars['String']['input'];
   id?: InputMaybe<Scalars['String']['input']>;
+  inputs?: InputMaybe<Array<InputMaybe<QuoteLineItemInputValueInput>>>;
   intakeFormSubmissionLineItemId?: InputMaybe<Scalars['String']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
   pimCategoryId?: InputMaybe<Scalars['String']['input']>;
+  placeRef?: InputMaybe<LineItemPlaceRefInput>;
+  pricingRef?: InputMaybe<QuoteLineItemPricingRefInput>;
+  pricingSpecSnapshot?: InputMaybe<PricingSpecInput>;
+  productRef?: InputMaybe<QuoteLineItemProductRefInput>;
   quantity?: InputMaybe<Scalars['Int']['input']>;
+  rateInCentsSnapshot?: InputMaybe<Scalars['Int']['input']>;
   rentalEndDate?: InputMaybe<Scalars['DateTime']['input']>;
   rentalStartDate?: InputMaybe<Scalars['DateTime']['input']>;
   sellersPriceId?: InputMaybe<Scalars['ID']['input']>;
+  targetSelectors?: InputMaybe<Array<InputMaybe<ServiceTargetSelectorInput>>>;
+  timeWindow?: InputMaybe<QuoteLineItemTimeWindowInput>;
   type: QuoteLineItemType;
+  unitCode?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type QuoteRevisionRentalLineItem = {
   __typename?: 'QuoteRevisionRentalLineItem';
+  constraints?: Maybe<Array<Maybe<QuoteLineItemConstraint>>>;
   deliveryLocation?: Maybe<Scalars['String']['output']>;
   deliveryMethod?: Maybe<QuoteLineItemDeliveryMethod>;
   deliveryNotes?: Maybe<Scalars['String']['output']>;
   description: Scalars['String']['output'];
   id?: Maybe<Scalars['String']['output']>;
+  inputs?: Maybe<Array<Maybe<QuoteLineItemInputValue>>>;
   intakeFormSubmissionLineItem?: Maybe<IntakeFormLineItem>;
   intakeFormSubmissionLineItemId?: Maybe<Scalars['String']['output']>;
+  notes?: Maybe<Scalars['String']['output']>;
   pimCategory?: Maybe<PimCategory>;
-  pimCategoryId: Scalars['String']['output'];
+  pimCategoryId?: Maybe<Scalars['String']['output']>;
+  placeRef?: Maybe<LineItemPlaceRef>;
   price?: Maybe<Price>;
+  pricingRef?: Maybe<QuoteLineItemPricingRef>;
+  pricingSpecSnapshot?: Maybe<PricingSpec>;
+  productRef?: Maybe<QuoteLineItemProductRef>;
   quantity: Scalars['Int']['output'];
+  rateInCentsSnapshot?: Maybe<Scalars['Int']['output']>;
   rentalEndDate: Scalars['DateTime']['output'];
   rentalStartDate: Scalars['DateTime']['output'];
   sellersPriceId?: Maybe<Scalars['ID']['output']>;
   subtotalInCents: Scalars['Int']['output'];
+  timeWindow?: Maybe<QuoteLineItemTimeWindow>;
   type: QuoteLineItemType;
+  unitCode?: Maybe<Scalars['String']['output']>;
 };
 
 export type QuoteRevisionSaleLineItem = {
   __typename?: 'QuoteRevisionSaleLineItem';
+  constraints?: Maybe<Array<Maybe<QuoteLineItemConstraint>>>;
   deliveryLocation?: Maybe<Scalars['String']['output']>;
   deliveryMethod?: Maybe<QuoteLineItemDeliveryMethod>;
   deliveryNotes?: Maybe<Scalars['String']['output']>;
   description: Scalars['String']['output'];
   id?: Maybe<Scalars['String']['output']>;
+  inputs?: Maybe<Array<Maybe<QuoteLineItemInputValue>>>;
   intakeFormSubmissionLineItem?: Maybe<IntakeFormLineItem>;
   intakeFormSubmissionLineItemId?: Maybe<Scalars['String']['output']>;
+  notes?: Maybe<Scalars['String']['output']>;
   pimCategory?: Maybe<PimCategory>;
-  pimCategoryId: Scalars['String']['output'];
+  pimCategoryId?: Maybe<Scalars['String']['output']>;
+  placeRef?: Maybe<LineItemPlaceRef>;
   price?: Maybe<Price>;
+  pricingRef?: Maybe<QuoteLineItemPricingRef>;
+  pricingSpecSnapshot?: Maybe<PricingSpec>;
+  productRef?: Maybe<QuoteLineItemProductRef>;
   quantity: Scalars['Int']['output'];
+  rateInCentsSnapshot?: Maybe<Scalars['Int']['output']>;
   sellersPriceId?: Maybe<Scalars['ID']['output']>;
   subtotalInCents: Scalars['Int']['output'];
+  timeWindow?: Maybe<QuoteLineItemTimeWindow>;
   type: QuoteLineItemType;
+  unitCode?: Maybe<Scalars['String']['output']>;
 };
 
 export type QuoteRevisionServiceLineItem = {
   __typename?: 'QuoteRevisionServiceLineItem';
+  constraints?: Maybe<Array<Maybe<QuoteLineItemConstraint>>>;
   deliveryLocation?: Maybe<Scalars['String']['output']>;
   deliveryMethod?: Maybe<QuoteLineItemDeliveryMethod>;
   deliveryNotes?: Maybe<Scalars['String']['output']>;
   description: Scalars['String']['output'];
   id?: Maybe<Scalars['String']['output']>;
+  inputs?: Maybe<Array<Maybe<QuoteLineItemInputValue>>>;
   intakeFormSubmissionLineItem?: Maybe<IntakeFormLineItem>;
   intakeFormSubmissionLineItemId?: Maybe<Scalars['String']['output']>;
+  notes?: Maybe<Scalars['String']['output']>;
+  placeRef?: Maybe<LineItemPlaceRef>;
   price?: Maybe<Price>;
+  pricingRef?: Maybe<QuoteLineItemPricingRef>;
+  pricingSpecSnapshot?: Maybe<PricingSpec>;
+  productRef?: Maybe<QuoteLineItemProductRef>;
   quantity: Scalars['Int']['output'];
+  rateInCentsSnapshot?: Maybe<Scalars['Int']['output']>;
   sellersPriceId?: Maybe<Scalars['ID']['output']>;
   subtotalInCents: Scalars['Int']['output'];
+  targetSelectors?: Maybe<Array<Maybe<ServiceTargetSelector>>>;
+  timeWindow?: Maybe<QuoteLineItemTimeWindow>;
   type: QuoteLineItemType;
+  unitCode?: Maybe<Scalars['String']['output']>;
 };
 
 export enum QuoteStatus {
@@ -4399,43 +5613,73 @@ export type Rfq = {
 export type RfqLineItem = RfqRentalLineItem | RfqSaleLineItem | RfqServiceLineItem;
 
 export type RfqLineItemInput = {
+  constraints?: InputMaybe<Array<InputMaybe<QuoteLineItemConstraintInput>>>;
   description: Scalars['String']['input'];
   id?: InputMaybe<Scalars['String']['input']>;
+  inputs?: InputMaybe<Array<InputMaybe<QuoteLineItemInputValueInput>>>;
+  notes?: InputMaybe<Scalars['String']['input']>;
   pimCategoryId?: InputMaybe<Scalars['String']['input']>;
+  placeRef?: InputMaybe<LineItemPlaceRefInput>;
+  productRef?: InputMaybe<QuoteLineItemProductRefInput>;
   quantity?: InputMaybe<Scalars['Int']['input']>;
   rentalEndDate?: InputMaybe<Scalars['DateTime']['input']>;
   rentalStartDate?: InputMaybe<Scalars['DateTime']['input']>;
+  targetSelectors?: InputMaybe<Array<InputMaybe<ServiceTargetSelectorInput>>>;
+  timeWindow?: InputMaybe<QuoteLineItemTimeWindowInput>;
   type: QuoteLineItemType;
+  unitCode?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type RfqRentalLineItem = {
   __typename?: 'RFQRentalLineItem';
+  constraints?: Maybe<Array<Maybe<QuoteLineItemConstraint>>>;
   description: Scalars['String']['output'];
   id?: Maybe<Scalars['String']['output']>;
+  inputs?: Maybe<Array<Maybe<QuoteLineItemInputValue>>>;
+  notes?: Maybe<Scalars['String']['output']>;
   pimCategory?: Maybe<PimCategory>;
-  pimCategoryId: Scalars['String']['output'];
+  pimCategoryId?: Maybe<Scalars['String']['output']>;
+  placeRef?: Maybe<LineItemPlaceRef>;
+  productRef?: Maybe<QuoteLineItemProductRef>;
   quantity: Scalars['Int']['output'];
   rentalEndDate: Scalars['DateTime']['output'];
   rentalStartDate: Scalars['DateTime']['output'];
+  timeWindow?: Maybe<QuoteLineItemTimeWindow>;
   type: QuoteLineItemType;
+  unitCode?: Maybe<Scalars['String']['output']>;
 };
 
 export type RfqSaleLineItem = {
   __typename?: 'RFQSaleLineItem';
+  constraints?: Maybe<Array<Maybe<QuoteLineItemConstraint>>>;
   description: Scalars['String']['output'];
   id?: Maybe<Scalars['String']['output']>;
+  inputs?: Maybe<Array<Maybe<QuoteLineItemInputValue>>>;
+  notes?: Maybe<Scalars['String']['output']>;
   pimCategory?: Maybe<PimCategory>;
-  pimCategoryId: Scalars['String']['output'];
+  pimCategoryId?: Maybe<Scalars['String']['output']>;
+  placeRef?: Maybe<LineItemPlaceRef>;
+  productRef?: Maybe<QuoteLineItemProductRef>;
   quantity: Scalars['Int']['output'];
+  timeWindow?: Maybe<QuoteLineItemTimeWindow>;
   type: QuoteLineItemType;
+  unitCode?: Maybe<Scalars['String']['output']>;
 };
 
 export type RfqServiceLineItem = {
   __typename?: 'RFQServiceLineItem';
+  constraints?: Maybe<Array<Maybe<QuoteLineItemConstraint>>>;
   description: Scalars['String']['output'];
   id?: Maybe<Scalars['String']['output']>;
+  inputs?: Maybe<Array<Maybe<QuoteLineItemInputValue>>>;
+  notes?: Maybe<Scalars['String']['output']>;
+  placeRef?: Maybe<LineItemPlaceRef>;
+  productRef?: Maybe<QuoteLineItemProductRef>;
   quantity: Scalars['Int']['output'];
+  targetSelectors?: Maybe<Array<Maybe<ServiceTargetSelector>>>;
+  timeWindow?: Maybe<QuoteLineItemTimeWindow>;
   type: QuoteLineItemType;
+  unitCode?: Maybe<Scalars['String']['output']>;
 };
 
 export enum RfqStatus {
@@ -4547,6 +5791,7 @@ export type RentalMaterializedView = {
 export type RentalPrice = {
   __typename?: 'RentalPrice';
   calculateSubTotal: LineItemPriceForecast;
+  catalogRef?: Maybe<PriceCatalogRef>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: Scalars['String']['output'];
   id: Scalars['ID']['output'];
@@ -4555,9 +5800,9 @@ export type RentalPrice = {
   parentPriceId?: Maybe<Scalars['ID']['output']>;
   parentPriceIdPercentageFactor?: Maybe<Scalars['Float']['output']>;
   pimCategory?: Maybe<PimCategory>;
-  pimCategoryId: Scalars['String']['output'];
-  pimCategoryName: Scalars['String']['output'];
-  pimCategoryPath: Scalars['String']['output'];
+  pimCategoryId?: Maybe<Scalars['String']['output']>;
+  pimCategoryName?: Maybe<Scalars['String']['output']>;
+  pimCategoryPath?: Maybe<Scalars['String']['output']>;
   pimProduct?: Maybe<PimProduct>;
   pimProductId?: Maybe<Scalars['ID']['output']>;
   priceBook?: Maybe<PriceBook>;
@@ -4566,6 +5811,7 @@ export type RentalPrice = {
   pricePerMonthInCents: Scalars['Int']['output'];
   pricePerWeekInCents: Scalars['Int']['output'];
   priceType: PriceType;
+  pricingSpec?: Maybe<PricingSpec>;
   updatedAt: Scalars['DateTime']['output'];
   workspaceId: Scalars['ID']['output'];
 };
@@ -4876,6 +6122,96 @@ export enum ResetFrequency {
   Yearly = 'yearly'
 }
 
+export type ResolveGlobalOrWorkspaceAttributeTypeInput = {
+  allowedUnits?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  appliesTo?: InputMaybe<GlobalAttributeAppliesTo>;
+  auditStatus?: InputMaybe<GlobalAttributeAuditStatus>;
+  canonicalUnit?: InputMaybe<Scalars['String']['input']>;
+  canonicalValueSetId?: InputMaybe<Scalars['String']['input']>;
+  dimension?: InputMaybe<GlobalAttributeDimension>;
+  kind: GlobalAttributeKind;
+  name: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+  preferGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalAttributeStatus>;
+  synonyms?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  usageHints?: InputMaybe<Array<InputMaybe<GlobalAttributeUsageHint>>>;
+  validationRules?: InputMaybe<Scalars['JSONObject']['input']>;
+  valueType: GlobalAttributeValueType;
+  workspaceId: Scalars['ID']['input'];
+};
+
+export type ResolveGlobalOrWorkspaceAttributeValueInput = {
+  attributeTypeId: Scalars['ID']['input'];
+  auditStatus?: InputMaybe<GlobalAttributeAuditStatus>;
+  codes?: InputMaybe<Scalars['JSONObject']['input']>;
+  preferGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalAttributeStatus>;
+  synonyms?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  value: Scalars['String']['input'];
+  workspaceId: Scalars['ID']['input'];
+};
+
+export type ResolveGlobalOrWorkspaceTagInput = {
+  auditStatus?: InputMaybe<GlobalTagAuditStatus>;
+  displayName?: InputMaybe<Scalars['String']['input']>;
+  label: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+  pos?: InputMaybe<GlobalTagPartOfSpeech>;
+  preferGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalTagStatus>;
+  synonyms?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  workspaceId: Scalars['ID']['input'];
+};
+
+export type ResolveGlobalOrWorkspaceUnitDefinitionInput = {
+  canonicalUnitCode?: InputMaybe<Scalars['String']['input']>;
+  code: Scalars['String']['input'];
+  dimension?: InputMaybe<GlobalAttributeDimension>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  offset?: InputMaybe<Scalars['Float']['input']>;
+  preferGlobal?: InputMaybe<Scalars['Boolean']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalUnitStatus>;
+  toCanonicalFactor?: InputMaybe<Scalars['Float']['input']>;
+  workspaceId: Scalars['ID']['input'];
+};
+
+export type ResolvedWorkspaceAttributeTypeResult = {
+  __typename?: 'ResolvedWorkspaceAttributeTypeResult';
+  created: Scalars['Boolean']['output'];
+  globalAttributeType?: Maybe<GlobalAttributeType>;
+  scope: VocabularyScope;
+  workspaceAttributeType?: Maybe<WorkspaceAttributeType>;
+};
+
+export type ResolvedWorkspaceAttributeValueResult = {
+  __typename?: 'ResolvedWorkspaceAttributeValueResult';
+  created: Scalars['Boolean']['output'];
+  globalAttributeValue?: Maybe<GlobalAttributeValue>;
+  scope: VocabularyScope;
+  workspaceAttributeValue?: Maybe<WorkspaceAttributeValue>;
+};
+
+export type ResolvedWorkspaceTagResult = {
+  __typename?: 'ResolvedWorkspaceTagResult';
+  created: Scalars['Boolean']['output'];
+  globalTag?: Maybe<GlobalTag>;
+  scope: VocabularyScope;
+  workspaceTag?: Maybe<WorkspaceTag>;
+};
+
+export type ResolvedWorkspaceUnitDefinitionResult = {
+  __typename?: 'ResolvedWorkspaceUnitDefinitionResult';
+  created: Scalars['Boolean']['output'];
+  globalUnitDefinition?: Maybe<GlobalUnitDefinition>;
+  scope: VocabularyScope;
+  workspaceUnitDefinition?: Maybe<WorkspaceUnitDefinition>;
+};
+
 export type ResourceMapAddress = {
   __typename?: 'ResourceMapAddress';
   city?: Maybe<Scalars['String']['output']>;
@@ -5128,6 +6464,7 @@ export type SaleFulfilment = FulfilmentBase & {
 
 export type SalePrice = {
   __typename?: 'SalePrice';
+  catalogRef?: Maybe<PriceCatalogRef>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: Scalars['String']['output'];
   discounts?: Maybe<Scalars['JSON']['output']>;
@@ -5137,14 +6474,15 @@ export type SalePrice = {
   parentPriceId?: Maybe<Scalars['ID']['output']>;
   parentPriceIdPercentageFactor?: Maybe<Scalars['Float']['output']>;
   pimCategory?: Maybe<PimCategory>;
-  pimCategoryId: Scalars['String']['output'];
-  pimCategoryName: Scalars['String']['output'];
-  pimCategoryPath: Scalars['String']['output'];
+  pimCategoryId?: Maybe<Scalars['String']['output']>;
+  pimCategoryName?: Maybe<Scalars['String']['output']>;
+  pimCategoryPath?: Maybe<Scalars['String']['output']>;
   pimProduct?: Maybe<PimProduct>;
   pimProductId?: Maybe<Scalars['ID']['output']>;
   priceBook?: Maybe<PriceBook>;
   priceBookId?: Maybe<Scalars['ID']['output']>;
   priceType: PriceType;
+  pricingSpec?: Maybe<PricingSpec>;
   unitCostInCents: Scalars['Int']['output'];
   updatedAt: Scalars['DateTime']['output'];
   workspaceId: Scalars['ID']['output'];
@@ -5247,6 +6585,8 @@ export type SalesOrder = {
   /** The intake form submission associated with this sales order */
   intakeFormSubmission?: Maybe<IntakeFormSubmission>;
   intake_form_submission_id?: Maybe<Scalars['String']['output']>;
+  /** Canonical line items for this sales order (source of truth). */
+  lineItems: Array<LineItem>;
   line_items?: Maybe<Array<Maybe<SalesOrderLineItem>>>;
   /** Pricing summary for the sales order */
   pricing?: Maybe<SalesOrderPricing>;
@@ -5473,12 +6813,122 @@ export type ServiceFulfilment = FulfilmentBase & {
   salesOrderPONumber?: Maybe<Scalars['String']['output']>;
   salesOrderType: FulfilmentType;
   serviceDate?: Maybe<Scalars['DateTime']['output']>;
+  tasks?: Maybe<Array<Maybe<ServiceFulfilmentTask>>>;
   unitCostInCents: Scalars['Int']['output'];
   updatedAt: Scalars['DateTime']['output'];
   workflowColumnId?: Maybe<Scalars['ID']['output']>;
   workflowId?: Maybe<Scalars['ID']['output']>;
   workspaceId: Scalars['ID']['output'];
 };
+
+export type ServiceFulfilmentTask = {
+  __typename?: 'ServiceFulfilmentTask';
+  activityTagIds: Array<Scalars['String']['output']>;
+  completedAt?: Maybe<Scalars['DateTime']['output']>;
+  completedBy?: Maybe<Scalars['String']['output']>;
+  contextTagIds?: Maybe<Array<Scalars['String']['output']>>;
+  id: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  status: ServiceFulfilmentTaskStatus;
+  title: Scalars['String']['output'];
+};
+
+export enum ServiceFulfilmentTaskStatus {
+  Done = 'DONE',
+  Open = 'OPEN',
+  Skipped = 'SKIPPED'
+}
+
+export type ServicePrice = {
+  __typename?: 'ServicePrice';
+  catalogRef?: Maybe<PriceCatalogRef>;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name?: Maybe<Scalars['String']['output']>;
+  parentPrice?: Maybe<Price>;
+  parentPriceId?: Maybe<Scalars['ID']['output']>;
+  parentPriceIdPercentageFactor?: Maybe<Scalars['Float']['output']>;
+  pimCategory?: Maybe<PimCategory>;
+  pimCategoryId?: Maybe<Scalars['String']['output']>;
+  pimCategoryName?: Maybe<Scalars['String']['output']>;
+  pimCategoryPath?: Maybe<Scalars['String']['output']>;
+  pimProduct?: Maybe<PimProduct>;
+  pimProductId?: Maybe<Scalars['ID']['output']>;
+  priceBook?: Maybe<PriceBook>;
+  priceBookId?: Maybe<Scalars['ID']['output']>;
+  priceType: PriceType;
+  pricingSpec?: Maybe<PricingSpec>;
+  updatedAt: Scalars['DateTime']['output'];
+  workspaceId: Scalars['ID']['output'];
+};
+
+export type ServiceRequirementEnvelope = {
+  __typename?: 'ServiceRequirementEnvelope';
+  maxHeight?: Maybe<ServiceRequirementMeasurement>;
+  maxItemWeight?: Maybe<ServiceRequirementMeasurement>;
+  maxLength?: Maybe<ServiceRequirementMeasurement>;
+  maxWidth?: Maybe<ServiceRequirementMeasurement>;
+  missingTargets: Array<ServiceRequirementMissingTarget>;
+  targetLineItemCount: Scalars['Int']['output'];
+  targetLineItemIds: Array<Scalars['String']['output']>;
+  targetQuantity?: Maybe<Scalars['Float']['output']>;
+  totalWeight?: Maybe<ServiceRequirementMeasurement>;
+  warnings: Array<Scalars['String']['output']>;
+};
+
+export type ServiceRequirementMeasurement = {
+  __typename?: 'ServiceRequirementMeasurement';
+  unitCode: Scalars['String']['output'];
+  value: Scalars['Float']['output'];
+};
+
+export type ServiceRequirementMissingTarget = {
+  __typename?: 'ServiceRequirementMissingTarget';
+  missingAttributeKeys: Array<Scalars['String']['output']>;
+  reason: Scalars['String']['output'];
+  targetLineItemId: Scalars['String']['output'];
+};
+
+export type ServiceScopeTask = {
+  __typename?: 'ServiceScopeTask';
+  activityTagIds: Array<Scalars['String']['output']>;
+  contextTagIds?: Maybe<Array<Scalars['String']['output']>>;
+  id: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  sourceTemplateId?: Maybe<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+};
+
+export type ServiceScopeTaskInput = {
+  activityTagIds: Array<Scalars['String']['input']>;
+  contextTagIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  id: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+  sourceTemplateId?: InputMaybe<Scalars['String']['input']>;
+  title: Scalars['String']['input'];
+};
+
+export type ServiceTargetSelector = {
+  __typename?: 'ServiceTargetSelector';
+  kind: ServiceTargetSelectorKind;
+  tagIds?: Maybe<Array<Scalars['String']['output']>>;
+  targetLineItemIds?: Maybe<Array<Scalars['String']['output']>>;
+  targetProductId?: Maybe<Scalars['String']['output']>;
+};
+
+export type ServiceTargetSelectorInput = {
+  kind: ServiceTargetSelectorKind;
+  tagIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  targetLineItemIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  targetProductId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export enum ServiceTargetSelectorKind {
+  LineItem = 'LINE_ITEM',
+  Product = 'PRODUCT',
+  Tags = 'TAGS'
+}
 
 export type ServiceTask = {
   __typename?: 'ServiceTask';
@@ -5544,6 +6994,266 @@ export type SpiceDbSubjectReference = {
   type: Scalars['String']['output'];
 };
 
+export type StudioCatalogCompileInput = {
+  catalogPath: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
+export type StudioCatalogCreateProductInput = {
+  catalogPath?: InputMaybe<Scalars['String']['input']>;
+  product: StudioCatalogProductInput;
+  workspaceId: Scalars['String']['input'];
+};
+
+export type StudioCatalogCreateProductResult = {
+  __typename?: 'StudioCatalogCreateProductResult';
+  catalogPath: Scalars['String']['output'];
+  product: StudioCatalogProductSummary;
+};
+
+export type StudioCatalogEnsureLogisticsServiceProductsInput = {
+  workspaceId: Scalars['String']['input'];
+};
+
+export type StudioCatalogEnsureLogisticsServiceProductsResult = {
+  __typename?: 'StudioCatalogEnsureLogisticsServiceProductsResult';
+  catalogPath: Scalars['String']['output'];
+  products: Array<StudioCatalogSeededProduct>;
+};
+
+export type StudioCatalogInitInput = {
+  name?: InputMaybe<Scalars['String']['input']>;
+  slug: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
+export type StudioCatalogInitResult = {
+  __typename?: 'StudioCatalogInitResult';
+  catalogPath: Scalars['String']['output'];
+};
+
+export type StudioCatalogProductAttributeInput = {
+  contextTags?: InputMaybe<Array<Scalars['String']['input']>>;
+  key: Scalars['String']['input'];
+  sourceRef?: InputMaybe<Scalars['String']['input']>;
+  unit?: InputMaybe<Scalars['String']['input']>;
+  value: Scalars['JSON']['input'];
+};
+
+export type StudioCatalogProductImageInput = {
+  alt?: InputMaybe<Scalars['String']['input']>;
+  uri: Scalars['String']['input'];
+};
+
+export type StudioCatalogProductInput = {
+  activityTags?: InputMaybe<Array<Scalars['String']['input']>>;
+  attributes?: InputMaybe<Array<StudioCatalogProductAttributeInput>>;
+  categoryPath?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  images?: InputMaybe<Array<StudioCatalogProductImageInput>>;
+  kind?: InputMaybe<StudioCatalogProductKind>;
+  name: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+  sourcePaths?: InputMaybe<Array<Scalars['String']['input']>>;
+  sourceRefs?: InputMaybe<Array<Scalars['String']['input']>>;
+  status?: InputMaybe<StudioCatalogProductStatus>;
+  tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  targetSpecs?: InputMaybe<Array<StudioCatalogProductTargetSpecInput>>;
+  taskTemplates?: InputMaybe<Array<StudioCatalogProductTaskTemplateInput>>;
+};
+
+export enum StudioCatalogProductKind {
+  Assembly = 'ASSEMBLY',
+  Material = 'MATERIAL',
+  Service = 'SERVICE'
+}
+
+export enum StudioCatalogProductOrigin {
+  System = 'SYSTEM',
+  Workspace = 'WORKSPACE'
+}
+
+export enum StudioCatalogProductStatus {
+  Active = 'ACTIVE',
+  Archived = 'ARCHIVED',
+  Draft = 'DRAFT'
+}
+
+export type StudioCatalogProductSummary = {
+  __typename?: 'StudioCatalogProductSummary';
+  categoryPath?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  kind?: Maybe<StudioCatalogProductKind>;
+  name: Scalars['String']['output'];
+  origin: StudioCatalogProductOrigin;
+  path: Scalars['String']['output'];
+  status?: Maybe<StudioCatalogProductStatus>;
+  tags?: Maybe<Array<Scalars['String']['output']>>;
+};
+
+export enum StudioCatalogProductTargetKind {
+  Product = 'PRODUCT',
+  Tags = 'TAGS'
+}
+
+export type StudioCatalogProductTargetSpecInput = {
+  kind: StudioCatalogProductTargetKind;
+  productId?: InputMaybe<Scalars['String']['input']>;
+  tagIds?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type StudioCatalogProductTaskTemplateInput = {
+  activityTagIds: Array<Scalars['String']['input']>;
+  contextTagIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  id: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+  title: Scalars['String']['input'];
+};
+
+export enum StudioCatalogSeedStatus {
+  Created = 'CREATED',
+  Existing = 'EXISTING'
+}
+
+export type StudioCatalogSeededProduct = {
+  __typename?: 'StudioCatalogSeededProduct';
+  product: StudioCatalogProductSummary;
+  status: StudioCatalogSeedStatus;
+};
+
+export type StudioCatalogValidateInput = {
+  catalogPath: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
+export type StudioCatalogValidateResult = {
+  __typename?: 'StudioCatalogValidateResult';
+  errors: Array<StudioCatalogValidationIssue>;
+  warnings: Array<StudioCatalogValidationIssue>;
+};
+
+export type StudioCatalogValidationIssue = {
+  __typename?: 'StudioCatalogValidationIssue';
+  message: Scalars['String']['output'];
+  path?: Maybe<Scalars['String']['output']>;
+};
+
+export type StudioConversation = {
+  __typename?: 'StudioConversation';
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  lastMessageAt?: Maybe<Scalars['DateTime']['output']>;
+  messageCount: Scalars['Int']['output'];
+  pinnedCatalogPath?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+  updatedBy: Scalars['String']['output'];
+  workingSet?: Maybe<Scalars['JSONObject']['output']>;
+  workspaceId: Scalars['String']['output'];
+};
+
+export type StudioConversationListResult = {
+  __typename?: 'StudioConversationListResult';
+  items: Array<StudioConversation>;
+  page: PaginationInfo;
+};
+
+export type StudioConversationMessage = {
+  __typename?: 'StudioConversationMessage';
+  content: Scalars['String']['output'];
+  conversationId: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  createdBy?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  metadata?: Maybe<Scalars['JSONObject']['output']>;
+  role: StudioConversationRole;
+};
+
+export type StudioConversationMessageListResult = {
+  __typename?: 'StudioConversationMessageListResult';
+  items: Array<StudioConversationMessage>;
+  page: PaginationInfo;
+};
+
+export enum StudioConversationRole {
+  Assistant = 'ASSISTANT',
+  System = 'SYSTEM',
+  Tool = 'TOOL',
+  User = 'USER'
+}
+
+export type StudioFsDeleteInput = {
+  path: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
+export type StudioFsListInput = {
+  path: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
+export type StudioFsMkdirInput = {
+  path: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
+export type StudioFsMoveInput = {
+  from: Scalars['String']['input'];
+  to: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
+export type StudioFsNode = {
+  __typename?: 'StudioFsNode';
+  etag: Scalars['String']['output'];
+  mimeType?: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+  sizeBytes?: Maybe<Scalars['Int']['output']>;
+  type: StudioFsNodeType;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export enum StudioFsNodeType {
+  File = 'FILE',
+  Folder = 'FOLDER'
+}
+
+export type StudioFsReadInput = {
+  path: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
+export type StudioFsReadResult = {
+  __typename?: 'StudioFsReadResult';
+  content: Scalars['String']['output'];
+  etag: Scalars['String']['output'];
+  mimeType?: Maybe<Scalars['String']['output']>;
+};
+
+export type StudioFsUploadInput = {
+  bytes: Scalars['String']['input'];
+  expectedEtag?: InputMaybe<Scalars['String']['input']>;
+  mimeType?: InputMaybe<Scalars['String']['input']>;
+  path: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
+export type StudioFsWriteInput = {
+  content: Scalars['String']['input'];
+  expectedEtag?: InputMaybe<Scalars['String']['input']>;
+  mimeType?: InputMaybe<Scalars['String']['input']>;
+  path: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
+export type StudioFsWriteResult = {
+  __typename?: 'StudioFsWriteResult';
+  etag: Scalars['String']['output'];
+};
+
 export type SubmissionSalesOrder = {
   __typename?: 'SubmissionSalesOrder';
   created_at: Scalars['String']['output'];
@@ -5571,6 +7281,21 @@ export enum SupportedContentType {
   ImagePng = 'IMAGE_PNG',
   TextCsv = 'TEXT_CSV'
 }
+
+export type SyncMaterialLogisticsAddOnsInput = {
+  delivery?: InputMaybe<LogisticsServiceAddOnSelectionInput>;
+  materialLineItemId: Scalars['ID']['input'];
+  pickup?: InputMaybe<LogisticsServiceAddOnSelectionInput>;
+};
+
+export type SyncMaterialLogisticsAddOnsResult = {
+  __typename?: 'SyncMaterialLogisticsAddOnsResult';
+  deliveryLineItem?: Maybe<LineItem>;
+  materialLineItemId: Scalars['ID']['output'];
+  pickupLineItem?: Maybe<LineItem>;
+  serviceAddOns: Array<LineItem>;
+  warnings: Array<Scalars['String']['output']>;
+};
 
 export type TaxAnalysisResult = {
   __typename?: 'TaxAnalysisResult';
@@ -5687,6 +7412,17 @@ export type UpdateGlobalAttributeValueInput = {
   value?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdateGlobalTagInput = {
+  auditStatus?: InputMaybe<GlobalTagAuditStatus>;
+  displayName?: InputMaybe<Scalars['String']['input']>;
+  label?: InputMaybe<Scalars['String']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  pos?: InputMaybe<GlobalTagPartOfSpeech>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalTagStatus>;
+  synonyms?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
 export type UpdateGlobalUnitDefinitionInput = {
   canonicalUnitCode?: InputMaybe<Scalars['String']['input']>;
   dimension?: InputMaybe<GlobalAttributeDimension>;
@@ -5719,6 +7455,28 @@ export type UpdateIntakeFormSubmissionInput = {
 
 export type UpdateInventorySerialisedIdInput = {
   assetId: Scalars['String']['input'];
+};
+
+export type UpdateLineItemInput = {
+  constraints?: InputMaybe<Array<InputMaybe<LineItemConstraintInput>>>;
+  customPriceName?: InputMaybe<Scalars['String']['input']>;
+  delivery?: InputMaybe<LineItemDeliveryInput>;
+  deliveryChargeInCents?: InputMaybe<Scalars['Int']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  inputs?: InputMaybe<Array<InputMaybe<LineItemInputValueInput>>>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  placeRef?: InputMaybe<LineItemPlaceRefInput>;
+  pricingRef?: InputMaybe<LineItemPricingRefInput>;
+  pricingSpecSnapshot?: InputMaybe<PricingSpecInput>;
+  productRef?: InputMaybe<LineItemProductRefInput>;
+  quantity?: InputMaybe<Scalars['String']['input']>;
+  rateInCentsSnapshot?: InputMaybe<Scalars['Int']['input']>;
+  scopeTasks?: InputMaybe<Array<InputMaybe<ServiceScopeTaskInput>>>;
+  sourceLineItemId?: InputMaybe<Scalars['ID']['input']>;
+  subtotalInCents?: InputMaybe<Scalars['Int']['input']>;
+  targetSelectors?: InputMaybe<Array<InputMaybe<LineItemTargetSelectorInput>>>;
+  timeWindow?: InputMaybe<LineItemTimeWindowInput>;
+  unitCode?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdatePersonContactInput = {
@@ -5806,6 +7564,7 @@ export type UpdateReferenceNumberTemplateInput = {
 };
 
 export type UpdateRentalPriceInput = {
+  catalogRef?: InputMaybe<PriceCatalogRefInput>;
   id: Scalars['ID']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
   pimCategoryId?: InputMaybe<Scalars['String']['input']>;
@@ -5813,6 +7572,7 @@ export type UpdateRentalPriceInput = {
   pricePerDayInCents?: InputMaybe<Scalars['Int']['input']>;
   pricePerMonthInCents?: InputMaybe<Scalars['Int']['input']>;
   pricePerWeekInCents?: InputMaybe<Scalars['Int']['input']>;
+  pricingSpec?: InputMaybe<PricingSpecInput>;
 };
 
 export type UpdateRentalPurchaseOrderLineItemInput = {
@@ -5852,11 +7612,13 @@ export type UpdateResourceMapTagInput = {
 };
 
 export type UpdateSalePriceInput = {
+  catalogRef?: InputMaybe<PriceCatalogRefInput>;
   discounts?: InputMaybe<Scalars['JSON']['input']>;
   id: Scalars['ID']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
   pimCategoryId?: InputMaybe<Scalars['String']['input']>;
   pimProductId?: InputMaybe<Scalars['ID']['input']>;
+  pricingSpec?: InputMaybe<PricingSpecInput>;
   unitCostInCents?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -5910,6 +7672,27 @@ export type UpdateSalesOrderLineItemInput = {
   so_quantity?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type UpdateServiceFulfilmentTaskStatusInput = {
+  fulfilmentId: Scalars['ID']['input'];
+  status: ServiceFulfilmentTaskStatus;
+  taskId: Scalars['String']['input'];
+};
+
+export type UpdateServicePriceInput = {
+  catalogRef?: InputMaybe<PriceCatalogRefInput>;
+  id: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  pimCategoryId?: InputMaybe<Scalars['String']['input']>;
+  pimProductId?: InputMaybe<Scalars['ID']['input']>;
+  pricingSpec?: InputMaybe<PricingSpecInput>;
+};
+
+export type UpdateStudioConversationInput = {
+  pinnedCatalogPath?: InputMaybe<Scalars['String']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+  workingSet?: InputMaybe<Scalars['JSONObject']['input']>;
+};
+
 export type UpdateTaxLineItemInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   invoiceId: Scalars['ID']['input'];
@@ -5931,6 +7714,60 @@ export type UpsertPimCategoryInput = {
   name: Scalars['String']['input'];
   path: Scalars['String']['input'];
   platform_id: Scalars['String']['input'];
+};
+
+export type UpsertWorkspaceAttributeTypeInput = {
+  allowedUnits?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  appliesTo?: InputMaybe<GlobalAttributeAppliesTo>;
+  auditStatus?: InputMaybe<GlobalAttributeAuditStatus>;
+  canonicalUnit?: InputMaybe<Scalars['String']['input']>;
+  canonicalValueSetId?: InputMaybe<Scalars['String']['input']>;
+  dimension?: InputMaybe<GlobalAttributeDimension>;
+  kind: GlobalAttributeKind;
+  name: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalAttributeStatus>;
+  synonyms?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  usageHints?: InputMaybe<Array<InputMaybe<GlobalAttributeUsageHint>>>;
+  validationRules?: InputMaybe<Scalars['JSONObject']['input']>;
+  valueType: GlobalAttributeValueType;
+  workspaceId: Scalars['ID']['input'];
+};
+
+export type UpsertWorkspaceAttributeValueInput = {
+  attributeTypeId: Scalars['ID']['input'];
+  auditStatus?: InputMaybe<GlobalAttributeAuditStatus>;
+  codes?: InputMaybe<Scalars['JSONObject']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalAttributeStatus>;
+  synonyms?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  value: Scalars['String']['input'];
+  workspaceId: Scalars['ID']['input'];
+};
+
+export type UpsertWorkspaceTagInput = {
+  auditStatus?: InputMaybe<GlobalTagAuditStatus>;
+  displayName?: InputMaybe<Scalars['String']['input']>;
+  label: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+  pos?: InputMaybe<GlobalTagPartOfSpeech>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalTagStatus>;
+  synonyms?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  workspaceId: Scalars['ID']['input'];
+};
+
+export type UpsertWorkspaceUnitDefinitionInput = {
+  canonicalUnitCode?: InputMaybe<Scalars['String']['input']>;
+  code: Scalars['String']['input'];
+  dimension?: InputMaybe<GlobalAttributeDimension>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  offset?: InputMaybe<Scalars['Float']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<GlobalUnitStatus>;
+  toCanonicalFactor?: InputMaybe<Scalars['Float']['input']>;
+  workspaceId: Scalars['ID']['input'];
 };
 
 export type User = {
@@ -6067,6 +7904,11 @@ export type ValidEnterpriseDomainResult = {
   reason?: Maybe<Scalars['String']['output']>;
 };
 
+export enum VocabularyScope {
+  Global = 'GLOBAL',
+  Workspace = 'WORKSPACE'
+}
+
 export type Workflow = {
   __typename?: 'Workflow';
   id?: Maybe<Scalars['ID']['output']>;
@@ -6130,6 +7972,62 @@ export enum WorkspaceAccessType {
   SameDomain = 'SAME_DOMAIN'
 }
 
+export type WorkspaceAttributeType = {
+  __typename?: 'WorkspaceAttributeType';
+  allowedUnits?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  appliesTo?: Maybe<GlobalAttributeAppliesTo>;
+  auditStatus?: Maybe<GlobalAttributeAuditStatus>;
+  canonicalUnit?: Maybe<Scalars['String']['output']>;
+  canonicalValueSetId?: Maybe<Scalars['String']['output']>;
+  createdAt?: Maybe<Scalars['DateTime']['output']>;
+  createdBy?: Maybe<Scalars['String']['output']>;
+  dimension?: Maybe<GlobalAttributeDimension>;
+  globalAttributeTypeId?: Maybe<Scalars['ID']['output']>;
+  id: Scalars['ID']['output'];
+  kind: GlobalAttributeKind;
+  name: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  source?: Maybe<Scalars['String']['output']>;
+  status: GlobalAttributeStatus;
+  synonyms?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  updatedAt?: Maybe<Scalars['DateTime']['output']>;
+  updatedBy?: Maybe<Scalars['String']['output']>;
+  usageHints?: Maybe<Array<Maybe<GlobalAttributeUsageHint>>>;
+  validationRules?: Maybe<Scalars['JSONObject']['output']>;
+  valueType: GlobalAttributeValueType;
+  workspaceId: Scalars['ID']['output'];
+};
+
+export type WorkspaceAttributeTypeListResult = {
+  __typename?: 'WorkspaceAttributeTypeListResult';
+  items: Array<WorkspaceAttributeType>;
+  page: PaginationInfo;
+};
+
+export type WorkspaceAttributeValue = {
+  __typename?: 'WorkspaceAttributeValue';
+  attributeTypeId: Scalars['ID']['output'];
+  auditStatus?: Maybe<GlobalAttributeAuditStatus>;
+  codes?: Maybe<Scalars['JSONObject']['output']>;
+  createdAt?: Maybe<Scalars['DateTime']['output']>;
+  createdBy?: Maybe<Scalars['String']['output']>;
+  globalAttributeValueId?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  source?: Maybe<Scalars['String']['output']>;
+  status: GlobalAttributeStatus;
+  synonyms?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  updatedAt?: Maybe<Scalars['DateTime']['output']>;
+  updatedBy?: Maybe<Scalars['String']['output']>;
+  value: Scalars['String']['output'];
+  workspaceId: Scalars['ID']['output'];
+};
+
+export type WorkspaceAttributeValueListResult = {
+  __typename?: 'WorkspaceAttributeValueListResult';
+  items: Array<WorkspaceAttributeValue>;
+  page: PaginationInfo;
+};
+
 export type WorkspaceMember = {
   __typename?: 'WorkspaceMember';
   roles: Array<WorkspaceUserRole>;
@@ -6142,6 +8040,56 @@ export type WorkspaceRoleInfo = {
   description?: Maybe<Scalars['String']['output']>;
   label?: Maybe<Scalars['String']['output']>;
   role: WorkspaceUserRole;
+};
+
+export type WorkspaceTag = {
+  __typename?: 'WorkspaceTag';
+  auditStatus?: Maybe<GlobalTagAuditStatus>;
+  createdAt?: Maybe<Scalars['DateTime']['output']>;
+  createdBy?: Maybe<Scalars['String']['output']>;
+  displayName?: Maybe<Scalars['String']['output']>;
+  globalTagId?: Maybe<Scalars['ID']['output']>;
+  id: Scalars['ID']['output'];
+  label: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  pos: GlobalTagPartOfSpeech;
+  source?: Maybe<Scalars['String']['output']>;
+  status: GlobalTagStatus;
+  synonyms?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  updatedAt?: Maybe<Scalars['DateTime']['output']>;
+  updatedBy?: Maybe<Scalars['String']['output']>;
+  workspaceId: Scalars['ID']['output'];
+};
+
+export type WorkspaceTagListResult = {
+  __typename?: 'WorkspaceTagListResult';
+  items: Array<WorkspaceTag>;
+  page: PaginationInfo;
+};
+
+export type WorkspaceUnitDefinition = {
+  __typename?: 'WorkspaceUnitDefinition';
+  canonicalUnitCode?: Maybe<Scalars['String']['output']>;
+  code: Scalars['String']['output'];
+  createdAt?: Maybe<Scalars['DateTime']['output']>;
+  createdBy?: Maybe<Scalars['String']['output']>;
+  dimension?: Maybe<GlobalAttributeDimension>;
+  globalUnitCode?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name?: Maybe<Scalars['String']['output']>;
+  offset?: Maybe<Scalars['Float']['output']>;
+  source?: Maybe<Scalars['String']['output']>;
+  status: GlobalUnitStatus;
+  toCanonicalFactor?: Maybe<Scalars['Float']['output']>;
+  updatedAt?: Maybe<Scalars['DateTime']['output']>;
+  updatedBy?: Maybe<Scalars['String']['output']>;
+  workspaceId: Scalars['ID']['output'];
+};
+
+export type WorkspaceUnitDefinitionListResult = {
+  __typename?: 'WorkspaceUnitDefinitionListResult';
+  items: Array<WorkspaceUnitDefinition>;
+  page: PaginationInfo;
 };
 
 /** Roles a user can have in a workspace (auto-generated from SpiceDB schema) */
@@ -6504,7 +8452,7 @@ export type UtilListInventoryReservationsQuery = { __typename?: 'Query', listInv
 
 export type RentalFulfilmentFieldsFragment = { __typename?: 'RentalFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, rentalStartDate?: any | null, rentalEndDate?: any | null, lastChargedAt?: any | null };
 
-export type SaleFulfilmentFieldsFragment = { __typename?: 'SaleFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, unitCostInCents: number, quantity: number, salesOrderLineItem?: { __typename: 'RentalSalesOrderLineItem' } | { __typename: 'SaleSalesOrderLineItem', price?: { __typename: 'RentalPrice' } | { __typename: 'SalePrice', discounts?: any | null } | null } | null };
+export type SaleFulfilmentFieldsFragment = { __typename?: 'SaleFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, unitCostInCents: number, quantity: number, salesOrderLineItem?: { __typename: 'RentalSalesOrderLineItem' } | { __typename: 'SaleSalesOrderLineItem', price?: { __typename: 'RentalPrice' } | { __typename: 'SalePrice', discounts?: any | null } | { __typename: 'ServicePrice' } | null } | null };
 
 export type ServiceFulfilmentFieldsFragment = { __typename?: 'ServiceFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, serviceDate?: any | null };
 
@@ -6520,7 +8468,7 @@ export type CreateSaleFulfilmentMutationVariables = Exact<{
 }>;
 
 
-export type CreateSaleFulfilmentMutation = { __typename?: 'Mutation', createSaleFulfilment?: { __typename?: 'SaleFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, unitCostInCents: number, quantity: number, salesOrderLineItem?: { __typename: 'RentalSalesOrderLineItem' } | { __typename: 'SaleSalesOrderLineItem', price?: { __typename: 'RentalPrice' } | { __typename: 'SalePrice', discounts?: any | null } | null } | null } | null };
+export type CreateSaleFulfilmentMutation = { __typename?: 'Mutation', createSaleFulfilment?: { __typename?: 'SaleFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, unitCostInCents: number, quantity: number, salesOrderLineItem?: { __typename: 'RentalSalesOrderLineItem' } | { __typename: 'SaleSalesOrderLineItem', price?: { __typename: 'RentalPrice' } | { __typename: 'SalePrice', discounts?: any | null } | { __typename: 'ServicePrice' } | null } | null } | null };
 
 export type CreateServiceFulfilmentMutationVariables = Exact<{
   input: CreateServiceFulfilmentInput;
@@ -6541,7 +8489,7 @@ export type GetFulfilmentByIdQueryVariables = Exact<{
 }>;
 
 
-export type GetFulfilmentByIdQuery = { __typename?: 'Query', getFulfilmentById?: { __typename: 'RentalFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, rentalStartDate?: any | null, rentalEndDate?: any | null, lastChargedAt?: any | null } | { __typename: 'SaleFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, unitCostInCents: number, quantity: number, salesOrderLineItem?: { __typename: 'RentalSalesOrderLineItem' } | { __typename: 'SaleSalesOrderLineItem', price?: { __typename: 'RentalPrice' } | { __typename: 'SalePrice', discounts?: any | null } | null } | null } | { __typename: 'ServiceFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, serviceDate?: any | null } | null };
+export type GetFulfilmentByIdQuery = { __typename?: 'Query', getFulfilmentById?: { __typename: 'RentalFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, rentalStartDate?: any | null, rentalEndDate?: any | null, lastChargedAt?: any | null } | { __typename: 'SaleFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, unitCostInCents: number, quantity: number, salesOrderLineItem?: { __typename: 'RentalSalesOrderLineItem' } | { __typename: 'SaleSalesOrderLineItem', price?: { __typename: 'RentalPrice' } | { __typename: 'SalePrice', discounts?: any | null } | { __typename: 'ServicePrice' } | null } | null } | { __typename: 'ServiceFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, serviceDate?: any | null } | null };
 
 export type ListFulfilmentsQueryVariables = Exact<{
   filter: ListFulfilmentsFilter;
@@ -6549,7 +8497,7 @@ export type ListFulfilmentsQueryVariables = Exact<{
 }>;
 
 
-export type ListFulfilmentsQuery = { __typename?: 'Query', listFulfilments?: { __typename?: 'ListFulfilmentsResult', items: Array<{ __typename: 'RentalFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, rentalStartDate?: any | null, rentalEndDate?: any | null, lastChargedAt?: any | null } | { __typename: 'SaleFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, unitCostInCents: number, quantity: number, salesOrderLineItem?: { __typename: 'RentalSalesOrderLineItem' } | { __typename: 'SaleSalesOrderLineItem', price?: { __typename: 'RentalPrice' } | { __typename: 'SalePrice', discounts?: any | null } | null } | null } | { __typename: 'ServiceFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, serviceDate?: any | null }>, page: { __typename?: 'PaginationInfo', number: number, size: number } } | null };
+export type ListFulfilmentsQuery = { __typename?: 'Query', listFulfilments?: { __typename?: 'ListFulfilmentsResult', items: Array<{ __typename: 'RentalFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, rentalStartDate?: any | null, rentalEndDate?: any | null, lastChargedAt?: any | null } | { __typename: 'SaleFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, unitCostInCents: number, quantity: number, salesOrderLineItem?: { __typename: 'RentalSalesOrderLineItem' } | { __typename: 'SaleSalesOrderLineItem', price?: { __typename: 'RentalPrice' } | { __typename: 'SalePrice', discounts?: any | null } | { __typename: 'ServicePrice' } | null } | null } | { __typename: 'ServiceFulfilment', id: string, contactId?: string | null, projectId?: string | null, salesOrderId: string, salesOrderLineItemId: string, purchaseOrderNumber: string, salesOrderType: FulfilmentType, workflowId?: string | null, workflowColumnId?: string | null, assignedToId?: string | null, createdAt: any, updatedAt: any, serviceDate?: any | null }>, page: { __typename?: 'PaginationInfo', number: number, size: number } } | null };
 
 export type UpdateFulfilmentColumnMutationVariables = Exact<{
   fulfilmentId: Scalars['ID']['input'];
@@ -6723,7 +8671,7 @@ export type GetIntakeFormByIdQueryVariables = Exact<{
 }>;
 
 
-export type GetIntakeFormByIdQuery = { __typename?: 'Query', getIntakeFormById?: { __typename?: 'IntakeForm', id: string, workspaceId: string, projectId?: string | null, isActive: boolean, isDeleted: boolean, createdAt: any, updatedAt: any, workspace?: { __typename?: 'IntakeFormWorkspace', id: string, name: string } | null, pricebook?: { __typename?: 'PriceBook', listPrices?: { __typename?: 'ListPricesResult', items: Array<{ __typename?: 'RentalPrice', id: string, pricePerDayInCents: number, pricePerWeekInCents: number, pricePerMonthInCents: number } | { __typename?: 'SalePrice', id: string, unitCostInCents: number }> } | null } | null } | null };
+export type GetIntakeFormByIdQuery = { __typename?: 'Query', getIntakeFormById?: { __typename?: 'IntakeForm', id: string, workspaceId: string, projectId?: string | null, isActive: boolean, isDeleted: boolean, createdAt: any, updatedAt: any, workspace?: { __typename?: 'IntakeFormWorkspace', id: string, name: string } | null, pricebook?: { __typename?: 'PriceBook', listPrices?: { __typename?: 'ListPricesResult', items: Array<{ __typename?: 'RentalPrice', id: string, pricePerDayInCents: number, pricePerWeekInCents: number, pricePerMonthInCents: number } | { __typename?: 'SalePrice', id: string, unitCostInCents: number } | { __typename?: 'ServicePrice' }> } | null } | null } | null };
 
 export type ListIntakeFormsQueryVariables = Exact<{
   workspaceId: Scalars['String']['input'];
@@ -7100,6 +9048,27 @@ export type ListChargesForInvoiceQueryVariables = Exact<{
 
 export type ListChargesForInvoiceQuery = { __typename?: 'Query', listCharges?: { __typename?: 'ChargePage', items: Array<{ __typename?: 'Charge', id: string, amountInCents: number, description: string, chargeType: ChargeType, contactId: string, invoiceId?: string | null }>, page: { __typename?: 'PaginationInfo', number: number, size: number, totalItems: number, totalPages: number } } | null };
 
+export type LogisticsAddOnsSyncCreateLineItemMutationVariables = Exact<{
+  input: LineItemInput;
+}>;
+
+
+export type LogisticsAddOnsSyncCreateLineItemMutation = { __typename?: 'Mutation', createLineItem: { __typename?: 'LineItem', id: string } };
+
+export type LogisticsAddOnsSyncMaterialLogisticsMutationVariables = Exact<{
+  input: SyncMaterialLogisticsAddOnsInput;
+}>;
+
+
+export type LogisticsAddOnsSyncMaterialLogisticsMutation = { __typename?: 'Mutation', syncMaterialLogisticsAddOns: { __typename?: 'SyncMaterialLogisticsAddOnsResult', materialLineItemId: string, warnings: Array<string>, deliveryLineItem?: { __typename?: 'LineItem', id: string, type: LineItemType, sourceLineItemId?: string | null, productRef?: { __typename?: 'LineItemProductRef', kind: LineItemProductKind, productId: string } | null, targetSelectors?: Array<{ __typename?: 'LineItemTargetSelector', kind: LineItemTargetSelectorKind, targetLineItemIds?: Array<string> | null } | null> | null, scopeTasks?: Array<{ __typename?: 'ServiceScopeTask', id: string, title: string, activityTagIds: Array<string> } | null> | null } | null, pickupLineItem?: { __typename?: 'LineItem', id: string, type: LineItemType, sourceLineItemId?: string | null, productRef?: { __typename?: 'LineItemProductRef', kind: LineItemProductKind, productId: string } | null, targetSelectors?: Array<{ __typename?: 'LineItemTargetSelector', kind: LineItemTargetSelectorKind, targetLineItemIds?: Array<string> | null } | null> | null, scopeTasks?: Array<{ __typename?: 'ServiceScopeTask', id: string, title: string, activityTagIds: Array<string> } | null> | null } | null, serviceAddOns: Array<{ __typename?: 'LineItem', id: string, productRef?: { __typename?: 'LineItemProductRef', productId: string } | null }> } };
+
+export type LogisticsGroupsListLogisticsServiceGroupsQueryVariables = Exact<{
+  filter: ListLogisticsServiceGroupsFilter;
+}>;
+
+
+export type LogisticsGroupsListLogisticsServiceGroupsQuery = { __typename?: 'Query', listLogisticsServiceGroups: Array<{ __typename?: 'LineItem', id: string, description: string, productRef?: { __typename?: 'LineItemProductRef', kind: LineItemProductKind, productId: string } | null, timeWindow?: { __typename?: 'LineItemTimeWindow', startAt?: any | null, endAt?: any | null } | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null, pricingRef?: { __typename?: 'LineItemPricingRef', priceId?: string | null } | null, targetSelectors?: Array<{ __typename?: 'LineItemTargetSelector', kind: LineItemTargetSelectorKind, targetLineItemIds?: Array<string> | null } | null> | null }> };
+
 export type CreateProjectForMcpMutationVariables = Exact<{
   input: ProjectInput;
 }>;
@@ -7241,7 +9210,7 @@ export type CreateRentalPriceForPriceBooksMutationVariables = Exact<{
 }>;
 
 
-export type CreateRentalPriceForPriceBooksMutation = { __typename?: 'Mutation', createRentalPrice?: { __typename?: 'RentalPrice', id: string, priceBookId?: string | null, pimCategoryId: string } | null };
+export type CreateRentalPriceForPriceBooksMutation = { __typename?: 'Mutation', createRentalPrice?: { __typename?: 'RentalPrice', id: string, priceBookId?: string | null, pimCategoryId?: string | null } | null };
 
 export type CreatePimCategoryForPricesMutationVariables = Exact<{
   input: UpsertPimCategoryInput;
@@ -7262,14 +9231,14 @@ export type CreateRentalPriceForPricesMutationVariables = Exact<{
 }>;
 
 
-export type CreateRentalPriceForPricesMutation = { __typename?: 'Mutation', createRentalPrice?: { __typename?: 'RentalPrice', id: string, priceBookId?: string | null, pimCategoryId: string, pimCategoryName: string, pimCategoryPath: string, pricePerDayInCents: number } | null };
+export type CreateRentalPriceForPricesMutation = { __typename?: 'Mutation', createRentalPrice?: { __typename?: 'RentalPrice', id: string, priceBookId?: string | null, pimCategoryId?: string | null, pimCategoryName?: string | null, pimCategoryPath?: string | null, pricePerDayInCents: number } | null };
 
 export type CreateSalePriceForPricesMutationVariables = Exact<{
   input: CreateSalePriceInput;
 }>;
 
 
-export type CreateSalePriceForPricesMutation = { __typename?: 'Mutation', createSalePrice?: { __typename?: 'SalePrice', id: string, priceBookId?: string | null, pimCategoryId: string, pimCategoryName: string, pimCategoryPath: string, unitCostInCents: number } | null };
+export type CreateSalePriceForPricesMutation = { __typename?: 'Mutation', createSalePrice?: { __typename?: 'SalePrice', id: string, priceBookId?: string | null, pimCategoryId?: string | null, pimCategoryName?: string | null, pimCategoryPath?: string | null, unitCostInCents: number } | null };
 
 export type ListPricesQueryVariables = Exact<{
   filter: ListPricesFilter;
@@ -7277,7 +9246,7 @@ export type ListPricesQueryVariables = Exact<{
 }>;
 
 
-export type ListPricesQuery = { __typename?: 'Query', listPrices?: { __typename?: 'ListPricesResult', items: Array<{ __typename?: 'RentalPrice', id: string, priceBookId?: string | null, pimCategoryId: string, pricePerDayInCents: number } | { __typename?: 'SalePrice', id: string, priceBookId?: string | null, pimCategoryId: string, unitCostInCents: number }>, page: { __typename?: 'PaginationInfo', number: number, size: number } } | null };
+export type ListPricesQuery = { __typename?: 'Query', listPrices?: { __typename?: 'ListPricesResult', items: Array<{ __typename: 'RentalPrice', id: string, pricingSpec?: { __typename?: 'PricingSpec', kind: PricingSpecKind, unitCode?: string | null, rateInCents?: number | null, pricePerDayInCents?: number | null, pricePerWeekInCents?: number | null, pricePerMonthInCents?: number | null } | null } | { __typename: 'SalePrice', id: string, pricingSpec?: { __typename?: 'PricingSpec', kind: PricingSpecKind, unitCode?: string | null, rateInCents?: number | null, pricePerDayInCents?: number | null, pricePerWeekInCents?: number | null, pricePerMonthInCents?: number | null } | null } | { __typename: 'ServicePrice', id: string, pricingSpec?: { __typename?: 'PricingSpec', kind: PricingSpecKind, unitCode?: string | null, rateInCents?: number | null, pricePerDayInCents?: number | null, pricePerWeekInCents?: number | null, pricePerMonthInCents?: number | null } | null }>, page: { __typename?: 'PaginationInfo', number: number, size: number } } | null };
 
 export type DeletePriceByIdMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -7314,14 +9283,14 @@ export type GetRentalPriceWithCalculateSubTotalQueryVariables = Exact<{
 }>;
 
 
-export type GetRentalPriceWithCalculateSubTotalQuery = { __typename?: 'Query', getPriceById?: { __typename: 'RentalPrice', id: string, pricePerDayInCents: number, pricePerWeekInCents: number, pricePerMonthInCents: number, calculateSubTotal: { __typename?: 'LineItemPriceForecast', accumulative_cost_in_cents: number, days: Array<{ __typename?: 'LineItemPriceForecastDay', day: number, accumulative_cost_in_cents: number, cost_in_cents: number, strategy: string }> } } | { __typename: 'SalePrice' } | null };
+export type GetRentalPriceWithCalculateSubTotalQuery = { __typename?: 'Query', getPriceById?: { __typename: 'RentalPrice', id: string, pricePerDayInCents: number, pricePerWeekInCents: number, pricePerMonthInCents: number, calculateSubTotal: { __typename?: 'LineItemPriceForecast', accumulative_cost_in_cents: number, days: Array<{ __typename?: 'LineItemPriceForecastDay', day: number, accumulative_cost_in_cents: number, cost_in_cents: number, strategy: string }> } } | { __typename: 'SalePrice' } | { __typename: 'ServicePrice' } | null };
 
 export type GetPriceByIdQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetPriceByIdQuery = { __typename?: 'Query', getPriceById?: { __typename?: 'RentalPrice', id: string, pricePerDayInCents: number, pricePerWeekInCents: number, pricePerMonthInCents: number } | { __typename?: 'SalePrice', id: string, unitCostInCents: number } | null };
+export type GetPriceByIdQuery = { __typename?: 'Query', getPriceById?: { __typename?: 'RentalPrice', id: string, pricePerDayInCents: number, pricePerWeekInCents: number, pricePerMonthInCents: number } | { __typename?: 'SalePrice', id: string, unitCostInCents: number } | { __typename?: 'ServicePrice' } | null };
 
 export type ListProjectsQueryVariables = Exact<{
   workspaceId: Scalars['String']['input'];
@@ -7535,7 +9504,7 @@ export type CreateQuoteFromIntakeFormSubmissionForTestsMutationVariables = Exact
 }>;
 
 
-export type CreateQuoteFromIntakeFormSubmissionForTestsMutation = { __typename?: 'Mutation', createQuoteFromIntakeFormSubmission: { __typename?: 'Quote', id: string, sellerWorkspaceId: string, sellersBuyerContactId: string, sellersProjectId: string, status: QuoteStatus, intakeFormSubmissionId?: string | null, currentRevisionId?: string | null, currentRevision?: { __typename?: 'QuoteRevision', id: string, revisionNumber: number, status: RevisionStatus, hasUnpricedLineItems: boolean, lineItems: Array<{ __typename: 'QuoteRevisionRentalLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId: string, rentalStartDate: any, rentalEndDate: any, sellersPriceId?: string | null, intakeFormSubmissionLineItemId?: string | null, deliveryMethod?: QuoteLineItemDeliveryMethod | null, deliveryLocation?: string | null, deliveryNotes?: string | null } | { __typename: 'QuoteRevisionSaleLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId: string, sellersPriceId?: string | null, intakeFormSubmissionLineItemId?: string | null, deliveryMethod?: QuoteLineItemDeliveryMethod | null, deliveryLocation?: string | null, deliveryNotes?: string | null } | { __typename: 'QuoteRevisionServiceLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, sellersPriceId?: string | null, intakeFormSubmissionLineItemId?: string | null, deliveryMethod?: QuoteLineItemDeliveryMethod | null, deliveryLocation?: string | null, deliveryNotes?: string | null }> } | null } };
+export type CreateQuoteFromIntakeFormSubmissionForTestsMutation = { __typename?: 'Mutation', createQuoteFromIntakeFormSubmission: { __typename?: 'Quote', id: string, sellerWorkspaceId: string, sellersBuyerContactId: string, sellersProjectId: string, status: QuoteStatus, intakeFormSubmissionId?: string | null, currentRevisionId?: string | null, currentRevision?: { __typename?: 'QuoteRevision', id: string, revisionNumber: number, status: RevisionStatus, hasUnpricedLineItems: boolean, lineItems: Array<{ __typename: 'QuoteRevisionRentalLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId?: string | null, rentalStartDate: any, rentalEndDate: any, sellersPriceId?: string | null, intakeFormSubmissionLineItemId?: string | null, deliveryMethod?: QuoteLineItemDeliveryMethod | null, deliveryLocation?: string | null, deliveryNotes?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'QuoteRevisionSaleLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId?: string | null, sellersPriceId?: string | null, intakeFormSubmissionLineItemId?: string | null, deliveryMethod?: QuoteLineItemDeliveryMethod | null, deliveryLocation?: string | null, deliveryNotes?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'QuoteRevisionServiceLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, sellersPriceId?: string | null, intakeFormSubmissionLineItemId?: string | null, deliveryMethod?: QuoteLineItemDeliveryMethod | null, deliveryLocation?: string | null, deliveryNotes?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null }> } | null } };
 
 export type CreateIntakeFormForQuoteTestsMutationVariables = Exact<{
   input: IntakeFormInput;
@@ -7571,7 +9540,7 @@ export type CreateQuoteRevisionWithOptionalPriceMutationVariables = Exact<{
 }>;
 
 
-export type CreateQuoteRevisionWithOptionalPriceMutation = { __typename?: 'Mutation', createQuoteRevision: { __typename?: 'QuoteRevision', id: string, quoteId: string, revisionNumber: number, status: RevisionStatus, hasUnpricedLineItems: boolean, lineItems: Array<{ __typename: 'QuoteRevisionRentalLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId: string, rentalStartDate: any, rentalEndDate: any, sellersPriceId?: string | null, intakeFormSubmissionLineItemId?: string | null, deliveryMethod?: QuoteLineItemDeliveryMethod | null, deliveryLocation?: string | null, deliveryNotes?: string | null } | { __typename: 'QuoteRevisionSaleLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId: string, sellersPriceId?: string | null, intakeFormSubmissionLineItemId?: string | null, deliveryMethod?: QuoteLineItemDeliveryMethod | null, deliveryLocation?: string | null, deliveryNotes?: string | null } | { __typename: 'QuoteRevisionServiceLineItem' }> } };
+export type CreateQuoteRevisionWithOptionalPriceMutation = { __typename?: 'Mutation', createQuoteRevision: { __typename?: 'QuoteRevision', id: string, quoteId: string, revisionNumber: number, status: RevisionStatus, hasUnpricedLineItems: boolean, lineItems: Array<{ __typename: 'QuoteRevisionRentalLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId?: string | null, rentalStartDate: any, rentalEndDate: any, sellersPriceId?: string | null, intakeFormSubmissionLineItemId?: string | null, deliveryMethod?: QuoteLineItemDeliveryMethod | null, deliveryLocation?: string | null, deliveryNotes?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'QuoteRevisionSaleLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId?: string | null, sellersPriceId?: string | null, intakeFormSubmissionLineItemId?: string | null, deliveryMethod?: QuoteLineItemDeliveryMethod | null, deliveryLocation?: string | null, deliveryNotes?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'QuoteRevisionServiceLineItem' }> } };
 
 export type CreateQuoteForIntakeTestsMutationVariables = Exact<{
   input: CreateQuoteInput;
@@ -7585,7 +9554,7 @@ export type UpdateQuoteRevisionForIntakeTestsMutationVariables = Exact<{
 }>;
 
 
-export type UpdateQuoteRevisionForIntakeTestsMutation = { __typename?: 'Mutation', updateQuoteRevision: { __typename?: 'QuoteRevision', id: string, quoteId: string, revisionNumber: number, status: RevisionStatus, lineItems: Array<{ __typename: 'QuoteRevisionRentalLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId: string, rentalStartDate: any, rentalEndDate: any, sellersPriceId?: string | null, intakeFormSubmissionLineItemId?: string | null, deliveryMethod?: QuoteLineItemDeliveryMethod | null, deliveryLocation?: string | null, deliveryNotes?: string | null } | { __typename: 'QuoteRevisionSaleLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId: string, sellersPriceId?: string | null, intakeFormSubmissionLineItemId?: string | null, deliveryMethod?: QuoteLineItemDeliveryMethod | null, deliveryLocation?: string | null, deliveryNotes?: string | null } | { __typename: 'QuoteRevisionServiceLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, sellersPriceId?: string | null, intakeFormSubmissionLineItemId?: string | null, deliveryMethod?: QuoteLineItemDeliveryMethod | null, deliveryLocation?: string | null, deliveryNotes?: string | null }> } };
+export type UpdateQuoteRevisionForIntakeTestsMutation = { __typename?: 'Mutation', updateQuoteRevision: { __typename?: 'QuoteRevision', id: string, quoteId: string, revisionNumber: number, status: RevisionStatus, lineItems: Array<{ __typename: 'QuoteRevisionRentalLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId?: string | null, rentalStartDate: any, rentalEndDate: any, sellersPriceId?: string | null, intakeFormSubmissionLineItemId?: string | null, deliveryMethod?: QuoteLineItemDeliveryMethod | null, deliveryLocation?: string | null, deliveryNotes?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'QuoteRevisionSaleLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId?: string | null, sellersPriceId?: string | null, intakeFormSubmissionLineItemId?: string | null, deliveryMethod?: QuoteLineItemDeliveryMethod | null, deliveryLocation?: string | null, deliveryNotes?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'QuoteRevisionServiceLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, sellersPriceId?: string | null, intakeFormSubmissionLineItemId?: string | null, deliveryMethod?: QuoteLineItemDeliveryMethod | null, deliveryLocation?: string | null, deliveryNotes?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null }> } };
 
 export type SendQuoteForIntakeTestsMutationVariables = Exact<{
   input: SendQuoteInput;
@@ -7599,14 +9568,14 @@ export type CreateRentalPriceForQuoteTestsMutationVariables = Exact<{
 }>;
 
 
-export type CreateRentalPriceForQuoteTestsMutation = { __typename?: 'Mutation', createRentalPrice?: { __typename?: 'RentalPrice', id: string, workspaceId: string, priceBookId?: string | null, pimCategoryId: string, pricePerDayInCents: number, pricePerWeekInCents: number, pricePerMonthInCents: number } | null };
+export type CreateRentalPriceForQuoteTestsMutation = { __typename?: 'Mutation', createRentalPrice?: { __typename?: 'RentalPrice', id: string, workspaceId: string, priceBookId?: string | null, pimCategoryId?: string | null, pricePerDayInCents: number, pricePerWeekInCents: number, pricePerMonthInCents: number } | null };
 
 export type CreateSalePriceForQuoteTestsMutationVariables = Exact<{
   input: CreateSalePriceInput;
 }>;
 
 
-export type CreateSalePriceForQuoteTestsMutation = { __typename?: 'Mutation', createSalePrice?: { __typename?: 'SalePrice', id: string, workspaceId: string, priceBookId?: string | null, pimCategoryId: string, unitCostInCents: number } | null };
+export type CreateSalePriceForQuoteTestsMutation = { __typename?: 'Mutation', createSalePrice?: { __typename?: 'SalePrice', id: string, workspaceId: string, priceBookId?: string | null, pimCategoryId?: string | null, unitCostInCents: number } | null };
 
 export type CreatePriceBookForQuoteTestsMutationVariables = Exact<{
   input: CreatePriceBookInput;
@@ -7662,28 +9631,35 @@ export type CreateQuoteRevisionMutationVariables = Exact<{
 }>;
 
 
-export type CreateQuoteRevisionMutation = { __typename?: 'Mutation', createQuoteRevision: { __typename?: 'QuoteRevision', id: string, quoteId: string, revisionNumber: number, status: RevisionStatus, validUntil?: any | null, createdAt: any, createdBy: string, updatedAt: any, updatedBy: string, lineItems: Array<{ __typename: 'QuoteRevisionRentalLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId: string, rentalStartDate: any, rentalEndDate: any, sellersPriceId?: string | null } | { __typename: 'QuoteRevisionSaleLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId: string, sellersPriceId?: string | null } | { __typename: 'QuoteRevisionServiceLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, sellersPriceId?: string | null }> } };
+export type CreateQuoteRevisionMutation = { __typename?: 'Mutation', createQuoteRevision: { __typename?: 'QuoteRevision', id: string, quoteId: string, revisionNumber: number, status: RevisionStatus, validUntil?: any | null, createdAt: any, createdBy: string, updatedAt: any, updatedBy: string, lineItems: Array<{ __typename: 'QuoteRevisionRentalLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId?: string | null, rentalStartDate: any, rentalEndDate: any, sellersPriceId?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'QuoteRevisionSaleLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId?: string | null, sellersPriceId?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'QuoteRevisionServiceLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, sellersPriceId?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null }> } };
 
 export type GetQuoteRevisionByIdQueryVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type GetQuoteRevisionByIdQuery = { __typename?: 'Query', quoteRevisionById?: { __typename?: 'QuoteRevision', id: string, quoteId: string, revisionNumber: number, status: RevisionStatus, validUntil?: any | null, updatedAt: any, updatedBy: string, lineItems: Array<{ __typename: 'QuoteRevisionRentalLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId: string, rentalStartDate: any, rentalEndDate: any, sellersPriceId?: string | null } | { __typename: 'QuoteRevisionSaleLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId: string, sellersPriceId?: string | null } | { __typename: 'QuoteRevisionServiceLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, sellersPriceId?: string | null }> } | null };
+export type GetQuoteRevisionByIdQuery = { __typename?: 'Query', quoteRevisionById?: { __typename?: 'QuoteRevision', id: string, quoteId: string, revisionNumber: number, status: RevisionStatus, validUntil?: any | null, updatedAt: any, updatedBy: string, lineItems: Array<{ __typename: 'QuoteRevisionRentalLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId?: string | null, rentalStartDate: any, rentalEndDate: any, sellersPriceId?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'QuoteRevisionSaleLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId?: string | null, sellersPriceId?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'QuoteRevisionServiceLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, sellersPriceId?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null }> } | null };
 
 export type CreateRentalPriceForTestsMutationVariables = Exact<{
   input: CreateRentalPriceInput;
 }>;
 
 
-export type CreateRentalPriceForTestsMutation = { __typename?: 'Mutation', createRentalPrice?: { __typename?: 'RentalPrice', id: string, workspaceId: string, priceBookId?: string | null, pimCategoryId: string, pricePerDayInCents: number, pricePerWeekInCents: number, pricePerMonthInCents: number } | null };
+export type CreateRentalPriceForTestsMutation = { __typename?: 'Mutation', createRentalPrice?: { __typename?: 'RentalPrice', id: string, workspaceId: string, priceBookId?: string | null, pimCategoryId?: string | null, pricePerDayInCents: number, pricePerWeekInCents: number, pricePerMonthInCents: number } | null };
 
 export type CreateSalePriceForTestsMutationVariables = Exact<{
   input: CreateSalePriceInput;
 }>;
 
 
-export type CreateSalePriceForTestsMutation = { __typename?: 'Mutation', createSalePrice?: { __typename?: 'SalePrice', id: string, workspaceId: string, priceBookId?: string | null, pimCategoryId: string, unitCostInCents: number } | null };
+export type CreateSalePriceForTestsMutation = { __typename?: 'Mutation', createSalePrice?: { __typename?: 'SalePrice', id: string, workspaceId: string, priceBookId?: string | null, pimCategoryId?: string | null, unitCostInCents: number } | null };
+
+export type CreateServicePriceForTestsMutationVariables = Exact<{
+  input: CreateServicePriceInput;
+}>;
+
+
+export type CreateServicePriceForTestsMutation = { __typename?: 'Mutation', createServicePrice?: { __typename?: 'ServicePrice', id: string, workspaceId: string, priceBookId?: string | null, catalogRef?: { __typename?: 'PriceCatalogRef', kind: CatalogProductKind, id: string } | null, pricingSpec?: { __typename?: 'PricingSpec', kind: PricingSpecKind, unitCode?: string | null, rateInCents?: number | null } | null } | null };
 
 export type CreatePimCategoryForTestsMutationVariables = Exact<{
   input: UpsertPimCategoryInput;
@@ -7725,7 +9701,7 @@ export type UpdateQuoteRevisionForTestsMutationVariables = Exact<{
 }>;
 
 
-export type UpdateQuoteRevisionForTestsMutation = { __typename?: 'Mutation', updateQuoteRevision: { __typename?: 'QuoteRevision', id: string, quoteId: string, revisionNumber: number, status: RevisionStatus, validUntil?: any | null, updatedAt: any, updatedBy: string, lineItems: Array<{ __typename: 'QuoteRevisionRentalLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId: string, rentalStartDate: any, rentalEndDate: any, sellersPriceId?: string | null } | { __typename: 'QuoteRevisionSaleLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId: string, sellersPriceId?: string | null } | { __typename: 'QuoteRevisionServiceLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, sellersPriceId?: string | null }> } };
+export type UpdateQuoteRevisionForTestsMutation = { __typename?: 'Mutation', updateQuoteRevision: { __typename?: 'QuoteRevision', id: string, quoteId: string, revisionNumber: number, status: RevisionStatus, validUntil?: any | null, updatedAt: any, updatedBy: string, lineItems: Array<{ __typename: 'QuoteRevisionRentalLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId?: string | null, rentalStartDate: any, rentalEndDate: any, sellersPriceId?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'QuoteRevisionSaleLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, pimCategoryId?: string | null, sellersPriceId?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'QuoteRevisionServiceLineItem', id?: string | null, description: string, quantity: number, subtotalInCents: number, type: QuoteLineItemType, sellersPriceId?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null }> } };
 
 export type SendQuoteForTestsMutationVariables = Exact<{
   input: SendQuoteInput;
@@ -7733,6 +9709,45 @@ export type SendQuoteForTestsMutationVariables = Exact<{
 
 
 export type SendQuoteForTestsMutation = { __typename?: 'Mutation', sendQuote: { __typename?: 'Quote', id: string, status: QuoteStatus, currentRevisionId?: string | null, validUntil?: any | null, updatedAt: any, updatedBy: string } };
+
+export type AcceptQuoteOfflineForTestsMutationVariables = Exact<{
+  input: AcceptQuoteInput;
+}>;
+
+
+export type AcceptQuoteOfflineForTestsMutation = { __typename?: 'Mutation', acceptQuote: { __typename?: 'AcceptQuoteResult', quote: { __typename?: 'Quote', id: string, status: QuoteStatus, approvalConfirmation?: string | null }, salesOrder: { __typename?: 'SalesOrder', id: string } } };
+
+export type QuoteRevisionStatusForTestsQueryVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type QuoteRevisionStatusForTestsQuery = { __typename?: 'Query', quoteRevisionById?: { __typename?: 'QuoteRevision', id: string, status: RevisionStatus } | null };
+
+export type ListServiceLineItemsForQuoteRevisionQueryVariables = Exact<{
+  workspaceId: Scalars['String']['input'];
+  quoteId: Scalars['String']['input'];
+  revisionId: Scalars['String']['input'];
+}>;
+
+
+export type ListServiceLineItemsForQuoteRevisionQuery = { __typename?: 'Query', listLineItems?: { __typename?: 'ListLineItemsResult', items: Array<{ __typename?: 'LineItem', id: string }> } | null };
+
+export type ListServiceLineItemsForSalesOrderQueryVariables = Exact<{
+  workspaceId: Scalars['String']['input'];
+  salesOrderId: Scalars['String']['input'];
+}>;
+
+
+export type ListServiceLineItemsForSalesOrderQuery = { __typename?: 'Query', listLineItems?: { __typename?: 'ListLineItemsResult', items: Array<{ __typename?: 'LineItem', id: string, type: LineItemType, sourceLineItemId?: string | null, rateInCentsSnapshot?: number | null, documentRef: { __typename?: 'LineItemDocumentRef', type: LineItemDocumentType, id: string }, timeWindow?: { __typename?: 'LineItemTimeWindow', startAt?: any | null } | null, targetSelectors?: Array<{ __typename?: 'LineItemTargetSelector', kind: LineItemTargetSelectorKind, targetLineItemIds?: Array<string> | null } | null> | null }> } | null };
+
+export type ListServiceFulfilmentsForLineItemQueryVariables = Exact<{
+  workspaceId: Scalars['ID']['input'];
+  salesOrderLineItemId: Scalars['ID']['input'];
+}>;
+
+
+export type ListServiceFulfilmentsForLineItemQuery = { __typename?: 'Query', listFulfilments?: { __typename?: 'ListFulfilmentsResult', items: Array<{ __typename: 'RentalFulfilment' } | { __typename: 'SaleFulfilment' } | { __typename: 'ServiceFulfilment', id: string, salesOrderType: FulfilmentType, salesOrderLineItemId: string, serviceDate?: any | null, unitCostInCents: number }> } | null };
 
 export type CreateReferenceNumberTemplateMutationVariables = Exact<{
   input: CreateReferenceNumberTemplateInput;
@@ -7863,21 +9878,21 @@ export type CreateRfqMutationVariables = Exact<{
 }>;
 
 
-export type CreateRfqMutation = { __typename?: 'Mutation', createRFQ: { __typename?: 'RFQ', id: string, buyersWorkspaceId: string, responseDeadline?: any | null, invitedSellerContactIds: Array<string>, status: RfqStatus, createdAt: any, updatedAt: any, createdBy: string, updatedBy: string, createdByUser?: { __typename?: 'User', id: string, email: string } | null, updatedByUser?: { __typename?: 'User', id: string, email: string } | null, lineItems: Array<{ __typename: 'RFQRentalLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType, pimCategoryId: string, rentalStartDate: any, rentalEndDate: any } | { __typename: 'RFQSaleLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType, pimCategoryId: string } | { __typename: 'RFQServiceLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType }> } };
+export type CreateRfqMutation = { __typename?: 'Mutation', createRFQ: { __typename?: 'RFQ', id: string, buyersWorkspaceId: string, responseDeadline?: any | null, invitedSellerContactIds: Array<string>, status: RfqStatus, createdAt: any, updatedAt: any, createdBy: string, updatedBy: string, createdByUser?: { __typename?: 'User', id: string, email: string } | null, updatedByUser?: { __typename?: 'User', id: string, email: string } | null, lineItems: Array<{ __typename: 'RFQRentalLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType, pimCategoryId?: string | null, rentalStartDate: any, rentalEndDate: any, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'RFQSaleLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType, pimCategoryId?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'RFQServiceLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null }> } };
 
 export type UpdateRfqMutationVariables = Exact<{
   input: UpdateRfqInput;
 }>;
 
 
-export type UpdateRfqMutation = { __typename?: 'Mutation', updateRFQ: { __typename?: 'RFQ', id: string, buyersWorkspaceId: string, responseDeadline?: any | null, invitedSellerContactIds: Array<string>, status: RfqStatus, updatedAt: any, updatedBy: string, lineItems: Array<{ __typename?: 'RFQRentalLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType, pimCategoryId: string, rentalStartDate: any, rentalEndDate: any } | { __typename?: 'RFQSaleLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType, pimCategoryId: string } | { __typename?: 'RFQServiceLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType }> } };
+export type UpdateRfqMutation = { __typename?: 'Mutation', updateRFQ: { __typename?: 'RFQ', id: string, buyersWorkspaceId: string, responseDeadline?: any | null, invitedSellerContactIds: Array<string>, status: RfqStatus, updatedAt: any, updatedBy: string, lineItems: Array<{ __typename?: 'RFQRentalLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType, pimCategoryId?: string | null, rentalStartDate: any, rentalEndDate: any, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename?: 'RFQSaleLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType, pimCategoryId?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename?: 'RFQServiceLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null }> } };
 
 export type GetRfqWithRelationshipsQueryVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type GetRfqWithRelationshipsQuery = { __typename?: 'Query', rfqById?: { __typename?: 'RFQ', id: string, buyersWorkspaceId: string, status: RfqStatus, invitedSellerContactIds: Array<string>, createdBy: string, updatedBy: string, createdByUser?: { __typename?: 'User', id: string, email: string } | null, updatedByUser?: { __typename?: 'User', id: string, email: string } | null, invitedSellerContacts?: Array<{ __typename?: 'BusinessContact', id: string, name: string, contactType: ContactType } | { __typename?: 'PersonContact', id: string, name: string, contactType: ContactType }> | null, lineItems: Array<{ __typename: 'RFQRentalLineItem', id?: string | null, description: string, pimCategoryId: string, rentalStartDate: any, rentalEndDate: any, pimCategory?: { __typename?: 'PimCategory', id: string, name: string } | null } | { __typename: 'RFQSaleLineItem' } | { __typename: 'RFQServiceLineItem' }> } | null };
+export type GetRfqWithRelationshipsQuery = { __typename?: 'Query', rfqById?: { __typename?: 'RFQ', id: string, buyersWorkspaceId: string, status: RfqStatus, invitedSellerContactIds: Array<string>, createdBy: string, updatedBy: string, createdByUser?: { __typename?: 'User', id: string, email: string } | null, updatedByUser?: { __typename?: 'User', id: string, email: string } | null, invitedSellerContacts?: Array<{ __typename?: 'BusinessContact', id: string, name: string, contactType: ContactType } | { __typename?: 'PersonContact', id: string, name: string, contactType: ContactType }> | null, lineItems: Array<{ __typename: 'RFQRentalLineItem', id?: string | null, description: string, pimCategoryId?: string | null, rentalStartDate: any, rentalEndDate: any, pimCategory?: { __typename?: 'PimCategory', id: string, name: string } | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'RFQSaleLineItem' } | { __typename: 'RFQServiceLineItem' }> } | null };
 
 export type ListRfQsQueryVariables = Exact<{
   filter: ListRfQsFilter;
@@ -7885,7 +9900,7 @@ export type ListRfQsQueryVariables = Exact<{
 }>;
 
 
-export type ListRfQsQuery = { __typename?: 'Query', listRFQs: { __typename?: 'ListRFQsResult', items: Array<{ __typename?: 'RFQ', id: string, buyersWorkspaceId: string, status: RfqStatus, invitedSellerContactIds: Array<string>, createdAt: any, updatedAt: any, createdBy: string, updatedBy: string, lineItems: Array<{ __typename: 'RFQRentalLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType, pimCategoryId: string, rentalStartDate: any, rentalEndDate: any } | { __typename: 'RFQSaleLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType, pimCategoryId: string } | { __typename: 'RFQServiceLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType }> }>, page: { __typename?: 'PaginationInfo', number: number, size: number, totalItems: number, totalPages: number } } };
+export type ListRfQsQuery = { __typename?: 'Query', listRFQs: { __typename?: 'ListRFQsResult', items: Array<{ __typename?: 'RFQ', id: string, buyersWorkspaceId: string, status: RfqStatus, invitedSellerContactIds: Array<string>, createdAt: any, updatedAt: any, createdBy: string, updatedBy: string, lineItems: Array<{ __typename: 'RFQRentalLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType, pimCategoryId?: string | null, rentalStartDate: any, rentalEndDate: any, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'RFQSaleLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType, pimCategoryId?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'RFQServiceLineItem', id?: string | null, description: string, quantity: number, type: QuoteLineItemType, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null }> }>, page: { __typename?: 'PaginationInfo', number: number, size: number, totalItems: number, totalPages: number } } };
 
 export type CreateQuoteLinkedToRfqMutationVariables = Exact<{
   input: CreateQuoteInput;
@@ -7927,7 +9942,7 @@ export type CreateQuoteRevisionForRfqTestMutationVariables = Exact<{
 }>;
 
 
-export type CreateQuoteRevisionForRfqTestMutation = { __typename?: 'Mutation', createQuoteRevision: { __typename?: 'QuoteRevision', id: string, quoteId: string, revisionNumber: number, status: RevisionStatus, lineItems: Array<{ __typename: 'QuoteRevisionRentalLineItem', id?: string | null, description: string, quantity: number, rentalStartDate: any, rentalEndDate: any } | { __typename: 'QuoteRevisionSaleLineItem' } | { __typename: 'QuoteRevisionServiceLineItem' }> } };
+export type CreateQuoteRevisionForRfqTestMutation = { __typename?: 'Mutation', createQuoteRevision: { __typename?: 'QuoteRevision', id: string, quoteId: string, revisionNumber: number, status: RevisionStatus, lineItems: Array<{ __typename: 'QuoteRevisionRentalLineItem', id?: string | null, description: string, quantity: number, rentalStartDate: any, rentalEndDate: any, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'QuoteRevisionSaleLineItem' } | { __typename: 'QuoteRevisionServiceLineItem' }> } };
 
 export type SendQuoteForRfqTestMutationVariables = Exact<{
   input: SendQuoteInput;
@@ -7969,7 +9984,7 @@ export type GetQuoteRevisionForAcceptanceTestQueryVariables = Exact<{
 }>;
 
 
-export type GetQuoteRevisionForAcceptanceTestQuery = { __typename?: 'Query', quoteRevisionById?: { __typename?: 'QuoteRevision', id: string, quoteId: string, revisionNumber: number, status: RevisionStatus, lineItems: Array<{ __typename: 'QuoteRevisionRentalLineItem', id?: string | null, description: string, quantity: number, pimCategoryId: string, rentalStartDate: any, rentalEndDate: any, sellersPriceId?: string | null } | { __typename: 'QuoteRevisionSaleLineItem' } | { __typename: 'QuoteRevisionServiceLineItem' }> } | null };
+export type GetQuoteRevisionForAcceptanceTestQuery = { __typename?: 'Query', quoteRevisionById?: { __typename?: 'QuoteRevision', id: string, quoteId: string, revisionNumber: number, status: RevisionStatus, lineItems: Array<{ __typename: 'QuoteRevisionRentalLineItem', id?: string | null, description: string, quantity: number, pimCategoryId?: string | null, rentalStartDate: any, rentalEndDate: any, sellersPriceId?: string | null, placeRef?: { __typename?: 'LineItemPlaceRef', kind: LineItemPlaceKind, id: string } | null } | { __typename: 'QuoteRevisionSaleLineItem' } | { __typename: 'QuoteRevisionServiceLineItem' }> } | null };
 
 export type CreateProjectForSalesOrderMutationVariables = Exact<{
   input?: InputMaybe<ProjectInput>;
@@ -8070,14 +10085,14 @@ export type CreateRentalPriceForSalesOrderMutationVariables = Exact<{
 }>;
 
 
-export type CreateRentalPriceForSalesOrderMutation = { __typename?: 'Mutation', createRentalPrice?: { __typename?: 'RentalPrice', id: string, name?: string | null, pimCategoryName: string, pricePerDayInCents: number, pricePerWeekInCents: number, pricePerMonthInCents: number } | null };
+export type CreateRentalPriceForSalesOrderMutation = { __typename?: 'Mutation', createRentalPrice?: { __typename?: 'RentalPrice', id: string, name?: string | null, pimCategoryName?: string | null, pricePerDayInCents: number, pricePerWeekInCents: number, pricePerMonthInCents: number } | null };
 
 export type CreateSalePriceForSalesOrderMutationVariables = Exact<{
   input: CreateSalePriceInput;
 }>;
 
 
-export type CreateSalePriceForSalesOrderMutation = { __typename?: 'Mutation', createSalePrice?: { __typename?: 'SalePrice', id: string, name?: string | null, pimCategoryName: string, unitCostInCents: number } | null };
+export type CreateSalePriceForSalesOrderMutation = { __typename?: 'Mutation', createSalePrice?: { __typename?: 'SalePrice', id: string, name?: string | null, pimCategoryName?: string | null, unitCostInCents: number } | null };
 
 export type CreatePimCategoryMutationVariables = Exact<{
   input: UpsertPimCategoryInput;
@@ -8205,6 +10220,76 @@ export type ClearSearchRecentsMutationVariables = Exact<{
 
 export type ClearSearchRecentsMutation = { __typename?: 'Mutation', clearSearchRecents: { __typename?: 'SearchUserState', id: string, userId: string, workspaceId: string, updatedAt: string, favorites: Array<{ __typename?: 'SearchUserStateFavorite', searchDocumentId: string, addedAt: string }>, recents: Array<{ __typename?: 'SearchUserStateRecent', searchDocumentId: string, accessedAt: string }> } };
 
+export type CreateCatalogProductMutationVariables = Exact<{
+  input: StudioCatalogCreateProductInput;
+}>;
+
+
+export type CreateCatalogProductMutation = { __typename?: 'Mutation', studioCatalogCreateProduct: { __typename?: 'StudioCatalogCreateProductResult', product: { __typename?: 'StudioCatalogProductSummary', id: string, path: string } } };
+
+export type CreateLineItemMutationVariables = Exact<{
+  input: LineItemInput;
+}>;
+
+
+export type CreateLineItemMutation = { __typename?: 'Mutation', createLineItem: { __typename?: 'LineItem', id: string } };
+
+export type ComputeEnvelopeQueryVariables = Exact<{
+  serviceLineItemId: Scalars['String']['input'];
+}>;
+
+
+export type ComputeEnvelopeQuery = { __typename?: 'Query', computeServiceRequirementEnvelope: { __typename?: 'ServiceRequirementEnvelope', targetLineItemIds: Array<string>, targetLineItemCount: number, targetQuantity?: number | null, warnings: Array<string>, totalWeight?: { __typename?: 'ServiceRequirementMeasurement', value: number, unitCode: string } | null, maxItemWeight?: { __typename?: 'ServiceRequirementMeasurement', value: number, unitCode: string } | null, maxLength?: { __typename?: 'ServiceRequirementMeasurement', value: number, unitCode: string } | null, maxWidth?: { __typename?: 'ServiceRequirementMeasurement', value: number, unitCode: string } | null, maxHeight?: { __typename?: 'ServiceRequirementMeasurement', value: number, unitCode: string } | null, missingTargets: Array<{ __typename?: 'ServiceRequirementMissingTarget', targetLineItemId: string, reason: string, missingAttributeKeys: Array<string> }> } };
+
+export type CreateLineItemWithScopeMutationVariables = Exact<{
+  input: LineItemInput;
+}>;
+
+
+export type CreateLineItemWithScopeMutation = { __typename?: 'Mutation', createLineItem: { __typename?: 'LineItem', id: string, type: LineItemType, rateInCentsSnapshot?: number | null, documentRef: { __typename?: 'LineItemDocumentRef', type: LineItemDocumentType, id: string }, scopeTasks?: Array<{ __typename?: 'ServiceScopeTask', id: string, title: string, activityTagIds: Array<string>, contextTagIds?: Array<string> | null, notes?: string | null } | null> | null, timeWindow?: { __typename?: 'LineItemTimeWindow', startAt?: any | null } | null } };
+
+export type CreateServiceFulfilmentFromLineItemMutationVariables = Exact<{
+  input: CreateServiceFulfilmentFromLineItemInput;
+}>;
+
+
+export type CreateServiceFulfilmentFromLineItemMutation = { __typename?: 'Mutation', createServiceFulfilmentFromLineItem?: { __typename?: 'ServiceFulfilment', id: string, salesOrderType: FulfilmentType, salesOrderLineItemId: string, serviceDate?: any | null, tasks?: Array<{ __typename?: 'ServiceFulfilmentTask', id: string, status: ServiceFulfilmentTaskStatus, completedAt?: any | null, completedBy?: string | null } | null> | null } | null };
+
+export type UpdateServiceFulfilmentTaskStatusMutationVariables = Exact<{
+  input: UpdateServiceFulfilmentTaskStatusInput;
+}>;
+
+
+export type UpdateServiceFulfilmentTaskStatusMutation = { __typename?: 'Mutation', updateServiceFulfilmentTaskStatus?: { __typename?: 'ServiceFulfilment', id: string, salesOrderType: FulfilmentType, tasks?: Array<{ __typename?: 'ServiceFulfilmentTask', id: string, status: ServiceFulfilmentTaskStatus, completedAt?: any | null, completedBy?: string | null } | null> | null } | null };
+
+export type CreateLineItemInvalidScopeMutationVariables = Exact<{
+  input: LineItemInput;
+}>;
+
+
+export type CreateLineItemInvalidScopeMutation = { __typename?: 'Mutation', createLineItem: { __typename?: 'LineItem', id: string } };
+
+export type EnsureLogisticsProductsMutationVariables = Exact<{
+  input: StudioCatalogEnsureLogisticsServiceProductsInput;
+}>;
+
+
+export type EnsureLogisticsProductsMutation = { __typename?: 'Mutation', studioCatalogEnsureLogisticsServiceProducts: { __typename?: 'StudioCatalogEnsureLogisticsServiceProductsResult', catalogPath: string, products: Array<{ __typename?: 'StudioCatalogSeededProduct', status: StudioCatalogSeedStatus, product: { __typename?: 'StudioCatalogProductSummary', id: string, name: string, path: string, kind?: StudioCatalogProductKind | null, origin: StudioCatalogProductOrigin } }> } };
+
+export type CreateCatalogProductWithTasksMutationVariables = Exact<{
+  input: StudioCatalogCreateProductInput;
+}>;
+
+
+export type CreateCatalogProductWithTasksMutation = { __typename?: 'Mutation', studioCatalogCreateProduct: { __typename?: 'StudioCatalogCreateProductResult', catalogPath: string, product: { __typename?: 'StudioCatalogProductSummary', id: string, name: string, path: string, kind?: StudioCatalogProductKind | null } } };
+
+export type CreateCatalogProductInvalidMutationVariables = Exact<{
+  input: StudioCatalogCreateProductInput;
+}>;
+
+
+export type CreateCatalogProductInvalidMutation = { __typename?: 'Mutation', studioCatalogCreateProduct: { __typename?: 'StudioCatalogCreateProductResult', catalogPath: string, product: { __typename?: 'StudioCatalogProductSummary', id: string, kind?: StudioCatalogProductKind | null } } };
+
 export type UtilCreatePimCategoryMutationVariables = Exact<{
   input: UpsertPimCategoryInput;
 }>;
@@ -8234,14 +10319,14 @@ export type UpdateRentalPriceMutationVariables = Exact<{
 }>;
 
 
-export type UpdateRentalPriceMutation = { __typename?: 'Mutation', updateRentalPrice?: { __typename?: 'RentalPrice', id: string, name?: string | null, pricePerDayInCents: number, pricePerWeekInCents: number, pricePerMonthInCents: number, pimProductId?: string | null, pimCategoryId: string, pimCategoryName: string, pimCategoryPath: string, updatedAt: any } | null };
+export type UpdateRentalPriceMutation = { __typename?: 'Mutation', updateRentalPrice?: { __typename?: 'RentalPrice', id: string, name?: string | null, pricePerDayInCents: number, pricePerWeekInCents: number, pricePerMonthInCents: number, pimProductId?: string | null, pimCategoryId?: string | null, pimCategoryName?: string | null, pimCategoryPath?: string | null, updatedAt: any } | null };
 
 export type UpdateSalePriceMutationVariables = Exact<{
   input: UpdateSalePriceInput;
 }>;
 
 
-export type UpdateSalePriceMutation = { __typename?: 'Mutation', updateSalePrice?: { __typename?: 'SalePrice', id: string, name?: string | null, unitCostInCents: number, discounts?: any | null, pimProductId?: string | null, pimCategoryId: string, pimCategoryName: string, pimCategoryPath: string, updatedAt: any } | null };
+export type UpdateSalePriceMutation = { __typename?: 'Mutation', updateSalePrice?: { __typename?: 'SalePrice', id: string, name?: string | null, unitCostInCents: number, discounts?: any | null, pimProductId?: string | null, pimCategoryId?: string | null, pimCategoryName?: string | null, pimCategoryPath?: string | null, updatedAt: any } | null };
 
 export type UpsertTestUserMutationVariables = Exact<{
   id: Scalars['String']['input'];
@@ -8618,32 +10703,45 @@ export type AcceptQuoteResultFieldPolicy = {
 	quote?: FieldPolicy<any> | FieldReadFunction<any>,
 	salesOrder?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type AdminMutationNamespaceKeySpecifier = ('assignRolesToUser' | 'collectionSnapshot' | 'createGlobalAttributeType' | 'createGlobalAttributeValue' | 'createGlobalUnitDefinition' | 'deleteRelationship' | 'removeRolesFromUser' | 'sendTemplatedEmail' | 'sendTestEmail' | 'updateGlobalAttributeType' | 'updateGlobalAttributeValue' | 'updateGlobalUnitDefinition' | 'writeRelationship' | AdminMutationNamespaceKeySpecifier)[];
+export type AdminMutationNamespaceKeySpecifier = ('assignRolesToUser' | 'collectionSnapshot' | 'createGlobalAttributeType' | 'createGlobalAttributeValue' | 'createGlobalTag' | 'createGlobalTagRelation' | 'createGlobalUnitDefinition' | 'deleteRelationship' | 'mergeGlobalTag' | 'promoteWorkspaceAttributeTypeToGlobal' | 'promoteWorkspaceAttributeTypesToGlobal' | 'promoteWorkspaceAttributeValueToGlobal' | 'promoteWorkspaceAttributeValuesToGlobal' | 'promoteWorkspaceTagToGlobal' | 'promoteWorkspaceUnitDefinitionToGlobal' | 'removeRolesFromUser' | 'sendTemplatedEmail' | 'sendTestEmail' | 'updateGlobalAttributeType' | 'updateGlobalAttributeValue' | 'updateGlobalTag' | 'updateGlobalUnitDefinition' | 'writeRelationship' | AdminMutationNamespaceKeySpecifier)[];
 export type AdminMutationNamespaceFieldPolicy = {
 	assignRolesToUser?: FieldPolicy<any> | FieldReadFunction<any>,
 	collectionSnapshot?: FieldPolicy<any> | FieldReadFunction<any>,
 	createGlobalAttributeType?: FieldPolicy<any> | FieldReadFunction<any>,
 	createGlobalAttributeValue?: FieldPolicy<any> | FieldReadFunction<any>,
+	createGlobalTag?: FieldPolicy<any> | FieldReadFunction<any>,
+	createGlobalTagRelation?: FieldPolicy<any> | FieldReadFunction<any>,
 	createGlobalUnitDefinition?: FieldPolicy<any> | FieldReadFunction<any>,
 	deleteRelationship?: FieldPolicy<any> | FieldReadFunction<any>,
+	mergeGlobalTag?: FieldPolicy<any> | FieldReadFunction<any>,
+	promoteWorkspaceAttributeTypeToGlobal?: FieldPolicy<any> | FieldReadFunction<any>,
+	promoteWorkspaceAttributeTypesToGlobal?: FieldPolicy<any> | FieldReadFunction<any>,
+	promoteWorkspaceAttributeValueToGlobal?: FieldPolicy<any> | FieldReadFunction<any>,
+	promoteWorkspaceAttributeValuesToGlobal?: FieldPolicy<any> | FieldReadFunction<any>,
+	promoteWorkspaceTagToGlobal?: FieldPolicy<any> | FieldReadFunction<any>,
+	promoteWorkspaceUnitDefinitionToGlobal?: FieldPolicy<any> | FieldReadFunction<any>,
 	removeRolesFromUser?: FieldPolicy<any> | FieldReadFunction<any>,
 	sendTemplatedEmail?: FieldPolicy<any> | FieldReadFunction<any>,
 	sendTestEmail?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateGlobalAttributeType?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateGlobalAttributeValue?: FieldPolicy<any> | FieldReadFunction<any>,
+	updateGlobalTag?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateGlobalUnitDefinition?: FieldPolicy<any> | FieldReadFunction<any>,
 	writeRelationship?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type AdminQueryNamespaceKeySpecifier = ('getGlobalAttributeTypeById' | 'getGlobalAttributeValueById' | 'getGlobalUnitDefinitionByCode' | 'getUserById' | 'getUserRoles' | 'listAvailableRelations' | 'listGlobalAttributeTypes' | 'listGlobalAttributeValues' | 'listGlobalUnitDefinitions' | 'listRelationships' | 'listResourceTypes' | 'listRoles' | 'previewEmailTemplate' | 'rawZedSchema' | 'searchUsers' | 'sendGridEmailActivity' | 'sendGridEmailDetails' | AdminQueryNamespaceKeySpecifier)[];
+export type AdminQueryNamespaceKeySpecifier = ('getGlobalAttributeTypeById' | 'getGlobalAttributeValueById' | 'getGlobalTagById' | 'getGlobalUnitDefinitionByCode' | 'getUserById' | 'getUserRoles' | 'listAvailableRelations' | 'listGlobalAttributeTypes' | 'listGlobalAttributeValues' | 'listGlobalTagRelations' | 'listGlobalTags' | 'listGlobalUnitDefinitions' | 'listRelationships' | 'listResourceTypes' | 'listRoles' | 'previewEmailTemplate' | 'rawZedSchema' | 'searchUsers' | 'sendGridEmailActivity' | 'sendGridEmailDetails' | AdminQueryNamespaceKeySpecifier)[];
 export type AdminQueryNamespaceFieldPolicy = {
 	getGlobalAttributeTypeById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getGlobalAttributeValueById?: FieldPolicy<any> | FieldReadFunction<any>,
+	getGlobalTagById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getGlobalUnitDefinitionByCode?: FieldPolicy<any> | FieldReadFunction<any>,
 	getUserById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getUserRoles?: FieldPolicy<any> | FieldReadFunction<any>,
 	listAvailableRelations?: FieldPolicy<any> | FieldReadFunction<any>,
 	listGlobalAttributeTypes?: FieldPolicy<any> | FieldReadFunction<any>,
 	listGlobalAttributeValues?: FieldPolicy<any> | FieldReadFunction<any>,
+	listGlobalTagRelations?: FieldPolicy<any> | FieldReadFunction<any>,
+	listGlobalTags?: FieldPolicy<any> | FieldReadFunction<any>,
 	listGlobalUnitDefinitions?: FieldPolicy<any> | FieldReadFunction<any>,
 	listRelationships?: FieldPolicy<any> | FieldReadFunction<any>,
 	listResourceTypes?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9216,6 +11314,51 @@ export type GlobalAttributeValueListResultFieldPolicy = {
 	items?: FieldPolicy<any> | FieldReadFunction<any>,
 	page?: FieldPolicy<any> | FieldReadFunction<any>
 };
+export type GlobalTagKeySpecifier = ('auditStatus' | 'createdAt' | 'createdBy' | 'displayName' | 'id' | 'label' | 'mergedIntoId' | 'notes' | 'pos' | 'source' | 'status' | 'synonyms' | 'updatedAt' | 'updatedBy' | GlobalTagKeySpecifier)[];
+export type GlobalTagFieldPolicy = {
+	auditStatus?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	displayName?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	label?: FieldPolicy<any> | FieldReadFunction<any>,
+	mergedIntoId?: FieldPolicy<any> | FieldReadFunction<any>,
+	notes?: FieldPolicy<any> | FieldReadFunction<any>,
+	pos?: FieldPolicy<any> | FieldReadFunction<any>,
+	source?: FieldPolicy<any> | FieldReadFunction<any>,
+	status?: FieldPolicy<any> | FieldReadFunction<any>,
+	synonyms?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedBy?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type GlobalTagIngestionResultKeySpecifier = ('parsed' | 'tag' | GlobalTagIngestionResultKeySpecifier)[];
+export type GlobalTagIngestionResultFieldPolicy = {
+	parsed?: FieldPolicy<any> | FieldReadFunction<any>,
+	tag?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type GlobalTagListResultKeySpecifier = ('items' | 'page' | GlobalTagListResultKeySpecifier)[];
+export type GlobalTagListResultFieldPolicy = {
+	items?: FieldPolicy<any> | FieldReadFunction<any>,
+	page?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type GlobalTagRelationKeySpecifier = ('confidence' | 'createdAt' | 'createdBy' | 'fromTagId' | 'id' | 'relationType' | 'source' | 'toTagId' | 'updatedAt' | 'updatedBy' | GlobalTagRelationKeySpecifier)[];
+export type GlobalTagRelationFieldPolicy = {
+	confidence?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	fromTagId?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	relationType?: FieldPolicy<any> | FieldReadFunction<any>,
+	source?: FieldPolicy<any> | FieldReadFunction<any>,
+	toTagId?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedBy?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type GlobalTagRelationListResultKeySpecifier = ('items' | 'page' | GlobalTagRelationListResultKeySpecifier)[];
+export type GlobalTagRelationListResultFieldPolicy = {
+	items?: FieldPolicy<any> | FieldReadFunction<any>,
+	page?: FieldPolicy<any> | FieldReadFunction<any>
+};
 export type GlobalUnitDefinitionKeySpecifier = ('canonicalUnitCode' | 'code' | 'createdAt' | 'createdBy' | 'dimension' | 'id' | 'name' | 'offset' | 'status' | 'toCanonicalFactor' | 'updatedAt' | 'updatedBy' | GlobalUnitDefinitionKeySpecifier)[];
 export type GlobalUnitDefinitionFieldPolicy = {
 	canonicalUnitCode?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9458,12 +11601,110 @@ export type InvoicesResponseKeySpecifier = ('items' | InvoicesResponseKeySpecifi
 export type InvoicesResponseFieldPolicy = {
 	items?: FieldPolicy<any> | FieldReadFunction<any>
 };
+export type LineItemKeySpecifier = ('constraints' | 'createdAt' | 'customPriceName' | 'delivery' | 'deliveryChargeInCents' | 'description' | 'documentRef' | 'id' | 'inputs' | 'notes' | 'placeRef' | 'pricingRef' | 'pricingSpecSnapshot' | 'productRef' | 'quantity' | 'rateInCentsSnapshot' | 'scopeTasks' | 'sourceLineItemId' | 'state' | 'subtotalInCents' | 'targetSelectors' | 'timeWindow' | 'type' | 'unitCode' | 'updatedAt' | 'workspaceId' | LineItemKeySpecifier)[];
+export type LineItemFieldPolicy = {
+	constraints?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	customPriceName?: FieldPolicy<any> | FieldReadFunction<any>,
+	delivery?: FieldPolicy<any> | FieldReadFunction<any>,
+	deliveryChargeInCents?: FieldPolicy<any> | FieldReadFunction<any>,
+	description?: FieldPolicy<any> | FieldReadFunction<any>,
+	documentRef?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	inputs?: FieldPolicy<any> | FieldReadFunction<any>,
+	notes?: FieldPolicy<any> | FieldReadFunction<any>,
+	placeRef?: FieldPolicy<any> | FieldReadFunction<any>,
+	pricingRef?: FieldPolicy<any> | FieldReadFunction<any>,
+	pricingSpecSnapshot?: FieldPolicy<any> | FieldReadFunction<any>,
+	productRef?: FieldPolicy<any> | FieldReadFunction<any>,
+	quantity?: FieldPolicy<any> | FieldReadFunction<any>,
+	rateInCentsSnapshot?: FieldPolicy<any> | FieldReadFunction<any>,
+	scopeTasks?: FieldPolicy<any> | FieldReadFunction<any>,
+	sourceLineItemId?: FieldPolicy<any> | FieldReadFunction<any>,
+	state?: FieldPolicy<any> | FieldReadFunction<any>,
+	subtotalInCents?: FieldPolicy<any> | FieldReadFunction<any>,
+	targetSelectors?: FieldPolicy<any> | FieldReadFunction<any>,
+	timeWindow?: FieldPolicy<any> | FieldReadFunction<any>,
+	type?: FieldPolicy<any> | FieldReadFunction<any>,
+	unitCode?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	workspaceId?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type LineItemConstraintKeySpecifier = ('data' | 'kind' | 'strength' | LineItemConstraintKeySpecifier)[];
+export type LineItemConstraintFieldPolicy = {
+	data?: FieldPolicy<any> | FieldReadFunction<any>,
+	kind?: FieldPolicy<any> | FieldReadFunction<any>,
+	strength?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type LineItemConstraintAttributeKeySpecifier = ('attributeTypeId' | 'contextTags' | 'op' | 'unitCode' | 'value' | LineItemConstraintAttributeKeySpecifier)[];
+export type LineItemConstraintAttributeFieldPolicy = {
+	attributeTypeId?: FieldPolicy<any> | FieldReadFunction<any>,
+	contextTags?: FieldPolicy<any> | FieldReadFunction<any>,
+	op?: FieldPolicy<any> | FieldReadFunction<any>,
+	unitCode?: FieldPolicy<any> | FieldReadFunction<any>,
+	value?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type LineItemConstraintBrandKeySpecifier = ('brandId' | 'manufacturerId' | LineItemConstraintBrandKeySpecifier)[];
+export type LineItemConstraintBrandFieldPolicy = {
+	brandId?: FieldPolicy<any> | FieldReadFunction<any>,
+	manufacturerId?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type LineItemConstraintDataKeySpecifier = ('attribute' | 'brand' | 'location' | 'other' | 'schedule' | 'tag' | LineItemConstraintDataKeySpecifier)[];
+export type LineItemConstraintDataFieldPolicy = {
+	attribute?: FieldPolicy<any> | FieldReadFunction<any>,
+	brand?: FieldPolicy<any> | FieldReadFunction<any>,
+	location?: FieldPolicy<any> | FieldReadFunction<any>,
+	other?: FieldPolicy<any> | FieldReadFunction<any>,
+	schedule?: FieldPolicy<any> | FieldReadFunction<any>,
+	tag?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type LineItemConstraintLocationKeySpecifier = ('placeRef' | LineItemConstraintLocationKeySpecifier)[];
+export type LineItemConstraintLocationFieldPolicy = {
+	placeRef?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type LineItemConstraintOtherKeySpecifier = ('note' | LineItemConstraintOtherKeySpecifier)[];
+export type LineItemConstraintOtherFieldPolicy = {
+	note?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type LineItemConstraintScheduleKeySpecifier = ('endAt' | 'startAt' | LineItemConstraintScheduleKeySpecifier)[];
+export type LineItemConstraintScheduleFieldPolicy = {
+	endAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	startAt?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type LineItemConstraintTagKeySpecifier = ('tagIds' | LineItemConstraintTagKeySpecifier)[];
+export type LineItemConstraintTagFieldPolicy = {
+	tagIds?: FieldPolicy<any> | FieldReadFunction<any>
+};
 export type LineItemCostOptionDetailsKeySpecifier = ('exactSplitDistribution' | 'optimalSplit' | 'plainText' | 'rates' | LineItemCostOptionDetailsKeySpecifier)[];
 export type LineItemCostOptionDetailsFieldPolicy = {
 	exactSplitDistribution?: FieldPolicy<any> | FieldReadFunction<any>,
 	optimalSplit?: FieldPolicy<any> | FieldReadFunction<any>,
 	plainText?: FieldPolicy<any> | FieldReadFunction<any>,
 	rates?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type LineItemDeliveryKeySpecifier = ('location' | 'method' | 'notes' | LineItemDeliveryKeySpecifier)[];
+export type LineItemDeliveryFieldPolicy = {
+	location?: FieldPolicy<any> | FieldReadFunction<any>,
+	method?: FieldPolicy<any> | FieldReadFunction<any>,
+	notes?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type LineItemDocumentRefKeySpecifier = ('id' | 'revisionId' | 'type' | LineItemDocumentRefKeySpecifier)[];
+export type LineItemDocumentRefFieldPolicy = {
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	revisionId?: FieldPolicy<any> | FieldReadFunction<any>,
+	type?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type LineItemInputValueKeySpecifier = ('attributeTypeId' | 'contextTags' | 'unitCode' | 'value' | LineItemInputValueKeySpecifier)[];
+export type LineItemInputValueFieldPolicy = {
+	attributeTypeId?: FieldPolicy<any> | FieldReadFunction<any>,
+	contextTags?: FieldPolicy<any> | FieldReadFunction<any>,
+	unitCode?: FieldPolicy<any> | FieldReadFunction<any>,
+	value?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type LineItemPlaceRefKeySpecifier = ('id' | 'kind' | LineItemPlaceRefKeySpecifier)[];
+export type LineItemPlaceRefFieldPolicy = {
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	kind?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type LineItemPriceForecastKeySpecifier = ('accumulative_cost_in_cents' | 'days' | LineItemPriceForecastKeySpecifier)[];
 export type LineItemPriceForecastFieldPolicy = {
@@ -9488,11 +11729,34 @@ export type LineItemPricingFieldPolicy = {
 	pricePer7DaysInCents?: FieldPolicy<any> | FieldReadFunction<any>,
 	pricePer28DaysInCents?: FieldPolicy<any> | FieldReadFunction<any>
 };
+export type LineItemPricingRefKeySpecifier = ('priceBookId' | 'priceId' | 'priceType' | LineItemPricingRefKeySpecifier)[];
+export type LineItemPricingRefFieldPolicy = {
+	priceBookId?: FieldPolicy<any> | FieldReadFunction<any>,
+	priceId?: FieldPolicy<any> | FieldReadFunction<any>,
+	priceType?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type LineItemProductRefKeySpecifier = ('kind' | 'productId' | LineItemProductRefKeySpecifier)[];
+export type LineItemProductRefFieldPolicy = {
+	kind?: FieldPolicy<any> | FieldReadFunction<any>,
+	productId?: FieldPolicy<any> | FieldReadFunction<any>
+};
 export type LineItemRentalPeriodKeySpecifier = ('days1' | 'days7' | 'days28' | LineItemRentalPeriodKeySpecifier)[];
 export type LineItemRentalPeriodFieldPolicy = {
 	days1?: FieldPolicy<any> | FieldReadFunction<any>,
 	days7?: FieldPolicy<any> | FieldReadFunction<any>,
 	days28?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type LineItemTargetSelectorKeySpecifier = ('kind' | 'tagIds' | 'targetLineItemIds' | 'targetProductId' | LineItemTargetSelectorKeySpecifier)[];
+export type LineItemTargetSelectorFieldPolicy = {
+	kind?: FieldPolicy<any> | FieldReadFunction<any>,
+	tagIds?: FieldPolicy<any> | FieldReadFunction<any>,
+	targetLineItemIds?: FieldPolicy<any> | FieldReadFunction<any>,
+	targetProductId?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type LineItemTimeWindowKeySpecifier = ('endAt' | 'startAt' | LineItemTimeWindowKeySpecifier)[];
+export type LineItemTimeWindowFieldPolicy = {
+	endAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	startAt?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type ListAssetsResultKeySpecifier = ('items' | 'page' | ListAssetsResultKeySpecifier)[];
 export type ListAssetsResultFieldPolicy = {
@@ -9506,6 +11770,11 @@ export type ListContactsResultFieldPolicy = {
 };
 export type ListFulfilmentsResultKeySpecifier = ('items' | 'page' | ListFulfilmentsResultKeySpecifier)[];
 export type ListFulfilmentsResultFieldPolicy = {
+	items?: FieldPolicy<any> | FieldReadFunction<any>,
+	page?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ListLineItemsResultKeySpecifier = ('items' | 'page' | ListLineItemsResultKeySpecifier)[];
+export type ListLineItemsResultFieldPolicy = {
 	items?: FieldPolicy<any> | FieldReadFunction<any>,
 	page?: FieldPolicy<any> | FieldReadFunction<any>
 };
@@ -9583,12 +11852,13 @@ export type LlmFieldPolicy = {
 	exampleTicket?: FieldPolicy<any> | FieldReadFunction<any>,
 	suggestTaxObligations?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type MutationKeySpecifier = ('acceptQuote' | 'addFileToEntity' | 'addInvoiceCharges' | 'addSearchRecent' | 'addTaxLineItem' | 'admin' | 'adoptOrphanedSubmissions' | 'archiveWorkspace' | 'assignInventoryToRentalFulfilment' | 'bulkMarkInventoryReceived' | 'cancelInvoice' | 'clearInvoiceTaxes' | 'clearSearchRecents' | 'createAssetSchedule' | 'createBusinessContact' | 'createCharge' | 'createFulfilmentReservation' | 'createGlobalAttributeRelation' | 'createGlobalAttributeType' | 'createGlobalAttributeValue' | 'createGlobalUnitDefinition' | 'createIntakeForm' | 'createIntakeFormSubmission' | 'createIntakeFormSubmissionLineItem' | 'createInventory' | 'createInvoice' | 'createNote' | 'createPdfFromPageAndAttachToEntityId' | 'createPersonContact' | 'createPriceBook' | 'createProject' | 'createPurchaseOrder' | 'createQuote' | 'createQuoteFromIntakeFormSubmission' | 'createQuoteRevision' | 'createRFQ' | 'createReferenceNumberTemplate' | 'createRentalFulfilment' | 'createRentalPrice' | 'createRentalPurchaseOrderLineItem' | 'createRentalSalesOrderLineItem' | 'createResourceMapTag' | 'createSaleFulfilment' | 'createSalePrice' | 'createSalePurchaseOrderLineItem' | 'createSaleSalesOrderLineItem' | 'createSalesOrder' | 'createServiceFulfilment' | 'createTransaction' | 'createWorkflowConfiguration' | 'createWorkspace' | 'deleteContactById' | 'deleteFulfilment' | 'deleteIntakeForm' | 'deleteIntakeFormSubmissionLineItem' | 'deleteInventory' | 'deleteInvoice' | 'deleteNote' | 'deletePriceBookById' | 'deletePriceById' | 'deleteProject' | 'deleteReferenceNumberTemplate' | 'deleteResourceMapTag' | 'deleteWorkflowConfigurationById' | 'exportPrices' | 'generateReferenceNumber' | 'getSignedReadUrl' | 'importPrices' | 'ingestGlobalAttributeString' | 'inviteUserToWorkspace' | 'joinWorkspace' | 'markInvoiceAsPaid' | 'markInvoiceAsSent' | 'refreshBrand' | 'rejectQuote' | 'removeFileFromEntity' | 'removeSearchRecent' | 'removeTaxLineItem' | 'removeUserFromWorkspace' | 'renameFile' | 'resetSequenceNumber' | 'runNightlyRentalChargesJob' | 'runNightlyRentalChargesJobAsync' | 'sendQuote' | 'setExpectedRentalEndDate' | 'setFulfilmentPurchaseOrderLineItemId' | 'setIntakeFormActive' | 'setInvoiceTax' | 'setRentalEndDate' | 'setRentalStartDate' | 'softDeletePurchaseOrder' | 'softDeletePurchaseOrderLineItem' | 'softDeleteSalesOrder' | 'softDeleteSalesOrderLineItem' | 'submitIntakeFormSubmission' | 'submitPurchaseOrder' | 'submitSalesOrder' | 'syncCurrentUser' | 'toggleSearchFavorite' | 'touchAllContacts' | 'unarchiveWorkspace' | 'unassignInventoryFromRentalFulfilment' | 'updateBusinessAddress' | 'updateBusinessBrandId' | 'updateBusinessContact' | 'updateBusinessName' | 'updateBusinessPhone' | 'updateBusinessTaxId' | 'updateBusinessWebsite' | 'updateFulfilmentAssignee' | 'updateFulfilmentColumn' | 'updateGlobalAttributeType' | 'updateGlobalAttributeValue' | 'updateGlobalUnitDefinition' | 'updateIntakeForm' | 'updateIntakeFormSubmission' | 'updateIntakeFormSubmissionLineItem' | 'updateInventoryActualReturnDate' | 'updateInventoryExpectedReturnDate' | 'updateInventorySerialisedId' | 'updateNote' | 'updatePersonBusiness' | 'updatePersonContact' | 'updatePersonEmail' | 'updatePersonName' | 'updatePersonPhone' | 'updatePersonResourceMap' | 'updatePriceBook' | 'updateProject' | 'updateProjectCode' | 'updateProjectContacts' | 'updateProjectDescription' | 'updateProjectName' | 'updateProjectParentProject' | 'updateProjectScopeOfWork' | 'updateProjectStatus' | 'updatePurchaseOrder' | 'updatePurchaseOrderLineItem' | 'updateQuote' | 'updateQuoteRevision' | 'updateQuoteStatus' | 'updateRFQ' | 'updateReferenceNumberTemplate' | 'updateRentalPrice' | 'updateRentalPurchaseOrderLineItem' | 'updateRentalSalesOrderLineItem' | 'updateResourceMapTag' | 'updateSalePrice' | 'updateSalePurchaseOrderLineItem' | 'updateSaleSalesOrderLineItem' | 'updateSalesOrder' | 'updateSalesOrderLineItem' | 'updateTaxLineItem' | 'updateWorkflowConfiguration' | 'updateWorkspaceAccessType' | 'updateWorkspaceSettings' | 'updateWorkspaceUserRoles' | 'upsertPimCategory' | 'upsertUser' | MutationKeySpecifier)[];
+export type MutationKeySpecifier = ('acceptQuote' | 'addFileToEntity' | 'addInvoiceCharges' | 'addSearchRecent' | 'addStudioConversationMessage' | 'addTaxLineItem' | 'admin' | 'adoptOrphanedSubmissions' | 'archiveWorkspace' | 'assignInventoryToRentalFulfilment' | 'bulkMarkInventoryReceived' | 'cancelInvoice' | 'clearInvoiceTaxes' | 'clearSearchRecents' | 'createAssetSchedule' | 'createBusinessContact' | 'createCharge' | 'createFulfilmentReservation' | 'createGlobalAttributeRelation' | 'createGlobalAttributeType' | 'createGlobalAttributeValue' | 'createGlobalTag' | 'createGlobalTagRelation' | 'createGlobalUnitDefinition' | 'createIntakeForm' | 'createIntakeFormSubmission' | 'createIntakeFormSubmissionLineItem' | 'createInventory' | 'createInvoice' | 'createLineItem' | 'createNote' | 'createPdfFromPageAndAttachToEntityId' | 'createPersonContact' | 'createPriceBook' | 'createProject' | 'createPurchaseOrder' | 'createQuote' | 'createQuoteFromIntakeFormSubmission' | 'createQuoteRevision' | 'createRFQ' | 'createReferenceNumberTemplate' | 'createRentalFulfilment' | 'createRentalPrice' | 'createRentalPurchaseOrderLineItem' | 'createRentalSalesOrderLineItem' | 'createResourceMapTag' | 'createSaleFulfilment' | 'createSalePrice' | 'createSalePurchaseOrderLineItem' | 'createSaleSalesOrderLineItem' | 'createSalesOrder' | 'createServiceFulfilment' | 'createServiceFulfilmentFromLineItem' | 'createServicePrice' | 'createStudioConversation' | 'createTransaction' | 'createWorkflowConfiguration' | 'createWorkspace' | 'deleteContactById' | 'deleteFulfilment' | 'deleteIntakeForm' | 'deleteIntakeFormSubmissionLineItem' | 'deleteInventory' | 'deleteInvoice' | 'deleteLineItem' | 'deleteNote' | 'deletePriceBookById' | 'deletePriceById' | 'deleteProject' | 'deleteReferenceNumberTemplate' | 'deleteResourceMapTag' | 'deleteStudioConversation' | 'deleteWorkflowConfigurationById' | 'exportPrices' | 'generateReferenceNumber' | 'getSignedReadUrl' | 'importPrices' | 'ingestGlobalAttributeString' | 'ingestGlobalTagString' | 'inviteUserToWorkspace' | 'joinWorkspace' | 'markInvoiceAsPaid' | 'markInvoiceAsSent' | 'refreshBrand' | 'rejectQuote' | 'removeFileFromEntity' | 'removeSearchRecent' | 'removeTaxLineItem' | 'removeUserFromWorkspace' | 'renameFile' | 'resetSequenceNumber' | 'resolveGlobalOrWorkspaceAttributeType' | 'resolveGlobalOrWorkspaceAttributeValue' | 'resolveGlobalOrWorkspaceTag' | 'resolveGlobalOrWorkspaceUnitDefinition' | 'runNightlyRentalChargesJob' | 'runNightlyRentalChargesJobAsync' | 'sendQuote' | 'setExpectedRentalEndDate' | 'setFulfilmentPurchaseOrderLineItemId' | 'setIntakeFormActive' | 'setInvoiceTax' | 'setRentalEndDate' | 'setRentalStartDate' | 'softDeletePurchaseOrder' | 'softDeletePurchaseOrderLineItem' | 'softDeleteSalesOrder' | 'softDeleteSalesOrderLineItem' | 'studioCatalogCompile' | 'studioCatalogCreateProduct' | 'studioCatalogEnsureLogisticsServiceProducts' | 'studioCatalogInit' | 'studioCatalogPreview' | 'studioCatalogValidate' | 'studioFsDelete' | 'studioFsMkdir' | 'studioFsMove' | 'studioFsUpload' | 'studioFsWrite' | 'submitIntakeFormSubmission' | 'submitPurchaseOrder' | 'submitSalesOrder' | 'syncCurrentUser' | 'syncMaterialLogisticsAddOns' | 'toggleSearchFavorite' | 'touchAllContacts' | 'unarchiveWorkspace' | 'unassignInventoryFromRentalFulfilment' | 'updateBusinessAddress' | 'updateBusinessBrandId' | 'updateBusinessContact' | 'updateBusinessName' | 'updateBusinessPhone' | 'updateBusinessTaxId' | 'updateBusinessWebsite' | 'updateFulfilmentAssignee' | 'updateFulfilmentColumn' | 'updateGlobalAttributeType' | 'updateGlobalAttributeValue' | 'updateGlobalTag' | 'updateGlobalUnitDefinition' | 'updateIntakeForm' | 'updateIntakeFormSubmission' | 'updateIntakeFormSubmissionLineItem' | 'updateInventoryActualReturnDate' | 'updateInventoryExpectedReturnDate' | 'updateInventorySerialisedId' | 'updateLineItem' | 'updateNote' | 'updatePersonBusiness' | 'updatePersonContact' | 'updatePersonEmail' | 'updatePersonName' | 'updatePersonPhone' | 'updatePersonResourceMap' | 'updatePriceBook' | 'updateProject' | 'updateProjectCode' | 'updateProjectContacts' | 'updateProjectDescription' | 'updateProjectName' | 'updateProjectParentProject' | 'updateProjectScopeOfWork' | 'updateProjectStatus' | 'updatePurchaseOrder' | 'updatePurchaseOrderLineItem' | 'updateQuote' | 'updateQuoteRevision' | 'updateQuoteStatus' | 'updateRFQ' | 'updateReferenceNumberTemplate' | 'updateRentalPrice' | 'updateRentalPurchaseOrderLineItem' | 'updateRentalSalesOrderLineItem' | 'updateResourceMapTag' | 'updateSalePrice' | 'updateSalePurchaseOrderLineItem' | 'updateSaleSalesOrderLineItem' | 'updateSalesOrder' | 'updateSalesOrderLineItem' | 'updateServiceFulfilmentTaskStatus' | 'updateServicePrice' | 'updateStudioConversation' | 'updateTaxLineItem' | 'updateWorkflowConfiguration' | 'updateWorkspaceAccessType' | 'updateWorkspaceSettings' | 'updateWorkspaceUserRoles' | 'upsertPimCategory' | 'upsertUser' | 'upsertWorkspaceAttributeType' | 'upsertWorkspaceAttributeValue' | 'upsertWorkspaceTag' | 'upsertWorkspaceUnitDefinition' | MutationKeySpecifier)[];
 export type MutationFieldPolicy = {
 	acceptQuote?: FieldPolicy<any> | FieldReadFunction<any>,
 	addFileToEntity?: FieldPolicy<any> | FieldReadFunction<any>,
 	addInvoiceCharges?: FieldPolicy<any> | FieldReadFunction<any>,
 	addSearchRecent?: FieldPolicy<any> | FieldReadFunction<any>,
+	addStudioConversationMessage?: FieldPolicy<any> | FieldReadFunction<any>,
 	addTaxLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	admin?: FieldPolicy<any> | FieldReadFunction<any>,
 	adoptOrphanedSubmissions?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9605,12 +11875,15 @@ export type MutationFieldPolicy = {
 	createGlobalAttributeRelation?: FieldPolicy<any> | FieldReadFunction<any>,
 	createGlobalAttributeType?: FieldPolicy<any> | FieldReadFunction<any>,
 	createGlobalAttributeValue?: FieldPolicy<any> | FieldReadFunction<any>,
+	createGlobalTag?: FieldPolicy<any> | FieldReadFunction<any>,
+	createGlobalTagRelation?: FieldPolicy<any> | FieldReadFunction<any>,
 	createGlobalUnitDefinition?: FieldPolicy<any> | FieldReadFunction<any>,
 	createIntakeForm?: FieldPolicy<any> | FieldReadFunction<any>,
 	createIntakeFormSubmission?: FieldPolicy<any> | FieldReadFunction<any>,
 	createIntakeFormSubmissionLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	createInventory?: FieldPolicy<any> | FieldReadFunction<any>,
 	createInvoice?: FieldPolicy<any> | FieldReadFunction<any>,
+	createLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	createNote?: FieldPolicy<any> | FieldReadFunction<any>,
 	createPdfFromPageAndAttachToEntityId?: FieldPolicy<any> | FieldReadFunction<any>,
 	createPersonContact?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9633,6 +11906,9 @@ export type MutationFieldPolicy = {
 	createSaleSalesOrderLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	createSalesOrder?: FieldPolicy<any> | FieldReadFunction<any>,
 	createServiceFulfilment?: FieldPolicy<any> | FieldReadFunction<any>,
+	createServiceFulfilmentFromLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
+	createServicePrice?: FieldPolicy<any> | FieldReadFunction<any>,
+	createStudioConversation?: FieldPolicy<any> | FieldReadFunction<any>,
 	createTransaction?: FieldPolicy<any> | FieldReadFunction<any>,
 	createWorkflowConfiguration?: FieldPolicy<any> | FieldReadFunction<any>,
 	createWorkspace?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9642,18 +11918,21 @@ export type MutationFieldPolicy = {
 	deleteIntakeFormSubmissionLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	deleteInventory?: FieldPolicy<any> | FieldReadFunction<any>,
 	deleteInvoice?: FieldPolicy<any> | FieldReadFunction<any>,
+	deleteLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	deleteNote?: FieldPolicy<any> | FieldReadFunction<any>,
 	deletePriceBookById?: FieldPolicy<any> | FieldReadFunction<any>,
 	deletePriceById?: FieldPolicy<any> | FieldReadFunction<any>,
 	deleteProject?: FieldPolicy<any> | FieldReadFunction<any>,
 	deleteReferenceNumberTemplate?: FieldPolicy<any> | FieldReadFunction<any>,
 	deleteResourceMapTag?: FieldPolicy<any> | FieldReadFunction<any>,
+	deleteStudioConversation?: FieldPolicy<any> | FieldReadFunction<any>,
 	deleteWorkflowConfigurationById?: FieldPolicy<any> | FieldReadFunction<any>,
 	exportPrices?: FieldPolicy<any> | FieldReadFunction<any>,
 	generateReferenceNumber?: FieldPolicy<any> | FieldReadFunction<any>,
 	getSignedReadUrl?: FieldPolicy<any> | FieldReadFunction<any>,
 	importPrices?: FieldPolicy<any> | FieldReadFunction<any>,
 	ingestGlobalAttributeString?: FieldPolicy<any> | FieldReadFunction<any>,
+	ingestGlobalTagString?: FieldPolicy<any> | FieldReadFunction<any>,
 	inviteUserToWorkspace?: FieldPolicy<any> | FieldReadFunction<any>,
 	joinWorkspace?: FieldPolicy<any> | FieldReadFunction<any>,
 	markInvoiceAsPaid?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9666,6 +11945,10 @@ export type MutationFieldPolicy = {
 	removeUserFromWorkspace?: FieldPolicy<any> | FieldReadFunction<any>,
 	renameFile?: FieldPolicy<any> | FieldReadFunction<any>,
 	resetSequenceNumber?: FieldPolicy<any> | FieldReadFunction<any>,
+	resolveGlobalOrWorkspaceAttributeType?: FieldPolicy<any> | FieldReadFunction<any>,
+	resolveGlobalOrWorkspaceAttributeValue?: FieldPolicy<any> | FieldReadFunction<any>,
+	resolveGlobalOrWorkspaceTag?: FieldPolicy<any> | FieldReadFunction<any>,
+	resolveGlobalOrWorkspaceUnitDefinition?: FieldPolicy<any> | FieldReadFunction<any>,
 	runNightlyRentalChargesJob?: FieldPolicy<any> | FieldReadFunction<any>,
 	runNightlyRentalChargesJobAsync?: FieldPolicy<any> | FieldReadFunction<any>,
 	sendQuote?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9679,10 +11962,22 @@ export type MutationFieldPolicy = {
 	softDeletePurchaseOrderLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	softDeleteSalesOrder?: FieldPolicy<any> | FieldReadFunction<any>,
 	softDeleteSalesOrderLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
+	studioCatalogCompile?: FieldPolicy<any> | FieldReadFunction<any>,
+	studioCatalogCreateProduct?: FieldPolicy<any> | FieldReadFunction<any>,
+	studioCatalogEnsureLogisticsServiceProducts?: FieldPolicy<any> | FieldReadFunction<any>,
+	studioCatalogInit?: FieldPolicy<any> | FieldReadFunction<any>,
+	studioCatalogPreview?: FieldPolicy<any> | FieldReadFunction<any>,
+	studioCatalogValidate?: FieldPolicy<any> | FieldReadFunction<any>,
+	studioFsDelete?: FieldPolicy<any> | FieldReadFunction<any>,
+	studioFsMkdir?: FieldPolicy<any> | FieldReadFunction<any>,
+	studioFsMove?: FieldPolicy<any> | FieldReadFunction<any>,
+	studioFsUpload?: FieldPolicy<any> | FieldReadFunction<any>,
+	studioFsWrite?: FieldPolicy<any> | FieldReadFunction<any>,
 	submitIntakeFormSubmission?: FieldPolicy<any> | FieldReadFunction<any>,
 	submitPurchaseOrder?: FieldPolicy<any> | FieldReadFunction<any>,
 	submitSalesOrder?: FieldPolicy<any> | FieldReadFunction<any>,
 	syncCurrentUser?: FieldPolicy<any> | FieldReadFunction<any>,
+	syncMaterialLogisticsAddOns?: FieldPolicy<any> | FieldReadFunction<any>,
 	toggleSearchFavorite?: FieldPolicy<any> | FieldReadFunction<any>,
 	touchAllContacts?: FieldPolicy<any> | FieldReadFunction<any>,
 	unarchiveWorkspace?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9698,6 +11993,7 @@ export type MutationFieldPolicy = {
 	updateFulfilmentColumn?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateGlobalAttributeType?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateGlobalAttributeValue?: FieldPolicy<any> | FieldReadFunction<any>,
+	updateGlobalTag?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateGlobalUnitDefinition?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateIntakeForm?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateIntakeFormSubmission?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9705,6 +12001,7 @@ export type MutationFieldPolicy = {
 	updateInventoryActualReturnDate?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateInventoryExpectedReturnDate?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateInventorySerialisedId?: FieldPolicy<any> | FieldReadFunction<any>,
+	updateLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateNote?: FieldPolicy<any> | FieldReadFunction<any>,
 	updatePersonBusiness?: FieldPolicy<any> | FieldReadFunction<any>,
 	updatePersonContact?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9737,13 +12034,20 @@ export type MutationFieldPolicy = {
 	updateSaleSalesOrderLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateSalesOrder?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateSalesOrderLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
+	updateServiceFulfilmentTaskStatus?: FieldPolicy<any> | FieldReadFunction<any>,
+	updateServicePrice?: FieldPolicy<any> | FieldReadFunction<any>,
+	updateStudioConversation?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateTaxLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateWorkflowConfiguration?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateWorkspaceAccessType?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateWorkspaceSettings?: FieldPolicy<any> | FieldReadFunction<any>,
 	updateWorkspaceUserRoles?: FieldPolicy<any> | FieldReadFunction<any>,
 	upsertPimCategory?: FieldPolicy<any> | FieldReadFunction<any>,
-	upsertUser?: FieldPolicy<any> | FieldReadFunction<any>
+	upsertUser?: FieldPolicy<any> | FieldReadFunction<any>,
+	upsertWorkspaceAttributeType?: FieldPolicy<any> | FieldReadFunction<any>,
+	upsertWorkspaceAttributeValue?: FieldPolicy<any> | FieldReadFunction<any>,
+	upsertWorkspaceTag?: FieldPolicy<any> | FieldReadFunction<any>,
+	upsertWorkspaceUnitDefinition?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type NoteKeySpecifier = ('_id' | 'company_id' | 'created_at' | 'created_by' | 'created_by_user' | 'deleted' | 'parent_entity_id' | 'sub_notes' | 'updated_at' | 'updated_by' | 'value' | 'workspace_id' | NoteKeySpecifier)[];
 export type NoteFieldPolicy = {
@@ -9840,6 +12144,20 @@ export type PriceBookFieldPolicy = {
 	updatedByUser?: FieldPolicy<any> | FieldReadFunction<any>,
 	workspaceId?: FieldPolicy<any> | FieldReadFunction<any>
 };
+export type PriceCatalogRefKeySpecifier = ('id' | 'kind' | PriceCatalogRefKeySpecifier)[];
+export type PriceCatalogRefFieldPolicy = {
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	kind?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type PricingSpecKeySpecifier = ('kind' | 'pricePerDayInCents' | 'pricePerMonthInCents' | 'pricePerWeekInCents' | 'rateInCents' | 'unitCode' | PricingSpecKeySpecifier)[];
+export type PricingSpecFieldPolicy = {
+	kind?: FieldPolicy<any> | FieldReadFunction<any>,
+	pricePerDayInCents?: FieldPolicy<any> | FieldReadFunction<any>,
+	pricePerMonthInCents?: FieldPolicy<any> | FieldReadFunction<any>,
+	pricePerWeekInCents?: FieldPolicy<any> | FieldReadFunction<any>,
+	rateInCents?: FieldPolicy<any> | FieldReadFunction<any>,
+	unitCode?: FieldPolicy<any> | FieldReadFunction<any>
+};
 export type ProjectKeySpecifier = ('associatedPriceBooks' | 'comments' | 'created_at' | 'created_by' | 'created_by_user' | 'deleted' | 'description' | 'id' | 'name' | 'parent_project' | 'project_code' | 'project_contacts' | 'scope_of_work' | 'status' | 'sub_projects' | 'totalDescendantCount' | 'updated_at' | 'updated_by' | 'updated_by_user' | 'workspaceId' | ProjectKeySpecifier)[];
 export type ProjectFieldPolicy = {
 	associatedPriceBooks?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9879,7 +12197,25 @@ export type ProjectStatusCodeFieldPolicy = {
 	code?: FieldPolicy<any> | FieldReadFunction<any>,
 	description?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type PurchaseOrderKeySpecifier = ('comments' | 'company_id' | 'created_at' | 'created_by' | 'created_by_user' | 'deleted_at' | 'fulfillmentProgress' | 'id' | 'intakeFormSubmission' | 'inventory' | 'line_items' | 'pricing' | 'project' | 'project_id' | 'purchase_order_number' | 'quote_id' | 'quote_revision_id' | 'seller' | 'seller_id' | 'status' | 'updated_at' | 'updated_by' | 'updated_by_user' | 'workspace_id' | PurchaseOrderKeySpecifier)[];
+export type PromoteWorkspaceAttributeTypesToGlobalResultKeySpecifier = ('items' | PromoteWorkspaceAttributeTypesToGlobalResultKeySpecifier)[];
+export type PromoteWorkspaceAttributeTypesToGlobalResultFieldPolicy = {
+	items?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type PromoteWorkspaceAttributeValuesToGlobalResultKeySpecifier = ('items' | PromoteWorkspaceAttributeValuesToGlobalResultKeySpecifier)[];
+export type PromoteWorkspaceAttributeValuesToGlobalResultFieldPolicy = {
+	items?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type PromotedWorkspaceAttributeTypeKeySpecifier = ('globalAttributeType' | 'workspaceAttributeTypeId' | PromotedWorkspaceAttributeTypeKeySpecifier)[];
+export type PromotedWorkspaceAttributeTypeFieldPolicy = {
+	globalAttributeType?: FieldPolicy<any> | FieldReadFunction<any>,
+	workspaceAttributeTypeId?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type PromotedWorkspaceAttributeValueKeySpecifier = ('globalAttributeValue' | 'workspaceAttributeValueId' | PromotedWorkspaceAttributeValueKeySpecifier)[];
+export type PromotedWorkspaceAttributeValueFieldPolicy = {
+	globalAttributeValue?: FieldPolicy<any> | FieldReadFunction<any>,
+	workspaceAttributeValueId?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type PurchaseOrderKeySpecifier = ('comments' | 'company_id' | 'created_at' | 'created_by' | 'created_by_user' | 'deleted_at' | 'fulfillmentProgress' | 'id' | 'intakeFormSubmission' | 'inventory' | 'lineItems' | 'line_items' | 'pricing' | 'project' | 'project_id' | 'purchase_order_number' | 'quote_id' | 'quote_revision_id' | 'seller' | 'seller_id' | 'status' | 'updated_at' | 'updated_by' | 'updated_by_user' | 'workspace_id' | PurchaseOrderKeySpecifier)[];
 export type PurchaseOrderFieldPolicy = {
 	comments?: FieldPolicy<any> | FieldReadFunction<any>,
 	company_id?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9891,6 +12227,7 @@ export type PurchaseOrderFieldPolicy = {
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
 	intakeFormSubmission?: FieldPolicy<any> | FieldReadFunction<any>,
 	inventory?: FieldPolicy<any> | FieldReadFunction<any>,
+	lineItems?: FieldPolicy<any> | FieldReadFunction<any>,
 	line_items?: FieldPolicy<any> | FieldReadFunction<any>,
 	pricing?: FieldPolicy<any> | FieldReadFunction<any>,
 	project?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9941,11 +12278,12 @@ export type PurchaseOrderPricingFieldPolicy = {
 	sub_total_in_cents?: FieldPolicy<any> | FieldReadFunction<any>,
 	total_in_cents?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type QueryKeySpecifier = ('admin' | 'bulkCalculateSubTotal' | 'calculateSubTotal' | 'getBrandByDomain' | 'getBrandById' | 'getBrandsByIds' | 'getBulkSearchDocumentsById' | 'getContactById' | 'getCurrentSequenceNumber' | 'getCurrentUser' | 'getDefaultTemplates' | 'getFulfilmentById' | 'getGlobalAttributeTypeById' | 'getIntakeFormById' | 'getIntakeFormSubmissionById' | 'getIntakeFormSubmissionByPurchaseOrderId' | 'getIntakeFormSubmissionBySalesOrderId' | 'getIntakeFormSubmissionLineItem' | 'getInventoryReservationById' | 'getNoteById' | 'getPimCategoryById' | 'getPimProductById' | 'getPriceBookById' | 'getPriceById' | 'getProjectById' | 'getPurchaseOrderById' | 'getPurchaseOrderLineItemById' | 'getReferenceNumberTemplate' | 'getResourceMapEntry' | 'getSalesOrderById' | 'getSalesOrderLineItemById' | 'getSearchDocumentByDocumentId' | 'getSearchDocumentById' | 'getSearchUserState' | 'getSignedUploadUrl' | 'getUsersById' | 'getWorkflowConfigurationById' | 'getWorkspaceById' | 'helloWorld' | 'inventoryById' | 'invoiceById' | 'listAssetSchedules' | 'listAssets' | 'listCharges' | 'listContacts' | 'listFilesByEntityId' | 'listFulfilments' | 'listGlobalAttributeRelations' | 'listGlobalAttributeTypes' | 'listGlobalAttributeValues' | 'listGlobalUnitDefinitions' | 'listIntakeFormSubmissionLineItems' | 'listIntakeFormSubmissions' | 'listIntakeFormSubmissionsAsBuyer' | 'listIntakeForms' | 'listIntakeFormsForUser' | 'listInventory' | 'listInventoryGroupedByPimCategoryId' | 'listInventoryReservations' | 'listInvoices' | 'listJoinableWorkspaces' | 'listMyOrphanedSubmissions' | 'listNotesByEntityId' | 'listPimCategories' | 'listPimProducts' | 'listPriceBookCategories' | 'listPriceBooks' | 'listPriceNames' | 'listPrices' | 'listProjectContactRelationCodes' | 'listProjectStatusCodes' | 'listProjects' | 'listProjectsByParentProjectId' | 'listPurchaseOrders' | 'listQuotes' | 'listRFQs' | 'listReferenceNumberTemplates' | 'listRentalFulfilments' | 'listRentalViews' | 'listResourceMapEntries' | 'listResourceMapEntriesByParentId' | 'listResourceMapEntriesByTagType' | 'listResourceMapLocationTags' | 'listSalesOrders' | 'listScopeOfWorkCodes' | 'listTopLevelProjects' | 'listTransactions' | 'listUserResourcePermissions' | 'listWorkflowConfigurations' | 'listWorkspaceMembers' | 'listWorkspaces' | 'llm' | 'quoteById' | 'quoteRevisionById' | 'rfqById' | 'searchBrands' | 'searchDocuments' | 'usersSearch' | 'validEnterpriseDomain' | QueryKeySpecifier)[];
+export type QueryKeySpecifier = ('admin' | 'bulkCalculateSubTotal' | 'calculateSubTotal' | 'computeServiceRequirementEnvelope' | 'getBrandByDomain' | 'getBrandById' | 'getBrandsByIds' | 'getBulkSearchDocumentsById' | 'getContactById' | 'getCurrentSequenceNumber' | 'getCurrentUser' | 'getDefaultTemplates' | 'getFulfilmentById' | 'getGlobalAttributeTypeById' | 'getGlobalTagById' | 'getIntakeFormById' | 'getIntakeFormSubmissionById' | 'getIntakeFormSubmissionByPurchaseOrderId' | 'getIntakeFormSubmissionBySalesOrderId' | 'getIntakeFormSubmissionLineItem' | 'getInventoryReservationById' | 'getLineItemById' | 'getNoteById' | 'getPimCategoryById' | 'getPimProductById' | 'getPriceBookById' | 'getPriceById' | 'getProjectById' | 'getPurchaseOrderById' | 'getPurchaseOrderLineItemById' | 'getReferenceNumberTemplate' | 'getResourceMapEntry' | 'getSalesOrderById' | 'getSalesOrderLineItemById' | 'getSearchDocumentByDocumentId' | 'getSearchDocumentById' | 'getSearchUserState' | 'getSignedUploadUrl' | 'getStudioConversationById' | 'getUsersById' | 'getWorkflowConfigurationById' | 'getWorkspaceAttributeTypeById' | 'getWorkspaceAttributeValueById' | 'getWorkspaceById' | 'getWorkspaceTagById' | 'getWorkspaceUnitDefinitionById' | 'helloWorld' | 'inventoryById' | 'invoiceById' | 'listAssetSchedules' | 'listAssets' | 'listCharges' | 'listContacts' | 'listFilesByEntityId' | 'listFulfilments' | 'listGlobalAttributeRelations' | 'listGlobalAttributeTypes' | 'listGlobalAttributeValues' | 'listGlobalTagRelations' | 'listGlobalTags' | 'listGlobalUnitDefinitions' | 'listIntakeFormSubmissionLineItems' | 'listIntakeFormSubmissions' | 'listIntakeFormSubmissionsAsBuyer' | 'listIntakeForms' | 'listIntakeFormsForUser' | 'listInventory' | 'listInventoryGroupedByPimCategoryId' | 'listInventoryReservations' | 'listInvoices' | 'listJoinableWorkspaces' | 'listLineItems' | 'listLogisticsServiceGroups' | 'listMyOrphanedSubmissions' | 'listNotesByEntityId' | 'listPimCategories' | 'listPimProducts' | 'listPriceBookCategories' | 'listPriceBooks' | 'listPriceNames' | 'listPrices' | 'listProjectContactRelationCodes' | 'listProjectStatusCodes' | 'listProjects' | 'listProjectsByParentProjectId' | 'listPurchaseOrders' | 'listQuotes' | 'listRFQs' | 'listReferenceNumberTemplates' | 'listRentalFulfilments' | 'listRentalViews' | 'listResourceMapEntries' | 'listResourceMapEntriesByParentId' | 'listResourceMapEntriesByTagType' | 'listResourceMapLocationTags' | 'listSalesOrders' | 'listScopeOfWorkCodes' | 'listStudioConversationMessages' | 'listStudioConversations' | 'listTopLevelProjects' | 'listTransactions' | 'listUserResourcePermissions' | 'listWorkflowConfigurations' | 'listWorkspaceAttributeTypes' | 'listWorkspaceAttributeValues' | 'listWorkspaceMembers' | 'listWorkspaceTags' | 'listWorkspaceUnitDefinitions' | 'listWorkspaces' | 'llm' | 'quoteById' | 'quoteRevisionById' | 'rfqById' | 'searchBrands' | 'searchDocuments' | 'studioFsList' | 'studioFsRead' | 'studioFsRoots' | 'usersSearch' | 'validEnterpriseDomain' | QueryKeySpecifier)[];
 export type QueryFieldPolicy = {
 	admin?: FieldPolicy<any> | FieldReadFunction<any>,
 	bulkCalculateSubTotal?: FieldPolicy<any> | FieldReadFunction<any>,
 	calculateSubTotal?: FieldPolicy<any> | FieldReadFunction<any>,
+	computeServiceRequirementEnvelope?: FieldPolicy<any> | FieldReadFunction<any>,
 	getBrandByDomain?: FieldPolicy<any> | FieldReadFunction<any>,
 	getBrandById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getBrandsByIds?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9956,12 +12294,14 @@ export type QueryFieldPolicy = {
 	getDefaultTemplates?: FieldPolicy<any> | FieldReadFunction<any>,
 	getFulfilmentById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getGlobalAttributeTypeById?: FieldPolicy<any> | FieldReadFunction<any>,
+	getGlobalTagById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getIntakeFormById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getIntakeFormSubmissionById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getIntakeFormSubmissionByPurchaseOrderId?: FieldPolicy<any> | FieldReadFunction<any>,
 	getIntakeFormSubmissionBySalesOrderId?: FieldPolicy<any> | FieldReadFunction<any>,
 	getIntakeFormSubmissionLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	getInventoryReservationById?: FieldPolicy<any> | FieldReadFunction<any>,
+	getLineItemById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getNoteById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getPimCategoryById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getPimProductById?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9978,9 +12318,14 @@ export type QueryFieldPolicy = {
 	getSearchDocumentById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getSearchUserState?: FieldPolicy<any> | FieldReadFunction<any>,
 	getSignedUploadUrl?: FieldPolicy<any> | FieldReadFunction<any>,
+	getStudioConversationById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getUsersById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getWorkflowConfigurationById?: FieldPolicy<any> | FieldReadFunction<any>,
+	getWorkspaceAttributeTypeById?: FieldPolicy<any> | FieldReadFunction<any>,
+	getWorkspaceAttributeValueById?: FieldPolicy<any> | FieldReadFunction<any>,
 	getWorkspaceById?: FieldPolicy<any> | FieldReadFunction<any>,
+	getWorkspaceTagById?: FieldPolicy<any> | FieldReadFunction<any>,
+	getWorkspaceUnitDefinitionById?: FieldPolicy<any> | FieldReadFunction<any>,
 	helloWorld?: FieldPolicy<any> | FieldReadFunction<any>,
 	inventoryById?: FieldPolicy<any> | FieldReadFunction<any>,
 	invoiceById?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -9993,6 +12338,8 @@ export type QueryFieldPolicy = {
 	listGlobalAttributeRelations?: FieldPolicy<any> | FieldReadFunction<any>,
 	listGlobalAttributeTypes?: FieldPolicy<any> | FieldReadFunction<any>,
 	listGlobalAttributeValues?: FieldPolicy<any> | FieldReadFunction<any>,
+	listGlobalTagRelations?: FieldPolicy<any> | FieldReadFunction<any>,
+	listGlobalTags?: FieldPolicy<any> | FieldReadFunction<any>,
 	listGlobalUnitDefinitions?: FieldPolicy<any> | FieldReadFunction<any>,
 	listIntakeFormSubmissionLineItems?: FieldPolicy<any> | FieldReadFunction<any>,
 	listIntakeFormSubmissions?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -10004,6 +12351,8 @@ export type QueryFieldPolicy = {
 	listInventoryReservations?: FieldPolicy<any> | FieldReadFunction<any>,
 	listInvoices?: FieldPolicy<any> | FieldReadFunction<any>,
 	listJoinableWorkspaces?: FieldPolicy<any> | FieldReadFunction<any>,
+	listLineItems?: FieldPolicy<any> | FieldReadFunction<any>,
+	listLogisticsServiceGroups?: FieldPolicy<any> | FieldReadFunction<any>,
 	listMyOrphanedSubmissions?: FieldPolicy<any> | FieldReadFunction<any>,
 	listNotesByEntityId?: FieldPolicy<any> | FieldReadFunction<any>,
 	listPimCategories?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -10028,11 +12377,17 @@ export type QueryFieldPolicy = {
 	listResourceMapLocationTags?: FieldPolicy<any> | FieldReadFunction<any>,
 	listSalesOrders?: FieldPolicy<any> | FieldReadFunction<any>,
 	listScopeOfWorkCodes?: FieldPolicy<any> | FieldReadFunction<any>,
+	listStudioConversationMessages?: FieldPolicy<any> | FieldReadFunction<any>,
+	listStudioConversations?: FieldPolicy<any> | FieldReadFunction<any>,
 	listTopLevelProjects?: FieldPolicy<any> | FieldReadFunction<any>,
 	listTransactions?: FieldPolicy<any> | FieldReadFunction<any>,
 	listUserResourcePermissions?: FieldPolicy<any> | FieldReadFunction<any>,
 	listWorkflowConfigurations?: FieldPolicy<any> | FieldReadFunction<any>,
+	listWorkspaceAttributeTypes?: FieldPolicy<any> | FieldReadFunction<any>,
+	listWorkspaceAttributeValues?: FieldPolicy<any> | FieldReadFunction<any>,
 	listWorkspaceMembers?: FieldPolicy<any> | FieldReadFunction<any>,
+	listWorkspaceTags?: FieldPolicy<any> | FieldReadFunction<any>,
+	listWorkspaceUnitDefinitions?: FieldPolicy<any> | FieldReadFunction<any>,
 	listWorkspaces?: FieldPolicy<any> | FieldReadFunction<any>,
 	llm?: FieldPolicy<any> | FieldReadFunction<any>,
 	quoteById?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -10040,11 +12395,15 @@ export type QueryFieldPolicy = {
 	rfqById?: FieldPolicy<any> | FieldReadFunction<any>,
 	searchBrands?: FieldPolicy<any> | FieldReadFunction<any>,
 	searchDocuments?: FieldPolicy<any> | FieldReadFunction<any>,
+	studioFsList?: FieldPolicy<any> | FieldReadFunction<any>,
+	studioFsRead?: FieldPolicy<any> | FieldReadFunction<any>,
+	studioFsRoots?: FieldPolicy<any> | FieldReadFunction<any>,
 	usersSearch?: FieldPolicy<any> | FieldReadFunction<any>,
 	validEnterpriseDomain?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type QuoteKeySpecifier = ('buyerAcceptedFullLegalName' | 'buyerUserId' | 'buyerWorkspaceId' | 'buyersProject' | 'buyersProjectId' | 'buyersSellerContact' | 'buyersSellerContactId' | 'createdAt' | 'createdBy' | 'createdByUser' | 'currentRevision' | 'currentRevisionId' | 'id' | 'intakeFormSubmission' | 'intakeFormSubmissionId' | 'rfqId' | 'sellerWorkspaceId' | 'sellersBuyerContact' | 'sellersBuyerContactId' | 'sellersProject' | 'sellersProjectId' | 'signatureUrl' | 'status' | 'updatedAt' | 'updatedBy' | 'updatedByUser' | 'validUntil' | QuoteKeySpecifier)[];
+export type QuoteKeySpecifier = ('approvalConfirmation' | 'buyerAcceptedFullLegalName' | 'buyerUserId' | 'buyerWorkspaceId' | 'buyersProject' | 'buyersProjectId' | 'buyersSellerContact' | 'buyersSellerContactId' | 'createdAt' | 'createdBy' | 'createdByUser' | 'currentRevision' | 'currentRevisionId' | 'id' | 'intakeFormSubmission' | 'intakeFormSubmissionId' | 'rfqId' | 'sellerWorkspaceId' | 'sellersBuyerContact' | 'sellersBuyerContactId' | 'sellersProject' | 'sellersProjectId' | 'signatureUrl' | 'status' | 'updatedAt' | 'updatedBy' | 'updatedByUser' | 'validUntil' | QuoteKeySpecifier)[];
 export type QuoteFieldPolicy = {
+	approvalConfirmation?: FieldPolicy<any> | FieldReadFunction<any>,
 	buyerAcceptedFullLegalName?: FieldPolicy<any> | FieldReadFunction<any>,
 	buyerUserId?: FieldPolicy<any> | FieldReadFunction<any>,
 	buyerWorkspaceId?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -10073,8 +12432,37 @@ export type QuoteFieldPolicy = {
 	updatedByUser?: FieldPolicy<any> | FieldReadFunction<any>,
 	validUntil?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type QuoteRevisionKeySpecifier = ('createdAt' | 'createdBy' | 'createdByUser' | 'hasUnpricedLineItems' | 'id' | 'lineItems' | 'quoteId' | 'revisionNumber' | 'status' | 'updatedAt' | 'updatedBy' | 'updatedByUser' | 'validUntil' | QuoteRevisionKeySpecifier)[];
+export type QuoteLineItemConstraintKeySpecifier = ('payload' | 'strength' | QuoteLineItemConstraintKeySpecifier)[];
+export type QuoteLineItemConstraintFieldPolicy = {
+	payload?: FieldPolicy<any> | FieldReadFunction<any>,
+	strength?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type QuoteLineItemInputValueKeySpecifier = ('attributeTypeId' | 'contextTags' | 'unitCode' | 'value' | QuoteLineItemInputValueKeySpecifier)[];
+export type QuoteLineItemInputValueFieldPolicy = {
+	attributeTypeId?: FieldPolicy<any> | FieldReadFunction<any>,
+	contextTags?: FieldPolicy<any> | FieldReadFunction<any>,
+	unitCode?: FieldPolicy<any> | FieldReadFunction<any>,
+	value?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type QuoteLineItemPricingRefKeySpecifier = ('priceBookId' | 'priceId' | 'priceType' | QuoteLineItemPricingRefKeySpecifier)[];
+export type QuoteLineItemPricingRefFieldPolicy = {
+	priceBookId?: FieldPolicy<any> | FieldReadFunction<any>,
+	priceId?: FieldPolicy<any> | FieldReadFunction<any>,
+	priceType?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type QuoteLineItemProductRefKeySpecifier = ('kind' | 'productId' | QuoteLineItemProductRefKeySpecifier)[];
+export type QuoteLineItemProductRefFieldPolicy = {
+	kind?: FieldPolicy<any> | FieldReadFunction<any>,
+	productId?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type QuoteLineItemTimeWindowKeySpecifier = ('endAt' | 'startAt' | QuoteLineItemTimeWindowKeySpecifier)[];
+export type QuoteLineItemTimeWindowFieldPolicy = {
+	endAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	startAt?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type QuoteRevisionKeySpecifier = ('canonicalLineItems' | 'createdAt' | 'createdBy' | 'createdByUser' | 'hasUnpricedLineItems' | 'id' | 'lineItems' | 'quoteId' | 'revisionNumber' | 'status' | 'updatedAt' | 'updatedBy' | 'updatedByUser' | 'validUntil' | QuoteRevisionKeySpecifier)[];
 export type QuoteRevisionFieldPolicy = {
+	canonicalLineItems?: FieldPolicy<any> | FieldReadFunction<any>,
 	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
 	createdBy?: FieldPolicy<any> | FieldReadFunction<any>,
 	createdByUser?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -10089,56 +12477,87 @@ export type QuoteRevisionFieldPolicy = {
 	updatedByUser?: FieldPolicy<any> | FieldReadFunction<any>,
 	validUntil?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type QuoteRevisionRentalLineItemKeySpecifier = ('deliveryLocation' | 'deliveryMethod' | 'deliveryNotes' | 'description' | 'id' | 'intakeFormSubmissionLineItem' | 'intakeFormSubmissionLineItemId' | 'pimCategory' | 'pimCategoryId' | 'price' | 'quantity' | 'rentalEndDate' | 'rentalStartDate' | 'sellersPriceId' | 'subtotalInCents' | 'type' | QuoteRevisionRentalLineItemKeySpecifier)[];
+export type QuoteRevisionRentalLineItemKeySpecifier = ('constraints' | 'deliveryLocation' | 'deliveryMethod' | 'deliveryNotes' | 'description' | 'id' | 'inputs' | 'intakeFormSubmissionLineItem' | 'intakeFormSubmissionLineItemId' | 'notes' | 'pimCategory' | 'pimCategoryId' | 'placeRef' | 'price' | 'pricingRef' | 'pricingSpecSnapshot' | 'productRef' | 'quantity' | 'rateInCentsSnapshot' | 'rentalEndDate' | 'rentalStartDate' | 'sellersPriceId' | 'subtotalInCents' | 'timeWindow' | 'type' | 'unitCode' | QuoteRevisionRentalLineItemKeySpecifier)[];
 export type QuoteRevisionRentalLineItemFieldPolicy = {
+	constraints?: FieldPolicy<any> | FieldReadFunction<any>,
 	deliveryLocation?: FieldPolicy<any> | FieldReadFunction<any>,
 	deliveryMethod?: FieldPolicy<any> | FieldReadFunction<any>,
 	deliveryNotes?: FieldPolicy<any> | FieldReadFunction<any>,
 	description?: FieldPolicy<any> | FieldReadFunction<any>,
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	inputs?: FieldPolicy<any> | FieldReadFunction<any>,
 	intakeFormSubmissionLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	intakeFormSubmissionLineItemId?: FieldPolicy<any> | FieldReadFunction<any>,
+	notes?: FieldPolicy<any> | FieldReadFunction<any>,
 	pimCategory?: FieldPolicy<any> | FieldReadFunction<any>,
 	pimCategoryId?: FieldPolicy<any> | FieldReadFunction<any>,
+	placeRef?: FieldPolicy<any> | FieldReadFunction<any>,
 	price?: FieldPolicy<any> | FieldReadFunction<any>,
+	pricingRef?: FieldPolicy<any> | FieldReadFunction<any>,
+	pricingSpecSnapshot?: FieldPolicy<any> | FieldReadFunction<any>,
+	productRef?: FieldPolicy<any> | FieldReadFunction<any>,
 	quantity?: FieldPolicy<any> | FieldReadFunction<any>,
+	rateInCentsSnapshot?: FieldPolicy<any> | FieldReadFunction<any>,
 	rentalEndDate?: FieldPolicy<any> | FieldReadFunction<any>,
 	rentalStartDate?: FieldPolicy<any> | FieldReadFunction<any>,
 	sellersPriceId?: FieldPolicy<any> | FieldReadFunction<any>,
 	subtotalInCents?: FieldPolicy<any> | FieldReadFunction<any>,
-	type?: FieldPolicy<any> | FieldReadFunction<any>
+	timeWindow?: FieldPolicy<any> | FieldReadFunction<any>,
+	type?: FieldPolicy<any> | FieldReadFunction<any>,
+	unitCode?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type QuoteRevisionSaleLineItemKeySpecifier = ('deliveryLocation' | 'deliveryMethod' | 'deliveryNotes' | 'description' | 'id' | 'intakeFormSubmissionLineItem' | 'intakeFormSubmissionLineItemId' | 'pimCategory' | 'pimCategoryId' | 'price' | 'quantity' | 'sellersPriceId' | 'subtotalInCents' | 'type' | QuoteRevisionSaleLineItemKeySpecifier)[];
+export type QuoteRevisionSaleLineItemKeySpecifier = ('constraints' | 'deliveryLocation' | 'deliveryMethod' | 'deliveryNotes' | 'description' | 'id' | 'inputs' | 'intakeFormSubmissionLineItem' | 'intakeFormSubmissionLineItemId' | 'notes' | 'pimCategory' | 'pimCategoryId' | 'placeRef' | 'price' | 'pricingRef' | 'pricingSpecSnapshot' | 'productRef' | 'quantity' | 'rateInCentsSnapshot' | 'sellersPriceId' | 'subtotalInCents' | 'timeWindow' | 'type' | 'unitCode' | QuoteRevisionSaleLineItemKeySpecifier)[];
 export type QuoteRevisionSaleLineItemFieldPolicy = {
+	constraints?: FieldPolicy<any> | FieldReadFunction<any>,
 	deliveryLocation?: FieldPolicy<any> | FieldReadFunction<any>,
 	deliveryMethod?: FieldPolicy<any> | FieldReadFunction<any>,
 	deliveryNotes?: FieldPolicy<any> | FieldReadFunction<any>,
 	description?: FieldPolicy<any> | FieldReadFunction<any>,
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	inputs?: FieldPolicy<any> | FieldReadFunction<any>,
 	intakeFormSubmissionLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	intakeFormSubmissionLineItemId?: FieldPolicy<any> | FieldReadFunction<any>,
+	notes?: FieldPolicy<any> | FieldReadFunction<any>,
 	pimCategory?: FieldPolicy<any> | FieldReadFunction<any>,
 	pimCategoryId?: FieldPolicy<any> | FieldReadFunction<any>,
+	placeRef?: FieldPolicy<any> | FieldReadFunction<any>,
 	price?: FieldPolicy<any> | FieldReadFunction<any>,
+	pricingRef?: FieldPolicy<any> | FieldReadFunction<any>,
+	pricingSpecSnapshot?: FieldPolicy<any> | FieldReadFunction<any>,
+	productRef?: FieldPolicy<any> | FieldReadFunction<any>,
 	quantity?: FieldPolicy<any> | FieldReadFunction<any>,
+	rateInCentsSnapshot?: FieldPolicy<any> | FieldReadFunction<any>,
 	sellersPriceId?: FieldPolicy<any> | FieldReadFunction<any>,
 	subtotalInCents?: FieldPolicy<any> | FieldReadFunction<any>,
-	type?: FieldPolicy<any> | FieldReadFunction<any>
+	timeWindow?: FieldPolicy<any> | FieldReadFunction<any>,
+	type?: FieldPolicy<any> | FieldReadFunction<any>,
+	unitCode?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type QuoteRevisionServiceLineItemKeySpecifier = ('deliveryLocation' | 'deliveryMethod' | 'deliveryNotes' | 'description' | 'id' | 'intakeFormSubmissionLineItem' | 'intakeFormSubmissionLineItemId' | 'price' | 'quantity' | 'sellersPriceId' | 'subtotalInCents' | 'type' | QuoteRevisionServiceLineItemKeySpecifier)[];
+export type QuoteRevisionServiceLineItemKeySpecifier = ('constraints' | 'deliveryLocation' | 'deliveryMethod' | 'deliveryNotes' | 'description' | 'id' | 'inputs' | 'intakeFormSubmissionLineItem' | 'intakeFormSubmissionLineItemId' | 'notes' | 'placeRef' | 'price' | 'pricingRef' | 'pricingSpecSnapshot' | 'productRef' | 'quantity' | 'rateInCentsSnapshot' | 'sellersPriceId' | 'subtotalInCents' | 'targetSelectors' | 'timeWindow' | 'type' | 'unitCode' | QuoteRevisionServiceLineItemKeySpecifier)[];
 export type QuoteRevisionServiceLineItemFieldPolicy = {
+	constraints?: FieldPolicy<any> | FieldReadFunction<any>,
 	deliveryLocation?: FieldPolicy<any> | FieldReadFunction<any>,
 	deliveryMethod?: FieldPolicy<any> | FieldReadFunction<any>,
 	deliveryNotes?: FieldPolicy<any> | FieldReadFunction<any>,
 	description?: FieldPolicy<any> | FieldReadFunction<any>,
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	inputs?: FieldPolicy<any> | FieldReadFunction<any>,
 	intakeFormSubmissionLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
 	intakeFormSubmissionLineItemId?: FieldPolicy<any> | FieldReadFunction<any>,
+	notes?: FieldPolicy<any> | FieldReadFunction<any>,
+	placeRef?: FieldPolicy<any> | FieldReadFunction<any>,
 	price?: FieldPolicy<any> | FieldReadFunction<any>,
+	pricingRef?: FieldPolicy<any> | FieldReadFunction<any>,
+	pricingSpecSnapshot?: FieldPolicy<any> | FieldReadFunction<any>,
+	productRef?: FieldPolicy<any> | FieldReadFunction<any>,
 	quantity?: FieldPolicy<any> | FieldReadFunction<any>,
+	rateInCentsSnapshot?: FieldPolicy<any> | FieldReadFunction<any>,
 	sellersPriceId?: FieldPolicy<any> | FieldReadFunction<any>,
 	subtotalInCents?: FieldPolicy<any> | FieldReadFunction<any>,
-	type?: FieldPolicy<any> | FieldReadFunction<any>
+	targetSelectors?: FieldPolicy<any> | FieldReadFunction<any>,
+	timeWindow?: FieldPolicy<any> | FieldReadFunction<any>,
+	type?: FieldPolicy<any> | FieldReadFunction<any>,
+	unitCode?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type QuotesResponseKeySpecifier = ('items' | QuotesResponseKeySpecifier)[];
 export type QuotesResponseFieldPolicy = {
@@ -10161,32 +12580,54 @@ export type RFQFieldPolicy = {
 	updatedBy?: FieldPolicy<any> | FieldReadFunction<any>,
 	updatedByUser?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type RFQRentalLineItemKeySpecifier = ('description' | 'id' | 'pimCategory' | 'pimCategoryId' | 'quantity' | 'rentalEndDate' | 'rentalStartDate' | 'type' | RFQRentalLineItemKeySpecifier)[];
+export type RFQRentalLineItemKeySpecifier = ('constraints' | 'description' | 'id' | 'inputs' | 'notes' | 'pimCategory' | 'pimCategoryId' | 'placeRef' | 'productRef' | 'quantity' | 'rentalEndDate' | 'rentalStartDate' | 'timeWindow' | 'type' | 'unitCode' | RFQRentalLineItemKeySpecifier)[];
 export type RFQRentalLineItemFieldPolicy = {
+	constraints?: FieldPolicy<any> | FieldReadFunction<any>,
 	description?: FieldPolicy<any> | FieldReadFunction<any>,
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	inputs?: FieldPolicy<any> | FieldReadFunction<any>,
+	notes?: FieldPolicy<any> | FieldReadFunction<any>,
 	pimCategory?: FieldPolicy<any> | FieldReadFunction<any>,
 	pimCategoryId?: FieldPolicy<any> | FieldReadFunction<any>,
+	placeRef?: FieldPolicy<any> | FieldReadFunction<any>,
+	productRef?: FieldPolicy<any> | FieldReadFunction<any>,
 	quantity?: FieldPolicy<any> | FieldReadFunction<any>,
 	rentalEndDate?: FieldPolicy<any> | FieldReadFunction<any>,
 	rentalStartDate?: FieldPolicy<any> | FieldReadFunction<any>,
-	type?: FieldPolicy<any> | FieldReadFunction<any>
+	timeWindow?: FieldPolicy<any> | FieldReadFunction<any>,
+	type?: FieldPolicy<any> | FieldReadFunction<any>,
+	unitCode?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type RFQSaleLineItemKeySpecifier = ('description' | 'id' | 'pimCategory' | 'pimCategoryId' | 'quantity' | 'type' | RFQSaleLineItemKeySpecifier)[];
+export type RFQSaleLineItemKeySpecifier = ('constraints' | 'description' | 'id' | 'inputs' | 'notes' | 'pimCategory' | 'pimCategoryId' | 'placeRef' | 'productRef' | 'quantity' | 'timeWindow' | 'type' | 'unitCode' | RFQSaleLineItemKeySpecifier)[];
 export type RFQSaleLineItemFieldPolicy = {
+	constraints?: FieldPolicy<any> | FieldReadFunction<any>,
 	description?: FieldPolicy<any> | FieldReadFunction<any>,
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	inputs?: FieldPolicy<any> | FieldReadFunction<any>,
+	notes?: FieldPolicy<any> | FieldReadFunction<any>,
 	pimCategory?: FieldPolicy<any> | FieldReadFunction<any>,
 	pimCategoryId?: FieldPolicy<any> | FieldReadFunction<any>,
+	placeRef?: FieldPolicy<any> | FieldReadFunction<any>,
+	productRef?: FieldPolicy<any> | FieldReadFunction<any>,
 	quantity?: FieldPolicy<any> | FieldReadFunction<any>,
-	type?: FieldPolicy<any> | FieldReadFunction<any>
+	timeWindow?: FieldPolicy<any> | FieldReadFunction<any>,
+	type?: FieldPolicy<any> | FieldReadFunction<any>,
+	unitCode?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type RFQServiceLineItemKeySpecifier = ('description' | 'id' | 'quantity' | 'type' | RFQServiceLineItemKeySpecifier)[];
+export type RFQServiceLineItemKeySpecifier = ('constraints' | 'description' | 'id' | 'inputs' | 'notes' | 'placeRef' | 'productRef' | 'quantity' | 'targetSelectors' | 'timeWindow' | 'type' | 'unitCode' | RFQServiceLineItemKeySpecifier)[];
 export type RFQServiceLineItemFieldPolicy = {
+	constraints?: FieldPolicy<any> | FieldReadFunction<any>,
 	description?: FieldPolicy<any> | FieldReadFunction<any>,
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	inputs?: FieldPolicy<any> | FieldReadFunction<any>,
+	notes?: FieldPolicy<any> | FieldReadFunction<any>,
+	placeRef?: FieldPolicy<any> | FieldReadFunction<any>,
+	productRef?: FieldPolicy<any> | FieldReadFunction<any>,
 	quantity?: FieldPolicy<any> | FieldReadFunction<any>,
-	type?: FieldPolicy<any> | FieldReadFunction<any>
+	targetSelectors?: FieldPolicy<any> | FieldReadFunction<any>,
+	timeWindow?: FieldPolicy<any> | FieldReadFunction<any>,
+	type?: FieldPolicy<any> | FieldReadFunction<any>,
+	unitCode?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type ReferenceNumberTemplateKeySpecifier = ('businessContact' | 'businessContactId' | 'companyId' | 'createdAt' | 'createdBy' | 'createdByUser' | 'deleted' | 'id' | 'project' | 'projectId' | 'resetFrequency' | 'seqPadding' | 'startAt' | 'template' | 'type' | 'updatedAt' | 'updatedBy' | 'updatedByUser' | 'useGlobalSequence' | 'workspaceId' | ReferenceNumberTemplateKeySpecifier)[];
 export type ReferenceNumberTemplateFieldPolicy = {
@@ -10262,9 +12703,10 @@ export type RentalMaterializedViewFieldPolicy = {
 	rentalId?: FieldPolicy<any> | FieldReadFunction<any>,
 	status?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type RentalPriceKeySpecifier = ('calculateSubTotal' | 'createdAt' | 'createdBy' | 'id' | 'name' | 'parentPrice' | 'parentPriceId' | 'parentPriceIdPercentageFactor' | 'pimCategory' | 'pimCategoryId' | 'pimCategoryName' | 'pimCategoryPath' | 'pimProduct' | 'pimProductId' | 'priceBook' | 'priceBookId' | 'pricePerDayInCents' | 'pricePerMonthInCents' | 'pricePerWeekInCents' | 'priceType' | 'updatedAt' | 'workspaceId' | RentalPriceKeySpecifier)[];
+export type RentalPriceKeySpecifier = ('calculateSubTotal' | 'catalogRef' | 'createdAt' | 'createdBy' | 'id' | 'name' | 'parentPrice' | 'parentPriceId' | 'parentPriceIdPercentageFactor' | 'pimCategory' | 'pimCategoryId' | 'pimCategoryName' | 'pimCategoryPath' | 'pimProduct' | 'pimProductId' | 'priceBook' | 'priceBookId' | 'pricePerDayInCents' | 'pricePerMonthInCents' | 'pricePerWeekInCents' | 'priceType' | 'pricingSpec' | 'updatedAt' | 'workspaceId' | RentalPriceKeySpecifier)[];
 export type RentalPriceFieldPolicy = {
 	calculateSubTotal?: FieldPolicy<any> | FieldReadFunction<any>,
+	catalogRef?: FieldPolicy<any> | FieldReadFunction<any>,
 	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
 	createdBy?: FieldPolicy<any> | FieldReadFunction<any>,
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -10284,6 +12726,7 @@ export type RentalPriceFieldPolicy = {
 	pricePerMonthInCents?: FieldPolicy<any> | FieldReadFunction<any>,
 	pricePerWeekInCents?: FieldPolicy<any> | FieldReadFunction<any>,
 	priceType?: FieldPolicy<any> | FieldReadFunction<any>,
+	pricingSpec?: FieldPolicy<any> | FieldReadFunction<any>,
 	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
 	workspaceId?: FieldPolicy<any> | FieldReadFunction<any>
 };
@@ -10539,6 +12982,34 @@ export type RentalViewStatusFieldPolicy = {
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
 	name?: FieldPolicy<any> | FieldReadFunction<any>
 };
+export type ResolvedWorkspaceAttributeTypeResultKeySpecifier = ('created' | 'globalAttributeType' | 'scope' | 'workspaceAttributeType' | ResolvedWorkspaceAttributeTypeResultKeySpecifier)[];
+export type ResolvedWorkspaceAttributeTypeResultFieldPolicy = {
+	created?: FieldPolicy<any> | FieldReadFunction<any>,
+	globalAttributeType?: FieldPolicy<any> | FieldReadFunction<any>,
+	scope?: FieldPolicy<any> | FieldReadFunction<any>,
+	workspaceAttributeType?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ResolvedWorkspaceAttributeValueResultKeySpecifier = ('created' | 'globalAttributeValue' | 'scope' | 'workspaceAttributeValue' | ResolvedWorkspaceAttributeValueResultKeySpecifier)[];
+export type ResolvedWorkspaceAttributeValueResultFieldPolicy = {
+	created?: FieldPolicy<any> | FieldReadFunction<any>,
+	globalAttributeValue?: FieldPolicy<any> | FieldReadFunction<any>,
+	scope?: FieldPolicy<any> | FieldReadFunction<any>,
+	workspaceAttributeValue?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ResolvedWorkspaceTagResultKeySpecifier = ('created' | 'globalTag' | 'scope' | 'workspaceTag' | ResolvedWorkspaceTagResultKeySpecifier)[];
+export type ResolvedWorkspaceTagResultFieldPolicy = {
+	created?: FieldPolicy<any> | FieldReadFunction<any>,
+	globalTag?: FieldPolicy<any> | FieldReadFunction<any>,
+	scope?: FieldPolicy<any> | FieldReadFunction<any>,
+	workspaceTag?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ResolvedWorkspaceUnitDefinitionResultKeySpecifier = ('created' | 'globalUnitDefinition' | 'scope' | 'workspaceUnitDefinition' | ResolvedWorkspaceUnitDefinitionResultKeySpecifier)[];
+export type ResolvedWorkspaceUnitDefinitionResultFieldPolicy = {
+	created?: FieldPolicy<any> | FieldReadFunction<any>,
+	globalUnitDefinition?: FieldPolicy<any> | FieldReadFunction<any>,
+	scope?: FieldPolicy<any> | FieldReadFunction<any>,
+	workspaceUnitDefinition?: FieldPolicy<any> | FieldReadFunction<any>
+};
 export type ResourceMapAddressKeySpecifier = ('city' | 'country' | 'line1' | 'line2' | 'placeId' | 'postalCode' | 'state' | ResourceMapAddressKeySpecifier)[];
 export type ResourceMapAddressFieldPolicy = {
 	city?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -10637,8 +13108,9 @@ export type SaleFulfilmentFieldPolicy = {
 	workflowId?: FieldPolicy<any> | FieldReadFunction<any>,
 	workspaceId?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type SalePriceKeySpecifier = ('createdAt' | 'createdBy' | 'discounts' | 'id' | 'name' | 'parentPrice' | 'parentPriceId' | 'parentPriceIdPercentageFactor' | 'pimCategory' | 'pimCategoryId' | 'pimCategoryName' | 'pimCategoryPath' | 'pimProduct' | 'pimProductId' | 'priceBook' | 'priceBookId' | 'priceType' | 'unitCostInCents' | 'updatedAt' | 'workspaceId' | SalePriceKeySpecifier)[];
+export type SalePriceKeySpecifier = ('catalogRef' | 'createdAt' | 'createdBy' | 'discounts' | 'id' | 'name' | 'parentPrice' | 'parentPriceId' | 'parentPriceIdPercentageFactor' | 'pimCategory' | 'pimCategoryId' | 'pimCategoryName' | 'pimCategoryPath' | 'pimProduct' | 'pimProductId' | 'priceBook' | 'priceBookId' | 'priceType' | 'pricingSpec' | 'unitCostInCents' | 'updatedAt' | 'workspaceId' | SalePriceKeySpecifier)[];
 export type SalePriceFieldPolicy = {
+	catalogRef?: FieldPolicy<any> | FieldReadFunction<any>,
 	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
 	createdBy?: FieldPolicy<any> | FieldReadFunction<any>,
 	discounts?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -10656,6 +13128,7 @@ export type SalePriceFieldPolicy = {
 	priceBook?: FieldPolicy<any> | FieldReadFunction<any>,
 	priceBookId?: FieldPolicy<any> | FieldReadFunction<any>,
 	priceType?: FieldPolicy<any> | FieldReadFunction<any>,
+	pricingSpec?: FieldPolicy<any> | FieldReadFunction<any>,
 	unitCostInCents?: FieldPolicy<any> | FieldReadFunction<any>,
 	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
 	workspaceId?: FieldPolicy<any> | FieldReadFunction<any>
@@ -10737,7 +13210,7 @@ export type SaleTransactionFieldPolicy = {
 	workflowId?: FieldPolicy<any> | FieldReadFunction<any>,
 	workspaceId?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type SalesOrderKeySpecifier = ('buyer' | 'buyer_id' | 'comments' | 'company_id' | 'created_at' | 'created_by' | 'created_by_user' | 'deleted_at' | 'id' | 'intakeFormSubmission' | 'intake_form_submission_id' | 'line_items' | 'pricing' | 'project' | 'project_id' | 'purchase_order_number' | 'quote_id' | 'quote_revision_id' | 'sales_order_number' | 'status' | 'updated_at' | 'updated_by' | 'updated_by_user' | 'workspace_id' | SalesOrderKeySpecifier)[];
+export type SalesOrderKeySpecifier = ('buyer' | 'buyer_id' | 'comments' | 'company_id' | 'created_at' | 'created_by' | 'created_by_user' | 'deleted_at' | 'id' | 'intakeFormSubmission' | 'intake_form_submission_id' | 'lineItems' | 'line_items' | 'pricing' | 'project' | 'project_id' | 'purchase_order_number' | 'quote_id' | 'quote_revision_id' | 'sales_order_number' | 'status' | 'updated_at' | 'updated_by' | 'updated_by_user' | 'workspace_id' | SalesOrderKeySpecifier)[];
 export type SalesOrderFieldPolicy = {
 	buyer?: FieldPolicy<any> | FieldReadFunction<any>,
 	buyer_id?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -10750,6 +13223,7 @@ export type SalesOrderFieldPolicy = {
 	id?: FieldPolicy<any> | FieldReadFunction<any>,
 	intakeFormSubmission?: FieldPolicy<any> | FieldReadFunction<any>,
 	intake_form_submission_id?: FieldPolicy<any> | FieldReadFunction<any>,
+	lineItems?: FieldPolicy<any> | FieldReadFunction<any>,
 	line_items?: FieldPolicy<any> | FieldReadFunction<any>,
 	pricing?: FieldPolicy<any> | FieldReadFunction<any>,
 	project?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -10862,7 +13336,7 @@ export type SequenceNumberFieldPolicy = {
 	value?: FieldPolicy<any> | FieldReadFunction<any>,
 	workspaceId?: FieldPolicy<any> | FieldReadFunction<any>
 };
-export type ServiceFulfilmentKeySpecifier = ('assignedTo' | 'assignedToId' | 'companyId' | 'contact' | 'contactId' | 'createdAt' | 'id' | 'pimCategory' | 'pimCategoryId' | 'pimCategoryName' | 'pimCategoryPath' | 'pimProduct' | 'pimProductId' | 'price' | 'priceId' | 'priceName' | 'project' | 'projectId' | 'purchaseOrderLineItem' | 'purchaseOrderLineItemId' | 'purchaseOrderNumber' | 'salesOrder' | 'salesOrderId' | 'salesOrderLineItem' | 'salesOrderLineItemId' | 'salesOrderPONumber' | 'salesOrderType' | 'serviceDate' | 'unitCostInCents' | 'updatedAt' | 'workflowColumnId' | 'workflowId' | 'workspaceId' | ServiceFulfilmentKeySpecifier)[];
+export type ServiceFulfilmentKeySpecifier = ('assignedTo' | 'assignedToId' | 'companyId' | 'contact' | 'contactId' | 'createdAt' | 'id' | 'pimCategory' | 'pimCategoryId' | 'pimCategoryName' | 'pimCategoryPath' | 'pimProduct' | 'pimProductId' | 'price' | 'priceId' | 'priceName' | 'project' | 'projectId' | 'purchaseOrderLineItem' | 'purchaseOrderLineItemId' | 'purchaseOrderNumber' | 'salesOrder' | 'salesOrderId' | 'salesOrderLineItem' | 'salesOrderLineItemId' | 'salesOrderPONumber' | 'salesOrderType' | 'serviceDate' | 'tasks' | 'unitCostInCents' | 'updatedAt' | 'workflowColumnId' | 'workflowId' | 'workspaceId' | ServiceFulfilmentKeySpecifier)[];
 export type ServiceFulfilmentFieldPolicy = {
 	assignedTo?: FieldPolicy<any> | FieldReadFunction<any>,
 	assignedToId?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -10892,11 +13366,86 @@ export type ServiceFulfilmentFieldPolicy = {
 	salesOrderPONumber?: FieldPolicy<any> | FieldReadFunction<any>,
 	salesOrderType?: FieldPolicy<any> | FieldReadFunction<any>,
 	serviceDate?: FieldPolicy<any> | FieldReadFunction<any>,
+	tasks?: FieldPolicy<any> | FieldReadFunction<any>,
 	unitCostInCents?: FieldPolicy<any> | FieldReadFunction<any>,
 	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
 	workflowColumnId?: FieldPolicy<any> | FieldReadFunction<any>,
 	workflowId?: FieldPolicy<any> | FieldReadFunction<any>,
 	workspaceId?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ServiceFulfilmentTaskKeySpecifier = ('activityTagIds' | 'completedAt' | 'completedBy' | 'contextTagIds' | 'id' | 'notes' | 'status' | 'title' | ServiceFulfilmentTaskKeySpecifier)[];
+export type ServiceFulfilmentTaskFieldPolicy = {
+	activityTagIds?: FieldPolicy<any> | FieldReadFunction<any>,
+	completedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	completedBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	contextTagIds?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	notes?: FieldPolicy<any> | FieldReadFunction<any>,
+	status?: FieldPolicy<any> | FieldReadFunction<any>,
+	title?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ServicePriceKeySpecifier = ('catalogRef' | 'createdAt' | 'createdBy' | 'id' | 'name' | 'parentPrice' | 'parentPriceId' | 'parentPriceIdPercentageFactor' | 'pimCategory' | 'pimCategoryId' | 'pimCategoryName' | 'pimCategoryPath' | 'pimProduct' | 'pimProductId' | 'priceBook' | 'priceBookId' | 'priceType' | 'pricingSpec' | 'updatedAt' | 'workspaceId' | ServicePriceKeySpecifier)[];
+export type ServicePriceFieldPolicy = {
+	catalogRef?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	name?: FieldPolicy<any> | FieldReadFunction<any>,
+	parentPrice?: FieldPolicy<any> | FieldReadFunction<any>,
+	parentPriceId?: FieldPolicy<any> | FieldReadFunction<any>,
+	parentPriceIdPercentageFactor?: FieldPolicy<any> | FieldReadFunction<any>,
+	pimCategory?: FieldPolicy<any> | FieldReadFunction<any>,
+	pimCategoryId?: FieldPolicy<any> | FieldReadFunction<any>,
+	pimCategoryName?: FieldPolicy<any> | FieldReadFunction<any>,
+	pimCategoryPath?: FieldPolicy<any> | FieldReadFunction<any>,
+	pimProduct?: FieldPolicy<any> | FieldReadFunction<any>,
+	pimProductId?: FieldPolicy<any> | FieldReadFunction<any>,
+	priceBook?: FieldPolicy<any> | FieldReadFunction<any>,
+	priceBookId?: FieldPolicy<any> | FieldReadFunction<any>,
+	priceType?: FieldPolicy<any> | FieldReadFunction<any>,
+	pricingSpec?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	workspaceId?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ServiceRequirementEnvelopeKeySpecifier = ('maxHeight' | 'maxItemWeight' | 'maxLength' | 'maxWidth' | 'missingTargets' | 'targetLineItemCount' | 'targetLineItemIds' | 'targetQuantity' | 'totalWeight' | 'warnings' | ServiceRequirementEnvelopeKeySpecifier)[];
+export type ServiceRequirementEnvelopeFieldPolicy = {
+	maxHeight?: FieldPolicy<any> | FieldReadFunction<any>,
+	maxItemWeight?: FieldPolicy<any> | FieldReadFunction<any>,
+	maxLength?: FieldPolicy<any> | FieldReadFunction<any>,
+	maxWidth?: FieldPolicy<any> | FieldReadFunction<any>,
+	missingTargets?: FieldPolicy<any> | FieldReadFunction<any>,
+	targetLineItemCount?: FieldPolicy<any> | FieldReadFunction<any>,
+	targetLineItemIds?: FieldPolicy<any> | FieldReadFunction<any>,
+	targetQuantity?: FieldPolicy<any> | FieldReadFunction<any>,
+	totalWeight?: FieldPolicy<any> | FieldReadFunction<any>,
+	warnings?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ServiceRequirementMeasurementKeySpecifier = ('unitCode' | 'value' | ServiceRequirementMeasurementKeySpecifier)[];
+export type ServiceRequirementMeasurementFieldPolicy = {
+	unitCode?: FieldPolicy<any> | FieldReadFunction<any>,
+	value?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ServiceRequirementMissingTargetKeySpecifier = ('missingAttributeKeys' | 'reason' | 'targetLineItemId' | ServiceRequirementMissingTargetKeySpecifier)[];
+export type ServiceRequirementMissingTargetFieldPolicy = {
+	missingAttributeKeys?: FieldPolicy<any> | FieldReadFunction<any>,
+	reason?: FieldPolicy<any> | FieldReadFunction<any>,
+	targetLineItemId?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ServiceScopeTaskKeySpecifier = ('activityTagIds' | 'contextTagIds' | 'id' | 'notes' | 'sourceTemplateId' | 'title' | ServiceScopeTaskKeySpecifier)[];
+export type ServiceScopeTaskFieldPolicy = {
+	activityTagIds?: FieldPolicy<any> | FieldReadFunction<any>,
+	contextTagIds?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	notes?: FieldPolicy<any> | FieldReadFunction<any>,
+	sourceTemplateId?: FieldPolicy<any> | FieldReadFunction<any>,
+	title?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type ServiceTargetSelectorKeySpecifier = ('kind' | 'tagIds' | 'targetLineItemIds' | 'targetProductId' | ServiceTargetSelectorKeySpecifier)[];
+export type ServiceTargetSelectorFieldPolicy = {
+	kind?: FieldPolicy<any> | FieldReadFunction<any>,
+	tagIds?: FieldPolicy<any> | FieldReadFunction<any>,
+	targetLineItemIds?: FieldPolicy<any> | FieldReadFunction<any>,
+	targetProductId?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type ServiceTaskKeySpecifier = ('completed' | 'taskDetails' | ServiceTaskKeySpecifier)[];
 export type ServiceTaskFieldPolicy = {
@@ -10945,6 +13494,100 @@ export type SpiceDBSubjectReferenceFieldPolicy = {
 	relation?: FieldPolicy<any> | FieldReadFunction<any>,
 	type?: FieldPolicy<any> | FieldReadFunction<any>
 };
+export type StudioCatalogCreateProductResultKeySpecifier = ('catalogPath' | 'product' | StudioCatalogCreateProductResultKeySpecifier)[];
+export type StudioCatalogCreateProductResultFieldPolicy = {
+	catalogPath?: FieldPolicy<any> | FieldReadFunction<any>,
+	product?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type StudioCatalogEnsureLogisticsServiceProductsResultKeySpecifier = ('catalogPath' | 'products' | StudioCatalogEnsureLogisticsServiceProductsResultKeySpecifier)[];
+export type StudioCatalogEnsureLogisticsServiceProductsResultFieldPolicy = {
+	catalogPath?: FieldPolicy<any> | FieldReadFunction<any>,
+	products?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type StudioCatalogInitResultKeySpecifier = ('catalogPath' | StudioCatalogInitResultKeySpecifier)[];
+export type StudioCatalogInitResultFieldPolicy = {
+	catalogPath?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type StudioCatalogProductSummaryKeySpecifier = ('categoryPath' | 'id' | 'kind' | 'name' | 'origin' | 'path' | 'status' | 'tags' | StudioCatalogProductSummaryKeySpecifier)[];
+export type StudioCatalogProductSummaryFieldPolicy = {
+	categoryPath?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	kind?: FieldPolicy<any> | FieldReadFunction<any>,
+	name?: FieldPolicy<any> | FieldReadFunction<any>,
+	origin?: FieldPolicy<any> | FieldReadFunction<any>,
+	path?: FieldPolicy<any> | FieldReadFunction<any>,
+	status?: FieldPolicy<any> | FieldReadFunction<any>,
+	tags?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type StudioCatalogSeededProductKeySpecifier = ('product' | 'status' | StudioCatalogSeededProductKeySpecifier)[];
+export type StudioCatalogSeededProductFieldPolicy = {
+	product?: FieldPolicy<any> | FieldReadFunction<any>,
+	status?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type StudioCatalogValidateResultKeySpecifier = ('errors' | 'warnings' | StudioCatalogValidateResultKeySpecifier)[];
+export type StudioCatalogValidateResultFieldPolicy = {
+	errors?: FieldPolicy<any> | FieldReadFunction<any>,
+	warnings?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type StudioCatalogValidationIssueKeySpecifier = ('message' | 'path' | StudioCatalogValidationIssueKeySpecifier)[];
+export type StudioCatalogValidationIssueFieldPolicy = {
+	message?: FieldPolicy<any> | FieldReadFunction<any>,
+	path?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type StudioConversationKeySpecifier = ('createdAt' | 'createdBy' | 'id' | 'lastMessageAt' | 'messageCount' | 'pinnedCatalogPath' | 'title' | 'updatedAt' | 'updatedBy' | 'workingSet' | 'workspaceId' | StudioConversationKeySpecifier)[];
+export type StudioConversationFieldPolicy = {
+	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	lastMessageAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	messageCount?: FieldPolicy<any> | FieldReadFunction<any>,
+	pinnedCatalogPath?: FieldPolicy<any> | FieldReadFunction<any>,
+	title?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	workingSet?: FieldPolicy<any> | FieldReadFunction<any>,
+	workspaceId?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type StudioConversationListResultKeySpecifier = ('items' | 'page' | StudioConversationListResultKeySpecifier)[];
+export type StudioConversationListResultFieldPolicy = {
+	items?: FieldPolicy<any> | FieldReadFunction<any>,
+	page?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type StudioConversationMessageKeySpecifier = ('content' | 'conversationId' | 'createdAt' | 'createdBy' | 'id' | 'metadata' | 'role' | StudioConversationMessageKeySpecifier)[];
+export type StudioConversationMessageFieldPolicy = {
+	content?: FieldPolicy<any> | FieldReadFunction<any>,
+	conversationId?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	metadata?: FieldPolicy<any> | FieldReadFunction<any>,
+	role?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type StudioConversationMessageListResultKeySpecifier = ('items' | 'page' | StudioConversationMessageListResultKeySpecifier)[];
+export type StudioConversationMessageListResultFieldPolicy = {
+	items?: FieldPolicy<any> | FieldReadFunction<any>,
+	page?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type StudioFsNodeKeySpecifier = ('etag' | 'mimeType' | 'name' | 'path' | 'sizeBytes' | 'type' | 'updatedAt' | StudioFsNodeKeySpecifier)[];
+export type StudioFsNodeFieldPolicy = {
+	etag?: FieldPolicy<any> | FieldReadFunction<any>,
+	mimeType?: FieldPolicy<any> | FieldReadFunction<any>,
+	name?: FieldPolicy<any> | FieldReadFunction<any>,
+	path?: FieldPolicy<any> | FieldReadFunction<any>,
+	sizeBytes?: FieldPolicy<any> | FieldReadFunction<any>,
+	type?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type StudioFsReadResultKeySpecifier = ('content' | 'etag' | 'mimeType' | StudioFsReadResultKeySpecifier)[];
+export type StudioFsReadResultFieldPolicy = {
+	content?: FieldPolicy<any> | FieldReadFunction<any>,
+	etag?: FieldPolicy<any> | FieldReadFunction<any>,
+	mimeType?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type StudioFsWriteResultKeySpecifier = ('etag' | StudioFsWriteResultKeySpecifier)[];
+export type StudioFsWriteResultFieldPolicy = {
+	etag?: FieldPolicy<any> | FieldReadFunction<any>
+};
 export type SubmissionSalesOrderKeySpecifier = ('created_at' | 'deleted_at' | 'id' | 'project' | 'project_id' | 'purchase_order_number' | 'sales_order_number' | 'status' | 'updated_at' | 'workspace_id' | SubmissionSalesOrderKeySpecifier)[];
 export type SubmissionSalesOrderFieldPolicy = {
 	created_at?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -10961,6 +13604,14 @@ export type SubmissionSalesOrderFieldPolicy = {
 export type SubscriptionKeySpecifier = ('currentTime' | SubscriptionKeySpecifier)[];
 export type SubscriptionFieldPolicy = {
 	currentTime?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type SyncMaterialLogisticsAddOnsResultKeySpecifier = ('deliveryLineItem' | 'materialLineItemId' | 'pickupLineItem' | 'serviceAddOns' | 'warnings' | SyncMaterialLogisticsAddOnsResultKeySpecifier)[];
+export type SyncMaterialLogisticsAddOnsResultFieldPolicy = {
+	deliveryLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
+	materialLineItemId?: FieldPolicy<any> | FieldReadFunction<any>,
+	pickupLineItem?: FieldPolicy<any> | FieldReadFunction<any>,
+	serviceAddOns?: FieldPolicy<any> | FieldReadFunction<any>,
+	warnings?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type TaxAnalysisResultKeySpecifier = ('taxes' | TaxAnalysisResultKeySpecifier)[];
 export type TaxAnalysisResultFieldPolicy = {
@@ -11167,6 +13818,58 @@ export type WorkspaceFieldPolicy = {
 	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
 	updatedBy?: FieldPolicy<any> | FieldReadFunction<any>
 };
+export type WorkspaceAttributeTypeKeySpecifier = ('allowedUnits' | 'appliesTo' | 'auditStatus' | 'canonicalUnit' | 'canonicalValueSetId' | 'createdAt' | 'createdBy' | 'dimension' | 'globalAttributeTypeId' | 'id' | 'kind' | 'name' | 'notes' | 'source' | 'status' | 'synonyms' | 'updatedAt' | 'updatedBy' | 'usageHints' | 'validationRules' | 'valueType' | 'workspaceId' | WorkspaceAttributeTypeKeySpecifier)[];
+export type WorkspaceAttributeTypeFieldPolicy = {
+	allowedUnits?: FieldPolicy<any> | FieldReadFunction<any>,
+	appliesTo?: FieldPolicy<any> | FieldReadFunction<any>,
+	auditStatus?: FieldPolicy<any> | FieldReadFunction<any>,
+	canonicalUnit?: FieldPolicy<any> | FieldReadFunction<any>,
+	canonicalValueSetId?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	dimension?: FieldPolicy<any> | FieldReadFunction<any>,
+	globalAttributeTypeId?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	kind?: FieldPolicy<any> | FieldReadFunction<any>,
+	name?: FieldPolicy<any> | FieldReadFunction<any>,
+	notes?: FieldPolicy<any> | FieldReadFunction<any>,
+	source?: FieldPolicy<any> | FieldReadFunction<any>,
+	status?: FieldPolicy<any> | FieldReadFunction<any>,
+	synonyms?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	usageHints?: FieldPolicy<any> | FieldReadFunction<any>,
+	validationRules?: FieldPolicy<any> | FieldReadFunction<any>,
+	valueType?: FieldPolicy<any> | FieldReadFunction<any>,
+	workspaceId?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type WorkspaceAttributeTypeListResultKeySpecifier = ('items' | 'page' | WorkspaceAttributeTypeListResultKeySpecifier)[];
+export type WorkspaceAttributeTypeListResultFieldPolicy = {
+	items?: FieldPolicy<any> | FieldReadFunction<any>,
+	page?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type WorkspaceAttributeValueKeySpecifier = ('attributeTypeId' | 'auditStatus' | 'codes' | 'createdAt' | 'createdBy' | 'globalAttributeValueId' | 'id' | 'source' | 'status' | 'synonyms' | 'updatedAt' | 'updatedBy' | 'value' | 'workspaceId' | WorkspaceAttributeValueKeySpecifier)[];
+export type WorkspaceAttributeValueFieldPolicy = {
+	attributeTypeId?: FieldPolicy<any> | FieldReadFunction<any>,
+	auditStatus?: FieldPolicy<any> | FieldReadFunction<any>,
+	codes?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	globalAttributeValueId?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	source?: FieldPolicy<any> | FieldReadFunction<any>,
+	status?: FieldPolicy<any> | FieldReadFunction<any>,
+	synonyms?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	value?: FieldPolicy<any> | FieldReadFunction<any>,
+	workspaceId?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type WorkspaceAttributeValueListResultKeySpecifier = ('items' | 'page' | WorkspaceAttributeValueListResultKeySpecifier)[];
+export type WorkspaceAttributeValueListResultFieldPolicy = {
+	items?: FieldPolicy<any> | FieldReadFunction<any>,
+	page?: FieldPolicy<any> | FieldReadFunction<any>
+};
 export type WorkspaceMemberKeySpecifier = ('roles' | 'user' | 'userId' | WorkspaceMemberKeySpecifier)[];
 export type WorkspaceMemberFieldPolicy = {
 	roles?: FieldPolicy<any> | FieldReadFunction<any>,
@@ -11178,6 +13881,52 @@ export type WorkspaceRoleInfoFieldPolicy = {
 	description?: FieldPolicy<any> | FieldReadFunction<any>,
 	label?: FieldPolicy<any> | FieldReadFunction<any>,
 	role?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type WorkspaceTagKeySpecifier = ('auditStatus' | 'createdAt' | 'createdBy' | 'displayName' | 'globalTagId' | 'id' | 'label' | 'notes' | 'pos' | 'source' | 'status' | 'synonyms' | 'updatedAt' | 'updatedBy' | 'workspaceId' | WorkspaceTagKeySpecifier)[];
+export type WorkspaceTagFieldPolicy = {
+	auditStatus?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	displayName?: FieldPolicy<any> | FieldReadFunction<any>,
+	globalTagId?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	label?: FieldPolicy<any> | FieldReadFunction<any>,
+	notes?: FieldPolicy<any> | FieldReadFunction<any>,
+	pos?: FieldPolicy<any> | FieldReadFunction<any>,
+	source?: FieldPolicy<any> | FieldReadFunction<any>,
+	status?: FieldPolicy<any> | FieldReadFunction<any>,
+	synonyms?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	workspaceId?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type WorkspaceTagListResultKeySpecifier = ('items' | 'page' | WorkspaceTagListResultKeySpecifier)[];
+export type WorkspaceTagListResultFieldPolicy = {
+	items?: FieldPolicy<any> | FieldReadFunction<any>,
+	page?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type WorkspaceUnitDefinitionKeySpecifier = ('canonicalUnitCode' | 'code' | 'createdAt' | 'createdBy' | 'dimension' | 'globalUnitCode' | 'id' | 'name' | 'offset' | 'source' | 'status' | 'toCanonicalFactor' | 'updatedAt' | 'updatedBy' | 'workspaceId' | WorkspaceUnitDefinitionKeySpecifier)[];
+export type WorkspaceUnitDefinitionFieldPolicy = {
+	canonicalUnitCode?: FieldPolicy<any> | FieldReadFunction<any>,
+	code?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	createdBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	dimension?: FieldPolicy<any> | FieldReadFunction<any>,
+	globalUnitCode?: FieldPolicy<any> | FieldReadFunction<any>,
+	id?: FieldPolicy<any> | FieldReadFunction<any>,
+	name?: FieldPolicy<any> | FieldReadFunction<any>,
+	offset?: FieldPolicy<any> | FieldReadFunction<any>,
+	source?: FieldPolicy<any> | FieldReadFunction<any>,
+	status?: FieldPolicy<any> | FieldReadFunction<any>,
+	toCanonicalFactor?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedAt?: FieldPolicy<any> | FieldReadFunction<any>,
+	updatedBy?: FieldPolicy<any> | FieldReadFunction<any>,
+	workspaceId?: FieldPolicy<any> | FieldReadFunction<any>
+};
+export type WorkspaceUnitDefinitionListResultKeySpecifier = ('items' | 'page' | WorkspaceUnitDefinitionListResultKeySpecifier)[];
+export type WorkspaceUnitDefinitionListResultFieldPolicy = {
+	items?: FieldPolicy<any> | FieldReadFunction<any>,
+	page?: FieldPolicy<any> | FieldReadFunction<any>
 };
 export type WriteRelationshipResultKeySpecifier = ('message' | 'relationship' | 'success' | WriteRelationshipResultKeySpecifier)[];
 export type WriteRelationshipResultFieldPolicy = {
@@ -11418,6 +14167,26 @@ export type StrictTypedTypePolicies = {
 		keyFields?: false | GlobalAttributeValueListResultKeySpecifier | (() => undefined | GlobalAttributeValueListResultKeySpecifier),
 		fields?: GlobalAttributeValueListResultFieldPolicy,
 	},
+	GlobalTag?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | GlobalTagKeySpecifier | (() => undefined | GlobalTagKeySpecifier),
+		fields?: GlobalTagFieldPolicy,
+	},
+	GlobalTagIngestionResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | GlobalTagIngestionResultKeySpecifier | (() => undefined | GlobalTagIngestionResultKeySpecifier),
+		fields?: GlobalTagIngestionResultFieldPolicy,
+	},
+	GlobalTagListResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | GlobalTagListResultKeySpecifier | (() => undefined | GlobalTagListResultKeySpecifier),
+		fields?: GlobalTagListResultFieldPolicy,
+	},
+	GlobalTagRelation?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | GlobalTagRelationKeySpecifier | (() => undefined | GlobalTagRelationKeySpecifier),
+		fields?: GlobalTagRelationFieldPolicy,
+	},
+	GlobalTagRelationListResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | GlobalTagRelationListResultKeySpecifier | (() => undefined | GlobalTagRelationListResultKeySpecifier),
+		fields?: GlobalTagRelationListResultFieldPolicy,
+	},
 	GlobalUnitDefinition?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | GlobalUnitDefinitionKeySpecifier | (() => undefined | GlobalUnitDefinitionKeySpecifier),
 		fields?: GlobalUnitDefinitionFieldPolicy,
@@ -11502,9 +14271,61 @@ export type StrictTypedTypePolicies = {
 		keyFields?: false | InvoicesResponseKeySpecifier | (() => undefined | InvoicesResponseKeySpecifier),
 		fields?: InvoicesResponseFieldPolicy,
 	},
+	LineItem?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LineItemKeySpecifier | (() => undefined | LineItemKeySpecifier),
+		fields?: LineItemFieldPolicy,
+	},
+	LineItemConstraint?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LineItemConstraintKeySpecifier | (() => undefined | LineItemConstraintKeySpecifier),
+		fields?: LineItemConstraintFieldPolicy,
+	},
+	LineItemConstraintAttribute?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LineItemConstraintAttributeKeySpecifier | (() => undefined | LineItemConstraintAttributeKeySpecifier),
+		fields?: LineItemConstraintAttributeFieldPolicy,
+	},
+	LineItemConstraintBrand?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LineItemConstraintBrandKeySpecifier | (() => undefined | LineItemConstraintBrandKeySpecifier),
+		fields?: LineItemConstraintBrandFieldPolicy,
+	},
+	LineItemConstraintData?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LineItemConstraintDataKeySpecifier | (() => undefined | LineItemConstraintDataKeySpecifier),
+		fields?: LineItemConstraintDataFieldPolicy,
+	},
+	LineItemConstraintLocation?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LineItemConstraintLocationKeySpecifier | (() => undefined | LineItemConstraintLocationKeySpecifier),
+		fields?: LineItemConstraintLocationFieldPolicy,
+	},
+	LineItemConstraintOther?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LineItemConstraintOtherKeySpecifier | (() => undefined | LineItemConstraintOtherKeySpecifier),
+		fields?: LineItemConstraintOtherFieldPolicy,
+	},
+	LineItemConstraintSchedule?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LineItemConstraintScheduleKeySpecifier | (() => undefined | LineItemConstraintScheduleKeySpecifier),
+		fields?: LineItemConstraintScheduleFieldPolicy,
+	},
+	LineItemConstraintTag?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LineItemConstraintTagKeySpecifier | (() => undefined | LineItemConstraintTagKeySpecifier),
+		fields?: LineItemConstraintTagFieldPolicy,
+	},
 	LineItemCostOptionDetails?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | LineItemCostOptionDetailsKeySpecifier | (() => undefined | LineItemCostOptionDetailsKeySpecifier),
 		fields?: LineItemCostOptionDetailsFieldPolicy,
+	},
+	LineItemDelivery?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LineItemDeliveryKeySpecifier | (() => undefined | LineItemDeliveryKeySpecifier),
+		fields?: LineItemDeliveryFieldPolicy,
+	},
+	LineItemDocumentRef?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LineItemDocumentRefKeySpecifier | (() => undefined | LineItemDocumentRefKeySpecifier),
+		fields?: LineItemDocumentRefFieldPolicy,
+	},
+	LineItemInputValue?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LineItemInputValueKeySpecifier | (() => undefined | LineItemInputValueKeySpecifier),
+		fields?: LineItemInputValueFieldPolicy,
+	},
+	LineItemPlaceRef?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LineItemPlaceRefKeySpecifier | (() => undefined | LineItemPlaceRefKeySpecifier),
+		fields?: LineItemPlaceRefFieldPolicy,
 	},
 	LineItemPriceForecast?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | LineItemPriceForecastKeySpecifier | (() => undefined | LineItemPriceForecastKeySpecifier),
@@ -11518,9 +14339,25 @@ export type StrictTypedTypePolicies = {
 		keyFields?: false | LineItemPricingKeySpecifier | (() => undefined | LineItemPricingKeySpecifier),
 		fields?: LineItemPricingFieldPolicy,
 	},
+	LineItemPricingRef?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LineItemPricingRefKeySpecifier | (() => undefined | LineItemPricingRefKeySpecifier),
+		fields?: LineItemPricingRefFieldPolicy,
+	},
+	LineItemProductRef?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LineItemProductRefKeySpecifier | (() => undefined | LineItemProductRefKeySpecifier),
+		fields?: LineItemProductRefFieldPolicy,
+	},
 	LineItemRentalPeriod?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | LineItemRentalPeriodKeySpecifier | (() => undefined | LineItemRentalPeriodKeySpecifier),
 		fields?: LineItemRentalPeriodFieldPolicy,
+	},
+	LineItemTargetSelector?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LineItemTargetSelectorKeySpecifier | (() => undefined | LineItemTargetSelectorKeySpecifier),
+		fields?: LineItemTargetSelectorFieldPolicy,
+	},
+	LineItemTimeWindow?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | LineItemTimeWindowKeySpecifier | (() => undefined | LineItemTimeWindowKeySpecifier),
+		fields?: LineItemTimeWindowFieldPolicy,
 	},
 	ListAssetsResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | ListAssetsResultKeySpecifier | (() => undefined | ListAssetsResultKeySpecifier),
@@ -11533,6 +14370,10 @@ export type StrictTypedTypePolicies = {
 	ListFulfilmentsResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | ListFulfilmentsResultKeySpecifier | (() => undefined | ListFulfilmentsResultKeySpecifier),
 		fields?: ListFulfilmentsResultFieldPolicy,
+	},
+	ListLineItemsResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ListLineItemsResultKeySpecifier | (() => undefined | ListLineItemsResultKeySpecifier),
+		fields?: ListLineItemsResultFieldPolicy,
 	},
 	ListPersonContactsResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | ListPersonContactsResultKeySpecifier | (() => undefined | ListPersonContactsResultKeySpecifier),
@@ -11622,6 +14463,14 @@ export type StrictTypedTypePolicies = {
 		keyFields?: false | PriceBookKeySpecifier | (() => undefined | PriceBookKeySpecifier),
 		fields?: PriceBookFieldPolicy,
 	},
+	PriceCatalogRef?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | PriceCatalogRefKeySpecifier | (() => undefined | PriceCatalogRefKeySpecifier),
+		fields?: PriceCatalogRefFieldPolicy,
+	},
+	PricingSpec?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | PricingSpecKeySpecifier | (() => undefined | PricingSpecKeySpecifier),
+		fields?: PricingSpecFieldPolicy,
+	},
 	Project?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | ProjectKeySpecifier | (() => undefined | ProjectKeySpecifier),
 		fields?: ProjectFieldPolicy,
@@ -11637,6 +14486,22 @@ export type StrictTypedTypePolicies = {
 	ProjectStatusCode?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | ProjectStatusCodeKeySpecifier | (() => undefined | ProjectStatusCodeKeySpecifier),
 		fields?: ProjectStatusCodeFieldPolicy,
+	},
+	PromoteWorkspaceAttributeTypesToGlobalResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | PromoteWorkspaceAttributeTypesToGlobalResultKeySpecifier | (() => undefined | PromoteWorkspaceAttributeTypesToGlobalResultKeySpecifier),
+		fields?: PromoteWorkspaceAttributeTypesToGlobalResultFieldPolicy,
+	},
+	PromoteWorkspaceAttributeValuesToGlobalResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | PromoteWorkspaceAttributeValuesToGlobalResultKeySpecifier | (() => undefined | PromoteWorkspaceAttributeValuesToGlobalResultKeySpecifier),
+		fields?: PromoteWorkspaceAttributeValuesToGlobalResultFieldPolicy,
+	},
+	PromotedWorkspaceAttributeType?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | PromotedWorkspaceAttributeTypeKeySpecifier | (() => undefined | PromotedWorkspaceAttributeTypeKeySpecifier),
+		fields?: PromotedWorkspaceAttributeTypeFieldPolicy,
+	},
+	PromotedWorkspaceAttributeValue?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | PromotedWorkspaceAttributeValueKeySpecifier | (() => undefined | PromotedWorkspaceAttributeValueKeySpecifier),
+		fields?: PromotedWorkspaceAttributeValueFieldPolicy,
 	},
 	PurchaseOrder?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | PurchaseOrderKeySpecifier | (() => undefined | PurchaseOrderKeySpecifier),
@@ -11665,6 +14530,26 @@ export type StrictTypedTypePolicies = {
 	Quote?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | QuoteKeySpecifier | (() => undefined | QuoteKeySpecifier),
 		fields?: QuoteFieldPolicy,
+	},
+	QuoteLineItemConstraint?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | QuoteLineItemConstraintKeySpecifier | (() => undefined | QuoteLineItemConstraintKeySpecifier),
+		fields?: QuoteLineItemConstraintFieldPolicy,
+	},
+	QuoteLineItemInputValue?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | QuoteLineItemInputValueKeySpecifier | (() => undefined | QuoteLineItemInputValueKeySpecifier),
+		fields?: QuoteLineItemInputValueFieldPolicy,
+	},
+	QuoteLineItemPricingRef?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | QuoteLineItemPricingRefKeySpecifier | (() => undefined | QuoteLineItemPricingRefKeySpecifier),
+		fields?: QuoteLineItemPricingRefFieldPolicy,
+	},
+	QuoteLineItemProductRef?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | QuoteLineItemProductRefKeySpecifier | (() => undefined | QuoteLineItemProductRefKeySpecifier),
+		fields?: QuoteLineItemProductRefFieldPolicy,
+	},
+	QuoteLineItemTimeWindow?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | QuoteLineItemTimeWindowKeySpecifier | (() => undefined | QuoteLineItemTimeWindowKeySpecifier),
+		fields?: QuoteLineItemTimeWindowFieldPolicy,
 	},
 	QuoteRevision?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | QuoteRevisionKeySpecifier | (() => undefined | QuoteRevisionKeySpecifier),
@@ -11790,6 +14675,22 @@ export type StrictTypedTypePolicies = {
 		keyFields?: false | RentalViewStatusKeySpecifier | (() => undefined | RentalViewStatusKeySpecifier),
 		fields?: RentalViewStatusFieldPolicy,
 	},
+	ResolvedWorkspaceAttributeTypeResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ResolvedWorkspaceAttributeTypeResultKeySpecifier | (() => undefined | ResolvedWorkspaceAttributeTypeResultKeySpecifier),
+		fields?: ResolvedWorkspaceAttributeTypeResultFieldPolicy,
+	},
+	ResolvedWorkspaceAttributeValueResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ResolvedWorkspaceAttributeValueResultKeySpecifier | (() => undefined | ResolvedWorkspaceAttributeValueResultKeySpecifier),
+		fields?: ResolvedWorkspaceAttributeValueResultFieldPolicy,
+	},
+	ResolvedWorkspaceTagResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ResolvedWorkspaceTagResultKeySpecifier | (() => undefined | ResolvedWorkspaceTagResultKeySpecifier),
+		fields?: ResolvedWorkspaceTagResultFieldPolicy,
+	},
+	ResolvedWorkspaceUnitDefinitionResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ResolvedWorkspaceUnitDefinitionResultKeySpecifier | (() => undefined | ResolvedWorkspaceUnitDefinitionResultKeySpecifier),
+		fields?: ResolvedWorkspaceUnitDefinitionResultFieldPolicy,
+	},
 	ResourceMapAddress?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | ResourceMapAddressKeySpecifier | (() => undefined | ResourceMapAddressKeySpecifier),
 		fields?: ResourceMapAddressFieldPolicy,
@@ -11894,6 +14795,34 @@ export type StrictTypedTypePolicies = {
 		keyFields?: false | ServiceFulfilmentKeySpecifier | (() => undefined | ServiceFulfilmentKeySpecifier),
 		fields?: ServiceFulfilmentFieldPolicy,
 	},
+	ServiceFulfilmentTask?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ServiceFulfilmentTaskKeySpecifier | (() => undefined | ServiceFulfilmentTaskKeySpecifier),
+		fields?: ServiceFulfilmentTaskFieldPolicy,
+	},
+	ServicePrice?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ServicePriceKeySpecifier | (() => undefined | ServicePriceKeySpecifier),
+		fields?: ServicePriceFieldPolicy,
+	},
+	ServiceRequirementEnvelope?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ServiceRequirementEnvelopeKeySpecifier | (() => undefined | ServiceRequirementEnvelopeKeySpecifier),
+		fields?: ServiceRequirementEnvelopeFieldPolicy,
+	},
+	ServiceRequirementMeasurement?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ServiceRequirementMeasurementKeySpecifier | (() => undefined | ServiceRequirementMeasurementKeySpecifier),
+		fields?: ServiceRequirementMeasurementFieldPolicy,
+	},
+	ServiceRequirementMissingTarget?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ServiceRequirementMissingTargetKeySpecifier | (() => undefined | ServiceRequirementMissingTargetKeySpecifier),
+		fields?: ServiceRequirementMissingTargetFieldPolicy,
+	},
+	ServiceScopeTask?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ServiceScopeTaskKeySpecifier | (() => undefined | ServiceScopeTaskKeySpecifier),
+		fields?: ServiceScopeTaskFieldPolicy,
+	},
+	ServiceTargetSelector?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | ServiceTargetSelectorKeySpecifier | (() => undefined | ServiceTargetSelectorKeySpecifier),
+		fields?: ServiceTargetSelectorFieldPolicy,
+	},
 	ServiceTask?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | ServiceTaskKeySpecifier | (() => undefined | ServiceTaskKeySpecifier),
 		fields?: ServiceTaskFieldPolicy,
@@ -11918,6 +14847,62 @@ export type StrictTypedTypePolicies = {
 		keyFields?: false | SpiceDBSubjectReferenceKeySpecifier | (() => undefined | SpiceDBSubjectReferenceKeySpecifier),
 		fields?: SpiceDBSubjectReferenceFieldPolicy,
 	},
+	StudioCatalogCreateProductResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | StudioCatalogCreateProductResultKeySpecifier | (() => undefined | StudioCatalogCreateProductResultKeySpecifier),
+		fields?: StudioCatalogCreateProductResultFieldPolicy,
+	},
+	StudioCatalogEnsureLogisticsServiceProductsResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | StudioCatalogEnsureLogisticsServiceProductsResultKeySpecifier | (() => undefined | StudioCatalogEnsureLogisticsServiceProductsResultKeySpecifier),
+		fields?: StudioCatalogEnsureLogisticsServiceProductsResultFieldPolicy,
+	},
+	StudioCatalogInitResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | StudioCatalogInitResultKeySpecifier | (() => undefined | StudioCatalogInitResultKeySpecifier),
+		fields?: StudioCatalogInitResultFieldPolicy,
+	},
+	StudioCatalogProductSummary?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | StudioCatalogProductSummaryKeySpecifier | (() => undefined | StudioCatalogProductSummaryKeySpecifier),
+		fields?: StudioCatalogProductSummaryFieldPolicy,
+	},
+	StudioCatalogSeededProduct?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | StudioCatalogSeededProductKeySpecifier | (() => undefined | StudioCatalogSeededProductKeySpecifier),
+		fields?: StudioCatalogSeededProductFieldPolicy,
+	},
+	StudioCatalogValidateResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | StudioCatalogValidateResultKeySpecifier | (() => undefined | StudioCatalogValidateResultKeySpecifier),
+		fields?: StudioCatalogValidateResultFieldPolicy,
+	},
+	StudioCatalogValidationIssue?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | StudioCatalogValidationIssueKeySpecifier | (() => undefined | StudioCatalogValidationIssueKeySpecifier),
+		fields?: StudioCatalogValidationIssueFieldPolicy,
+	},
+	StudioConversation?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | StudioConversationKeySpecifier | (() => undefined | StudioConversationKeySpecifier),
+		fields?: StudioConversationFieldPolicy,
+	},
+	StudioConversationListResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | StudioConversationListResultKeySpecifier | (() => undefined | StudioConversationListResultKeySpecifier),
+		fields?: StudioConversationListResultFieldPolicy,
+	},
+	StudioConversationMessage?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | StudioConversationMessageKeySpecifier | (() => undefined | StudioConversationMessageKeySpecifier),
+		fields?: StudioConversationMessageFieldPolicy,
+	},
+	StudioConversationMessageListResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | StudioConversationMessageListResultKeySpecifier | (() => undefined | StudioConversationMessageListResultKeySpecifier),
+		fields?: StudioConversationMessageListResultFieldPolicy,
+	},
+	StudioFsNode?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | StudioFsNodeKeySpecifier | (() => undefined | StudioFsNodeKeySpecifier),
+		fields?: StudioFsNodeFieldPolicy,
+	},
+	StudioFsReadResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | StudioFsReadResultKeySpecifier | (() => undefined | StudioFsReadResultKeySpecifier),
+		fields?: StudioFsReadResultFieldPolicy,
+	},
+	StudioFsWriteResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | StudioFsWriteResultKeySpecifier | (() => undefined | StudioFsWriteResultKeySpecifier),
+		fields?: StudioFsWriteResultFieldPolicy,
+	},
 	SubmissionSalesOrder?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | SubmissionSalesOrderKeySpecifier | (() => undefined | SubmissionSalesOrderKeySpecifier),
 		fields?: SubmissionSalesOrderFieldPolicy,
@@ -11925,6 +14910,10 @@ export type StrictTypedTypePolicies = {
 	Subscription?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | SubscriptionKeySpecifier | (() => undefined | SubscriptionKeySpecifier),
 		fields?: SubscriptionFieldPolicy,
+	},
+	SyncMaterialLogisticsAddOnsResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | SyncMaterialLogisticsAddOnsResultKeySpecifier | (() => undefined | SyncMaterialLogisticsAddOnsResultKeySpecifier),
+		fields?: SyncMaterialLogisticsAddOnsResultFieldPolicy,
 	},
 	TaxAnalysisResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | TaxAnalysisResultKeySpecifier | (() => undefined | TaxAnalysisResultKeySpecifier),
@@ -11986,6 +14975,22 @@ export type StrictTypedTypePolicies = {
 		keyFields?: false | WorkspaceKeySpecifier | (() => undefined | WorkspaceKeySpecifier),
 		fields?: WorkspaceFieldPolicy,
 	},
+	WorkspaceAttributeType?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | WorkspaceAttributeTypeKeySpecifier | (() => undefined | WorkspaceAttributeTypeKeySpecifier),
+		fields?: WorkspaceAttributeTypeFieldPolicy,
+	},
+	WorkspaceAttributeTypeListResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | WorkspaceAttributeTypeListResultKeySpecifier | (() => undefined | WorkspaceAttributeTypeListResultKeySpecifier),
+		fields?: WorkspaceAttributeTypeListResultFieldPolicy,
+	},
+	WorkspaceAttributeValue?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | WorkspaceAttributeValueKeySpecifier | (() => undefined | WorkspaceAttributeValueKeySpecifier),
+		fields?: WorkspaceAttributeValueFieldPolicy,
+	},
+	WorkspaceAttributeValueListResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | WorkspaceAttributeValueListResultKeySpecifier | (() => undefined | WorkspaceAttributeValueListResultKeySpecifier),
+		fields?: WorkspaceAttributeValueListResultFieldPolicy,
+	},
 	WorkspaceMember?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | WorkspaceMemberKeySpecifier | (() => undefined | WorkspaceMemberKeySpecifier),
 		fields?: WorkspaceMemberFieldPolicy,
@@ -11993,6 +14998,22 @@ export type StrictTypedTypePolicies = {
 	WorkspaceRoleInfo?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | WorkspaceRoleInfoKeySpecifier | (() => undefined | WorkspaceRoleInfoKeySpecifier),
 		fields?: WorkspaceRoleInfoFieldPolicy,
+	},
+	WorkspaceTag?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | WorkspaceTagKeySpecifier | (() => undefined | WorkspaceTagKeySpecifier),
+		fields?: WorkspaceTagFieldPolicy,
+	},
+	WorkspaceTagListResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | WorkspaceTagListResultKeySpecifier | (() => undefined | WorkspaceTagListResultKeySpecifier),
+		fields?: WorkspaceTagListResultFieldPolicy,
+	},
+	WorkspaceUnitDefinition?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | WorkspaceUnitDefinitionKeySpecifier | (() => undefined | WorkspaceUnitDefinitionKeySpecifier),
+		fields?: WorkspaceUnitDefinitionFieldPolicy,
+	},
+	WorkspaceUnitDefinitionListResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
+		keyFields?: false | WorkspaceUnitDefinitionListResultKeySpecifier | (() => undefined | WorkspaceUnitDefinitionListResultKeySpecifier),
+		fields?: WorkspaceUnitDefinitionListResultFieldPolicy,
 	},
 	WriteRelationshipResult?: Omit<TypePolicy, "fields" | "keyFields"> & {
 		keyFields?: false | WriteRelationshipResultKeySpecifier | (() => undefined | WriteRelationshipResultKeySpecifier),
@@ -14106,6 +17127,90 @@ export const ListChargesForInvoiceDocument = gql`
   }
 }
     `;
+export const LogisticsAddOnsSyncCreateLineItemDocument = gql`
+    mutation LogisticsAddOnsSyncCreateLineItem($input: LineItemInput!) {
+  createLineItem(input: $input) {
+    id
+  }
+}
+    `;
+export const LogisticsAddOnsSyncMaterialLogisticsDocument = gql`
+    mutation LogisticsAddOnsSyncMaterialLogistics($input: SyncMaterialLogisticsAddOnsInput!) {
+  syncMaterialLogisticsAddOns(input: $input) {
+    materialLineItemId
+    deliveryLineItem {
+      id
+      type
+      productRef {
+        kind
+        productId
+      }
+      sourceLineItemId
+      targetSelectors {
+        kind
+        targetLineItemIds
+      }
+      scopeTasks {
+        id
+        title
+        activityTagIds
+      }
+    }
+    pickupLineItem {
+      id
+      type
+      productRef {
+        kind
+        productId
+      }
+      sourceLineItemId
+      targetSelectors {
+        kind
+        targetLineItemIds
+      }
+      scopeTasks {
+        id
+        title
+        activityTagIds
+      }
+    }
+    serviceAddOns {
+      id
+      productRef {
+        productId
+      }
+    }
+    warnings
+  }
+}
+    `;
+export const LogisticsGroupsListLogisticsServiceGroupsDocument = gql`
+    query LogisticsGroupsListLogisticsServiceGroups($filter: ListLogisticsServiceGroupsFilter!) {
+  listLogisticsServiceGroups(filter: $filter) {
+    id
+    description
+    productRef {
+      kind
+      productId
+    }
+    timeWindow {
+      startAt
+      endAt
+    }
+    placeRef {
+      kind
+      id
+    }
+    pricingRef {
+      priceId
+    }
+    targetSelectors {
+      kind
+      targetLineItemIds
+    }
+  }
+}
+    `;
 export const CreateProjectForMcpDocument = gql`
     mutation CreateProjectForMCP($input: ProjectInput!) {
   createProject(input: $input) {
@@ -14344,17 +17449,39 @@ export const ListPricesDocument = gql`
     query ListPrices($filter: ListPricesFilter!, $page: ListPricesPage!) {
   listPrices(filter: $filter, page: $page) {
     items {
+      __typename
       ... on RentalPrice {
         id
-        priceBookId
-        pimCategoryId
-        pricePerDayInCents
+        pricingSpec {
+          kind
+          unitCode
+          rateInCents
+          pricePerDayInCents
+          pricePerWeekInCents
+          pricePerMonthInCents
+        }
       }
       ... on SalePrice {
         id
-        priceBookId
-        pimCategoryId
-        unitCostInCents
+        pricingSpec {
+          kind
+          unitCode
+          rateInCents
+          pricePerDayInCents
+          pricePerWeekInCents
+          pricePerMonthInCents
+        }
+      }
+      ... on ServicePrice {
+        id
+        pricingSpec {
+          kind
+          unitCode
+          rateInCents
+          pricePerDayInCents
+          pricePerWeekInCents
+          pricePerMonthInCents
+        }
       }
     }
     page {
@@ -14924,6 +18051,10 @@ export const CreateQuoteFromIntakeFormSubmissionForTestsDocument = gql`
           deliveryMethod
           deliveryLocation
           deliveryNotes
+          placeRef {
+            kind
+            id
+          }
         }
         ... on QuoteRevisionSaleLineItem {
           id
@@ -14937,6 +18068,10 @@ export const CreateQuoteFromIntakeFormSubmissionForTestsDocument = gql`
           deliveryMethod
           deliveryLocation
           deliveryNotes
+          placeRef {
+            kind
+            id
+          }
         }
         ... on QuoteRevisionServiceLineItem {
           id
@@ -14949,6 +18084,10 @@ export const CreateQuoteFromIntakeFormSubmissionForTestsDocument = gql`
           deliveryMethod
           deliveryLocation
           deliveryNotes
+          placeRef {
+            kind
+            id
+          }
         }
       }
     }
@@ -15042,6 +18181,10 @@ export const CreateQuoteRevisionWithOptionalPriceDocument = gql`
         deliveryMethod
         deliveryLocation
         deliveryNotes
+        placeRef {
+          kind
+          id
+        }
       }
       ... on QuoteRevisionSaleLineItem {
         id
@@ -15055,6 +18198,10 @@ export const CreateQuoteRevisionWithOptionalPriceDocument = gql`
         deliveryMethod
         deliveryLocation
         deliveryNotes
+        placeRef {
+          kind
+          id
+        }
       }
     }
   }
@@ -15095,6 +18242,10 @@ export const UpdateQuoteRevisionForIntakeTestsDocument = gql`
         deliveryMethod
         deliveryLocation
         deliveryNotes
+        placeRef {
+          kind
+          id
+        }
       }
       ... on QuoteRevisionSaleLineItem {
         id
@@ -15108,6 +18259,10 @@ export const UpdateQuoteRevisionForIntakeTestsDocument = gql`
         deliveryMethod
         deliveryLocation
         deliveryNotes
+        placeRef {
+          kind
+          id
+        }
       }
       ... on QuoteRevisionServiceLineItem {
         id
@@ -15120,6 +18275,10 @@ export const UpdateQuoteRevisionForIntakeTestsDocument = gql`
         deliveryMethod
         deliveryLocation
         deliveryNotes
+        placeRef {
+          kind
+          id
+        }
       }
     }
   }
@@ -15255,6 +18414,10 @@ export const CreateQuoteRevisionDocument = gql`
         subtotalInCents
         type
         sellersPriceId
+        placeRef {
+          kind
+          id
+        }
       }
       ... on QuoteRevisionRentalLineItem {
         id
@@ -15266,6 +18429,10 @@ export const CreateQuoteRevisionDocument = gql`
         rentalStartDate
         rentalEndDate
         sellersPriceId
+        placeRef {
+          kind
+          id
+        }
       }
       ... on QuoteRevisionSaleLineItem {
         id
@@ -15275,6 +18442,10 @@ export const CreateQuoteRevisionDocument = gql`
         type
         pimCategoryId
         sellersPriceId
+        placeRef {
+          kind
+          id
+        }
       }
     }
   }
@@ -15299,6 +18470,10 @@ export const GetQuoteRevisionByIdDocument = gql`
         subtotalInCents
         type
         sellersPriceId
+        placeRef {
+          kind
+          id
+        }
       }
       ... on QuoteRevisionRentalLineItem {
         id
@@ -15310,6 +18485,10 @@ export const GetQuoteRevisionByIdDocument = gql`
         rentalStartDate
         rentalEndDate
         sellersPriceId
+        placeRef {
+          kind
+          id
+        }
       }
       ... on QuoteRevisionSaleLineItem {
         id
@@ -15319,6 +18498,10 @@ export const GetQuoteRevisionByIdDocument = gql`
         type
         pimCategoryId
         sellersPriceId
+        placeRef {
+          kind
+          id
+        }
       }
     }
   }
@@ -15345,6 +18528,24 @@ export const CreateSalePriceForTestsDocument = gql`
     priceBookId
     pimCategoryId
     unitCostInCents
+  }
+}
+    `;
+export const CreateServicePriceForTestsDocument = gql`
+    mutation CreateServicePriceForTests($input: CreateServicePriceInput!) {
+  createServicePrice(input: $input) {
+    id
+    workspaceId
+    priceBookId
+    catalogRef {
+      kind
+      id
+    }
+    pricingSpec {
+      kind
+      unitCode
+      rateInCents
+    }
   }
 }
     `;
@@ -15418,6 +18619,10 @@ export const UpdateQuoteRevisionForTestsDocument = gql`
         rentalStartDate
         rentalEndDate
         sellersPriceId
+        placeRef {
+          kind
+          id
+        }
       }
       ... on QuoteRevisionSaleLineItem {
         id
@@ -15427,6 +18632,10 @@ export const UpdateQuoteRevisionForTestsDocument = gql`
         type
         pimCategoryId
         sellersPriceId
+        placeRef {
+          kind
+          id
+        }
       }
       ... on QuoteRevisionServiceLineItem {
         id
@@ -15435,6 +18644,10 @@ export const UpdateQuoteRevisionForTestsDocument = gql`
         subtotalInCents
         type
         sellersPriceId
+        placeRef {
+          kind
+          id
+        }
       }
     }
   }
@@ -15449,6 +18662,85 @@ export const SendQuoteForTestsDocument = gql`
     validUntil
     updatedAt
     updatedBy
+  }
+}
+    `;
+export const AcceptQuoteOfflineForTestsDocument = gql`
+    mutation AcceptQuoteOfflineForTests($input: AcceptQuoteInput!) {
+  acceptQuote(input: $input) {
+    quote {
+      id
+      status
+      approvalConfirmation
+    }
+    salesOrder {
+      id
+    }
+  }
+}
+    `;
+export const QuoteRevisionStatusForTestsDocument = gql`
+    query QuoteRevisionStatusForTests($id: String!) {
+  quoteRevisionById(id: $id) {
+    id
+    status
+  }
+}
+    `;
+export const ListServiceLineItemsForQuoteRevisionDocument = gql`
+    query ListServiceLineItemsForQuoteRevision($workspaceId: String!, $quoteId: String!, $revisionId: String!) {
+  listLineItems(
+    filter: {workspaceId: $workspaceId, documentType: QUOTE_REVISION, documentId: $quoteId, revisionId: $revisionId, type: SERVICE}
+    page: {number: 1, size: 50}
+  ) {
+    items {
+      id
+    }
+  }
+}
+    `;
+export const ListServiceLineItemsForSalesOrderDocument = gql`
+    query ListServiceLineItemsForSalesOrder($workspaceId: String!, $salesOrderId: String!) {
+  listLineItems(
+    filter: {workspaceId: $workspaceId, documentType: SALES_ORDER, documentId: $salesOrderId}
+    page: {number: 1, size: 50}
+  ) {
+    items {
+      id
+      type
+      documentRef {
+        type
+        id
+      }
+      sourceLineItemId
+      rateInCentsSnapshot
+      timeWindow {
+        startAt
+      }
+      targetSelectors {
+        kind
+        targetLineItemIds
+      }
+    }
+  }
+}
+    `;
+export const ListServiceFulfilmentsForLineItemDocument = gql`
+    query ListServiceFulfilmentsForLineItem($workspaceId: ID!, $salesOrderLineItemId: ID!) {
+  listFulfilments(
+    filter: {workspaceId: $workspaceId, salesOrderType: SERVICE, salesOrderLineItemId: $salesOrderLineItemId}
+    page: {number: 1, size: 10}
+  ) {
+    items {
+      __typename
+      ... on ServiceFulfilment {
+        id
+        salesOrderType
+        salesOrderLineItemId
+        serviceDate
+        unitCostInCents
+      }
+    }
   }
 }
     `;
@@ -15733,6 +19025,10 @@ export const CreateRfqDocument = gql`
         description
         quantity
         type
+        placeRef {
+          kind
+          id
+        }
       }
       ... on RFQRentalLineItem {
         id
@@ -15742,6 +19038,10 @@ export const CreateRfqDocument = gql`
         pimCategoryId
         rentalStartDate
         rentalEndDate
+        placeRef {
+          kind
+          id
+        }
       }
       ... on RFQSaleLineItem {
         id
@@ -15749,6 +19049,10 @@ export const CreateRfqDocument = gql`
         quantity
         type
         pimCategoryId
+        placeRef {
+          kind
+          id
+        }
       }
     }
   }
@@ -15770,6 +19074,10 @@ export const UpdateRfqDocument = gql`
         description
         quantity
         type
+        placeRef {
+          kind
+          id
+        }
       }
       ... on RFQRentalLineItem {
         id
@@ -15779,6 +19087,10 @@ export const UpdateRfqDocument = gql`
         pimCategoryId
         rentalStartDate
         rentalEndDate
+        placeRef {
+          kind
+          id
+        }
       }
       ... on RFQSaleLineItem {
         id
@@ -15786,6 +19098,10 @@ export const UpdateRfqDocument = gql`
         quantity
         type
         pimCategoryId
+        placeRef {
+          kind
+          id
+        }
       }
     }
   }
@@ -15832,6 +19148,10 @@ export const GetRfqWithRelationshipsDocument = gql`
         }
         rentalStartDate
         rentalEndDate
+        placeRef {
+          kind
+          id
+        }
       }
     }
   }
@@ -15856,6 +19176,10 @@ export const ListRfQsDocument = gql`
           description
           quantity
           type
+          placeRef {
+            kind
+            id
+          }
         }
         ... on RFQRentalLineItem {
           id
@@ -15865,6 +19189,10 @@ export const ListRfQsDocument = gql`
           pimCategoryId
           rentalStartDate
           rentalEndDate
+          placeRef {
+            kind
+            id
+          }
         }
         ... on RFQSaleLineItem {
           id
@@ -15872,6 +19200,10 @@ export const ListRfQsDocument = gql`
           quantity
           type
           pimCategoryId
+          placeRef {
+            kind
+            id
+          }
         }
       }
     }
@@ -15959,6 +19291,10 @@ export const CreateQuoteRevisionForRfqTestDocument = gql`
         quantity
         rentalStartDate
         rentalEndDate
+        placeRef {
+          kind
+          id
+        }
       }
     }
   }
@@ -16107,6 +19443,10 @@ export const GetQuoteRevisionForAcceptanceTestDocument = gql`
         rentalStartDate
         rentalEndDate
         sellersPriceId
+        placeRef {
+          kind
+          id
+        }
       }
     }
   }
@@ -16667,6 +20007,159 @@ export const ClearSearchRecentsDocument = gql`
       accessedAt
     }
     updatedAt
+  }
+}
+    `;
+export const CreateCatalogProductDocument = gql`
+    mutation CreateCatalogProduct($input: StudioCatalogCreateProductInput!) {
+  studioCatalogCreateProduct(input: $input) {
+    product {
+      id
+      path
+    }
+  }
+}
+    `;
+export const CreateLineItemDocument = gql`
+    mutation CreateLineItem($input: LineItemInput!) {
+  createLineItem(input: $input) {
+    id
+  }
+}
+    `;
+export const ComputeEnvelopeDocument = gql`
+    query ComputeEnvelope($serviceLineItemId: String!) {
+  computeServiceRequirementEnvelope(serviceLineItemId: $serviceLineItemId) {
+    targetLineItemIds
+    targetLineItemCount
+    targetQuantity
+    totalWeight {
+      value
+      unitCode
+    }
+    maxItemWeight {
+      value
+      unitCode
+    }
+    maxLength {
+      value
+      unitCode
+    }
+    maxWidth {
+      value
+      unitCode
+    }
+    maxHeight {
+      value
+      unitCode
+    }
+    missingTargets {
+      targetLineItemId
+      reason
+      missingAttributeKeys
+    }
+    warnings
+  }
+}
+    `;
+export const CreateLineItemWithScopeDocument = gql`
+    mutation CreateLineItemWithScope($input: LineItemInput!) {
+  createLineItem(input: $input) {
+    id
+    type
+    documentRef {
+      type
+      id
+    }
+    scopeTasks {
+      id
+      title
+      activityTagIds
+      contextTagIds
+      notes
+    }
+    timeWindow {
+      startAt
+    }
+    rateInCentsSnapshot
+  }
+}
+    `;
+export const CreateServiceFulfilmentFromLineItemDocument = gql`
+    mutation CreateServiceFulfilmentFromLineItem($input: CreateServiceFulfilmentFromLineItemInput!) {
+  createServiceFulfilmentFromLineItem(input: $input) {
+    id
+    salesOrderType
+    salesOrderLineItemId
+    serviceDate
+    tasks {
+      id
+      status
+      completedAt
+      completedBy
+    }
+  }
+}
+    `;
+export const UpdateServiceFulfilmentTaskStatusDocument = gql`
+    mutation UpdateServiceFulfilmentTaskStatus($input: UpdateServiceFulfilmentTaskStatusInput!) {
+  updateServiceFulfilmentTaskStatus(input: $input) {
+    id
+    salesOrderType
+    tasks {
+      id
+      status
+      completedAt
+      completedBy
+    }
+  }
+}
+    `;
+export const CreateLineItemInvalidScopeDocument = gql`
+    mutation CreateLineItemInvalidScope($input: LineItemInput!) {
+  createLineItem(input: $input) {
+    id
+  }
+}
+    `;
+export const EnsureLogisticsProductsDocument = gql`
+    mutation EnsureLogisticsProducts($input: StudioCatalogEnsureLogisticsServiceProductsInput!) {
+  studioCatalogEnsureLogisticsServiceProducts(input: $input) {
+    catalogPath
+    products {
+      status
+      product {
+        id
+        name
+        path
+        kind
+        origin
+      }
+    }
+  }
+}
+    `;
+export const CreateCatalogProductWithTasksDocument = gql`
+    mutation CreateCatalogProductWithTasks($input: StudioCatalogCreateProductInput!) {
+  studioCatalogCreateProduct(input: $input) {
+    catalogPath
+    product {
+      id
+      name
+      path
+      kind
+    }
+  }
+}
+    `;
+export const CreateCatalogProductInvalidDocument = gql`
+    mutation CreateCatalogProductInvalid($input: StudioCatalogCreateProductInput!) {
+  studioCatalogCreateProduct(input: $input) {
+    catalogPath
+    product {
+      id
+      kind
+    }
   }
 }
     `;
@@ -17668,6 +21161,15 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     ListChargesForInvoice(variables: ListChargesForInvoiceQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ListChargesForInvoiceQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ListChargesForInvoiceQuery>(ListChargesForInvoiceDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'ListChargesForInvoice', 'query');
     },
+    LogisticsAddOnsSyncCreateLineItem(variables: LogisticsAddOnsSyncCreateLineItemMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<LogisticsAddOnsSyncCreateLineItemMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<LogisticsAddOnsSyncCreateLineItemMutation>(LogisticsAddOnsSyncCreateLineItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'LogisticsAddOnsSyncCreateLineItem', 'mutation');
+    },
+    LogisticsAddOnsSyncMaterialLogistics(variables: LogisticsAddOnsSyncMaterialLogisticsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<LogisticsAddOnsSyncMaterialLogisticsMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<LogisticsAddOnsSyncMaterialLogisticsMutation>(LogisticsAddOnsSyncMaterialLogisticsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'LogisticsAddOnsSyncMaterialLogistics', 'mutation');
+    },
+    LogisticsGroupsListLogisticsServiceGroups(variables: LogisticsGroupsListLogisticsServiceGroupsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<LogisticsGroupsListLogisticsServiceGroupsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<LogisticsGroupsListLogisticsServiceGroupsQuery>(LogisticsGroupsListLogisticsServiceGroupsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'LogisticsGroupsListLogisticsServiceGroups', 'query');
+    },
     CreateProjectForMCP(variables: CreateProjectForMcpMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CreateProjectForMcpMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreateProjectForMcpMutation>(CreateProjectForMcpDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'CreateProjectForMCP', 'mutation');
     },
@@ -17914,6 +21416,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     CreateSalePriceForTests(variables: CreateSalePriceForTestsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CreateSalePriceForTestsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreateSalePriceForTestsMutation>(CreateSalePriceForTestsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'CreateSalePriceForTests', 'mutation');
     },
+    CreateServicePriceForTests(variables: CreateServicePriceForTestsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CreateServicePriceForTestsMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateServicePriceForTestsMutation>(CreateServicePriceForTestsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'CreateServicePriceForTests', 'mutation');
+    },
     CreatePimCategoryForTests(variables: CreatePimCategoryForTestsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CreatePimCategoryForTestsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreatePimCategoryForTestsMutation>(CreatePimCategoryForTestsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'CreatePimCategoryForTests', 'mutation');
     },
@@ -17934,6 +21439,21 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     SendQuoteForTests(variables: SendQuoteForTestsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<SendQuoteForTestsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<SendQuoteForTestsMutation>(SendQuoteForTestsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'SendQuoteForTests', 'mutation');
+    },
+    AcceptQuoteOfflineForTests(variables: AcceptQuoteOfflineForTestsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AcceptQuoteOfflineForTestsMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AcceptQuoteOfflineForTestsMutation>(AcceptQuoteOfflineForTestsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'AcceptQuoteOfflineForTests', 'mutation');
+    },
+    QuoteRevisionStatusForTests(variables: QuoteRevisionStatusForTestsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<QuoteRevisionStatusForTestsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<QuoteRevisionStatusForTestsQuery>(QuoteRevisionStatusForTestsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'QuoteRevisionStatusForTests', 'query');
+    },
+    ListServiceLineItemsForQuoteRevision(variables: ListServiceLineItemsForQuoteRevisionQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ListServiceLineItemsForQuoteRevisionQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ListServiceLineItemsForQuoteRevisionQuery>(ListServiceLineItemsForQuoteRevisionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'ListServiceLineItemsForQuoteRevision', 'query');
+    },
+    ListServiceLineItemsForSalesOrder(variables: ListServiceLineItemsForSalesOrderQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ListServiceLineItemsForSalesOrderQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ListServiceLineItemsForSalesOrderQuery>(ListServiceLineItemsForSalesOrderDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'ListServiceLineItemsForSalesOrder', 'query');
+    },
+    ListServiceFulfilmentsForLineItem(variables: ListServiceFulfilmentsForLineItemQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ListServiceFulfilmentsForLineItemQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ListServiceFulfilmentsForLineItemQuery>(ListServiceFulfilmentsForLineItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'ListServiceFulfilmentsForLineItem', 'query');
     },
     CreateReferenceNumberTemplate(variables: CreateReferenceNumberTemplateMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CreateReferenceNumberTemplateMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreateReferenceNumberTemplateMutation>(CreateReferenceNumberTemplateDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'CreateReferenceNumberTemplate', 'mutation');
@@ -18129,6 +21649,36 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     ClearSearchRecents(variables: ClearSearchRecentsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ClearSearchRecentsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<ClearSearchRecentsMutation>(ClearSearchRecentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'ClearSearchRecents', 'mutation');
+    },
+    CreateCatalogProduct(variables: CreateCatalogProductMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CreateCatalogProductMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateCatalogProductMutation>(CreateCatalogProductDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'CreateCatalogProduct', 'mutation');
+    },
+    CreateLineItem(variables: CreateLineItemMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CreateLineItemMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateLineItemMutation>(CreateLineItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'CreateLineItem', 'mutation');
+    },
+    ComputeEnvelope(variables: ComputeEnvelopeQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ComputeEnvelopeQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ComputeEnvelopeQuery>(ComputeEnvelopeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'ComputeEnvelope', 'query');
+    },
+    CreateLineItemWithScope(variables: CreateLineItemWithScopeMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CreateLineItemWithScopeMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateLineItemWithScopeMutation>(CreateLineItemWithScopeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'CreateLineItemWithScope', 'mutation');
+    },
+    CreateServiceFulfilmentFromLineItem(variables: CreateServiceFulfilmentFromLineItemMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CreateServiceFulfilmentFromLineItemMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateServiceFulfilmentFromLineItemMutation>(CreateServiceFulfilmentFromLineItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'CreateServiceFulfilmentFromLineItem', 'mutation');
+    },
+    UpdateServiceFulfilmentTaskStatus(variables: UpdateServiceFulfilmentTaskStatusMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateServiceFulfilmentTaskStatusMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateServiceFulfilmentTaskStatusMutation>(UpdateServiceFulfilmentTaskStatusDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'UpdateServiceFulfilmentTaskStatus', 'mutation');
+    },
+    CreateLineItemInvalidScope(variables: CreateLineItemInvalidScopeMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CreateLineItemInvalidScopeMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateLineItemInvalidScopeMutation>(CreateLineItemInvalidScopeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'CreateLineItemInvalidScope', 'mutation');
+    },
+    EnsureLogisticsProducts(variables: EnsureLogisticsProductsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<EnsureLogisticsProductsMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<EnsureLogisticsProductsMutation>(EnsureLogisticsProductsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'EnsureLogisticsProducts', 'mutation');
+    },
+    CreateCatalogProductWithTasks(variables: CreateCatalogProductWithTasksMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CreateCatalogProductWithTasksMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateCatalogProductWithTasksMutation>(CreateCatalogProductWithTasksDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'CreateCatalogProductWithTasks', 'mutation');
+    },
+    CreateCatalogProductInvalid(variables: CreateCatalogProductInvalidMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CreateCatalogProductInvalidMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateCatalogProductInvalidMutation>(CreateCatalogProductInvalidDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'CreateCatalogProductInvalid', 'mutation');
     },
     UtilCreatePimCategory(variables: UtilCreatePimCategoryMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UtilCreatePimCategoryMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UtilCreatePimCategoryMutation>(UtilCreatePimCategoryDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'UtilCreatePimCategory', 'mutation');

@@ -53,6 +53,10 @@ gql`
         id
         priceType
       }
+      ... on ServicePrice {
+        id
+        priceType
+      }
     }
   }
 `;

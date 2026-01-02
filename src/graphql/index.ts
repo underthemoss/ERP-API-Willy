@@ -17,6 +17,21 @@ export const gqlPlugin: FastifyPluginAsync<CreateContextConfig> = async (
 ) => {
   const { envConfig } = opts;
 
+  const unwrapValidationErrors = (errors: readonly any[] | undefined) => {
+    if (!Array.isArray(errors) || errors.length === 0) return errors;
+
+    const flattened: any[] = [];
+    for (const error of errors) {
+      const nested = error?.extensions?.errors;
+      if (error?.message === 'Graphql validation error' && Array.isArray(nested)) {
+        flattened.push(...nested);
+        continue;
+      }
+      flattened.push(error);
+    }
+    return flattened;
+  };
+
   fastify.register(mercurius, {
     schema: buildNexusSchema({ envConfig }),
     graphiql: envConfig.GRAPHIQL_ENABLED,
@@ -29,8 +44,8 @@ export const gqlPlugin: FastifyPluginAsync<CreateContextConfig> = async (
       const operationName = body?.operationName || opFromQueryParam;
       const querySnippet =
         typeof body?.query === 'string' ? body.query.slice(0, 800) : undefined;
-      const errorMessages =
-        execution.errors?.map((e: any) => e.message) ?? undefined;
+      const errors = unwrapValidationErrors(execution.errors);
+      const errorMessages = errors?.map((e: any) => e.message) ?? undefined;
 
       if (errorMessages && errorMessages.length > 0) {
         fastify.log.warn(
@@ -46,7 +61,7 @@ export const gqlPlugin: FastifyPluginAsync<CreateContextConfig> = async (
 
       return {
         statusCode: 200,
-        response: execution,
+        response: errors ? { ...execution, errors } : execution,
       };
     },
     subscription: {

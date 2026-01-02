@@ -45,6 +45,18 @@ CREATE TABLE IF NOT EXISTS PRICES_TABLE (
   `pimProductId` STRING,
   `priceType` STRING,
   `priceBookId` STRING,
+  `catalogRef` STRUCT<
+      `kind` STRING,
+      `id` STRING
+  >,
+  `pricingSpec` STRUCT<
+      `kind` STRING,
+      `unitCode` STRING,
+      `rateInCents` BIGINT,
+      `pricePerDayInCents` BIGINT,
+      `pricePerWeekInCents` BIGINT,
+      `pricePerMonthInCents` BIGINT
+  >,
   `businessContactId` STRING,
   `projectId` STRING,
   `location` STRING,
@@ -97,6 +109,8 @@ CREATE TABLE IF NOT EXISTS PRICES_WITH_PRICE_BOOK AS
     p.`pimProductId` AS `pimProductId`,
     p.`priceType` AS `priceType`,
     p.`priceBookId` AS `priceBookId`,
+    p.`catalogRef` AS `catalogRef`,
+    p.`pricingSpec` AS `pricingSpec`,
     p.`businessContactId` AS `businessContactId`,
     p.`projectId` AS `projectId`,
     p.`location` AS `location`,
@@ -143,6 +157,8 @@ CREATE TABLE IF NOT EXISTS PRICES_WITH_CATEGORY AS
     pwpb.`pimProductId` AS `pimProductId`,
     pwpb.`priceType` AS `priceType`,
     pwpb.`priceBookId` AS `priceBookId`,
+    pwpb.`catalogRef` AS `catalogRef`,
+    pwpb.`pricingSpec` AS `pricingSpec`,
     pwpb.`businessContactId` AS `businessContactId`,
     pwpb.`projectId` AS `projectId`,
     pwpb.`location` AS `location`,

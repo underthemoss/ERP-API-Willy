@@ -1,0 +1,325 @@
+{
+  "version": "1",
+  "tools": [
+    {
+      "name": "studio_fs_roots",
+      "description": "Lists allowed StudioFS root paths for a workspace.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "description": "Workspace ID"
+          }
+        },
+        "required": ["workspaceId"]
+      }
+    },
+    {
+      "name": "studio_fs_list",
+      "description": "Lists children of a workspace filesystem path.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "description": "Workspace ID"
+          },
+          "path": {
+            "type": "string",
+            "description": "Path to list (e.g., /catalogs/demo)"
+          }
+        },
+        "required": ["workspaceId", "path"]
+      }
+    },
+    {
+      "name": "studio_fs_read",
+      "description": "Reads a file from the workspace filesystem.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "description": "Workspace ID"
+          },
+          "path": {
+            "type": "string",
+            "description": "File path to read"
+          },
+          "maxChars": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Optional maximum characters to return (defaults to 20000)"
+          }
+        },
+        "required": ["workspaceId", "path"]
+      }
+    },
+    {
+      "name": "studio_fs_write",
+      "description": "Writes a text file to the workspace filesystem.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "description": "Workspace ID"
+          },
+          "path": {
+            "type": "string",
+            "description": "File path to write"
+          },
+          "content": {
+            "type": "string",
+            "description": "File contents (string)"
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "Optional MIME type (e.g., application/json)"
+          },
+          "expectedEtag": {
+            "type": "string",
+            "description": "Required for updates; omit for create"
+          }
+        },
+        "required": ["workspaceId", "path", "content"]
+      }
+    },
+    {
+      "name": "studio_fs_upload",
+      "description": "Uploads a base64-encoded file to the workspace filesystem.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "description": "Workspace ID"
+          },
+          "path": {
+            "type": "string",
+            "description": "File path to write"
+          },
+          "bytes": {
+            "type": "string",
+            "description": "Base64-encoded file contents"
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "Optional MIME type (e.g., application/pdf)"
+          },
+          "expectedEtag": {
+            "type": "string",
+            "description": "Required for updates; omit for create"
+          }
+        },
+        "required": ["workspaceId", "path", "bytes"]
+      }
+    },
+    {
+      "name": "studio_fs_mkdir",
+      "description": "Creates a folder path in the workspace filesystem.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "description": "Workspace ID"
+          },
+          "path": {
+            "type": "string",
+            "description": "Folder path to create"
+          }
+        },
+        "required": ["workspaceId", "path"]
+      }
+    },
+    {
+      "name": "studio_fs_move",
+      "description": "Moves or renames a file or folder in the workspace filesystem.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "description": "Workspace ID"
+          },
+          "from": {
+            "type": "string",
+            "description": "Existing path to move"
+          },
+          "to": {
+            "type": "string",
+            "description": "Destination path"
+          }
+        },
+        "required": ["workspaceId", "from", "to"]
+      }
+    },
+    {
+      "name": "studio_fs_delete",
+      "description": "Soft deletes a file or folder from the workspace filesystem.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "description": "Workspace ID"
+          },
+          "path": {
+            "type": "string",
+            "description": "Path to delete"
+          }
+        },
+        "required": ["workspaceId", "path"]
+      }
+    },
+    {
+      "name": "studio_catalog_init",
+      "description": "Initializes a catalog folder structure in StudioFS.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "description": "Workspace ID"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Catalog slug (kebab/snake case)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Optional catalog display name"
+          }
+        },
+        "required": ["workspaceId", "slug"]
+      }
+    },
+    {
+      "name": "studio_catalog_validate",
+      "description": "Validates and lints a catalog (manifest + products/lists).",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "description": "Workspace ID"
+          },
+          "catalogPath": {
+            "type": "string",
+            "description": "Catalog folder path (e.g., /catalogs/demo)"
+          }
+        },
+        "required": ["workspaceId", "catalogPath"]
+      }
+    },
+    {
+      "name": "studio_catalog_create_product",
+      "description": "Creates a catalog product file under /catalogs/<slug>/products and returns its catalogRef for pricing.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": { "type": "string", "description": "Workspace ID" },
+          "catalogPath": { "type": "string", "description": "Optional catalog folder path (e.g., /catalogs/default). If omitted, uses the default catalog." },
+          "product": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "kind": { "type": "string", "enum": ["MATERIAL", "SERVICE", "ASSEMBLY"] },
+              "status": { "type": "string", "enum": ["DRAFT", "ACTIVE", "ARCHIVED"] },
+              "categoryPath": { "type": "string" },
+              "tags": { "type": "array", "items": { "type": "string" } },
+              "activityTags": { "type": "array", "items": { "type": "string" } },
+              "targetSpecs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": { "type": "string", "enum": ["TAGS", "PRODUCT"] },
+                    "tagIds": { "type": "array", "items": { "type": "string" } },
+                    "productId": { "type": "string" }
+                  },
+                  "required": ["kind"]
+                }
+              },
+              "attributes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "key": { "type": "string" },
+                    "value": { "type": ["string", "number", "boolean"] },
+                    "unit": { "type": "string" },
+                    "contextTags": { "type": "array", "items": { "type": "string" } },
+                    "sourceRef": { "type": "string" }
+                  },
+                  "required": ["key", "value"]
+                }
+              },
+              "sourceRefs": { "type": "array", "items": { "type": "string" } },
+              "sourcePaths": { "type": "array", "items": { "type": "string" } },
+              "images": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "uri": { "type": "string" },
+                    "alt": { "type": "string" }
+                  },
+                  "required": ["uri"]
+                }
+              },
+              "notes": { "type": "string" }
+            },
+            "required": ["id", "name", "kind"]
+          }
+        },
+        "required": ["workspaceId", "product"]
+      }
+    },
+    {
+      "name": "studio_catalog_preview",
+      "description": "Previews compiled catalog lists without writing outputs.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": { "type": "string", "description": "Workspace ID" },
+          "catalogPath": { "type": "string", "description": "Catalog folder path (e.g., /catalogs/demo)" }
+        },
+        "required": ["workspaceId", "catalogPath"]
+      }
+    },
+    {
+      "name": "studio_catalog_compile",
+      "description": "Compiles a catalog and writes derived outputs under /catalogs/<slug>/.catalog.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "workspaceId": { "type": "string", "description": "Workspace ID" },
+          "catalogPath": { "type": "string", "description": "Catalog folder path (e.g., /catalogs/demo)" }
+        },
+        "required": ["workspaceId", "catalogPath"]
+      }
+    }
+  ]
+}

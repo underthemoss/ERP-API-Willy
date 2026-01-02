@@ -72,7 +72,10 @@ export type UpdateResourceMapTagInput = {
 export class ResourceMapResourcesService {
   private model: ResourceMapResourcesModel;
   private envConfig: EnvConfig;
-  constructor(config: { model: ResourceMapResourcesModel; envConfig: EnvConfig }) {
+  constructor(config: {
+    model: ResourceMapResourcesModel;
+    envConfig: EnvConfig;
+  }) {
     this.model = config.model;
     this.envConfig = config.envConfig;
   }
@@ -268,9 +271,7 @@ export class ResourceMapResourcesService {
       parent,
     });
     const locationGeo = buildLocationGeometry(resolvedLocation);
-    const parentPath = parent
-      ? normalizePath(parent.path, parent._id)
-      : null;
+    const parentPath = parent ? normalizePath(parent.path, parent._id) : null;
     const path = parentPath ? [...parentPath, id] : [id];
 
     const hierarchy_id =
@@ -445,9 +446,7 @@ export class ResourceMapResourcesService {
 
     if (parentChanged) {
       const currentPath = normalizePath(existing.path, existing._id);
-      const parentPath = parent
-        ? normalizePath(parent.path, parent._id)
-        : null;
+      const parentPath = parent ? normalizePath(parent.path, parent._id) : null;
       const newRootPath = parentPath
         ? [...parentPath, existing._id]
         : [existing._id];
@@ -552,9 +551,7 @@ export class ResourceMapResourcesService {
         tenantId,
         id,
       );
-      await this.model.deleteResourcesByIds(
-        descendants.map((doc) => doc._id),
-      );
+      await this.model.deleteResourcesByIds(descendants.map((doc) => doc._id));
     } else {
       await this.model.deleteResourceById(id);
     }
@@ -562,15 +559,13 @@ export class ResourceMapResourcesService {
     return existing;
   };
 
-  validateResourceMapIds = async (
-    opts: {
-      ids: string[];
-      allowedTypes: ResourceMapTagType[];
-      requiredTypes?: ResourceMapTagType[];
-      user?: UserAuthPayload;
-      allowEmpty?: boolean;
-    },
-  ): Promise<ResourceMapTagValidationResult> => {
+  validateResourceMapIds = async (opts: {
+    ids: string[];
+    allowedTypes: ResourceMapTagType[];
+    requiredTypes?: ResourceMapTagType[];
+    user?: UserAuthPayload;
+    allowEmpty?: boolean;
+  }): Promise<ResourceMapTagValidationResult> => {
     const { ids, allowedTypes, requiredTypes, user, allowEmpty } = opts;
 
     if (!user) {
@@ -649,12 +644,15 @@ const isFiniteNumber = (value: unknown): value is number =>
 const normalizeValue = (value?: string | null) => {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
-  return trimmed ? trimmed : undefined;
+  return trimmed || undefined;
 };
 
 const normalizeId = (value?: string | null) => normalizeValue(value) || '';
 
-const normalizePath = (path: string[] | null | undefined, fallbackId: string) => {
+const normalizePath = (
+  path: string[] | null | undefined,
+  fallbackId: string,
+) => {
   if (Array.isArray(path) && path.length) {
     return path;
   }
@@ -698,7 +696,9 @@ const buildPointFromLatLng = (
   };
 };
 
-const validateGeofence = (geofence: ResourceMapGeofence): ResourceMapGeofence => {
+const validateGeofence = (
+  geofence: ResourceMapGeofence,
+): ResourceMapGeofence => {
   if (!geofence) {
     throw new Error('geofence is required');
   }
@@ -738,7 +738,9 @@ const validateGeofence = (geofence: ResourceMapGeofence): ResourceMapGeofence =>
   throw new Error('Invalid geofence type');
 };
 
-const validateLocation = (location: ResourceMapLocation): ResourceMapLocation => {
+const validateLocation = (
+  location: ResourceMapLocation,
+): ResourceMapLocation => {
   if (!location?.kind) {
     throw new Error('location.kind is required');
   }
@@ -797,9 +799,7 @@ const validateLocation = (location: ResourceMapLocation): ResourceMapLocation =>
     };
   }
   if (location.kind === RESOURCE_MAP_LOCATION_KIND.GEOFENCE) {
-    const geofence = validateGeofence(
-      location.geofence as ResourceMapGeofence,
-    );
+    const geofence = validateGeofence(location.geofence as ResourceMapGeofence);
     return {
       kind: location.kind,
       geofence,
@@ -829,7 +829,10 @@ const resolveLocationForTag = async (opts: {
   });
   const validated = validateLocation(locationWithPlusCode);
   const geocoded = await maybeGeocodeLocation(envConfig, validated);
-  const interior = normalizeInteriorMetadata(locationWithPlusCode.interior, tagId);
+  const interior = normalizeInteriorMetadata(
+    locationWithPlusCode.interior,
+    tagId,
+  );
 
   return applyInteriorMetadata(geocoded, interior);
 };
@@ -973,7 +976,10 @@ const buildLocationGeometry = (
   location?: ResourceMapLocation | null,
 ): ResourceMapLocationGeometry | null => {
   if (!location) return null;
-  if (location.kind === RESOURCE_MAP_LOCATION_KIND.LAT_LNG && location.lat_lng) {
+  if (
+    location.kind === RESOURCE_MAP_LOCATION_KIND.LAT_LNG &&
+    location.lat_lng
+  ) {
     return buildPointFromLatLng(location.lat_lng);
   }
   if (

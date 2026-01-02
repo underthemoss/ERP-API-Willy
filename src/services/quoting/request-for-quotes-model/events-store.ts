@@ -7,22 +7,97 @@ import {
 import { z } from 'zod';
 
 const rfqLineItemType = z.enum(['RENTAL', 'SALE', 'SERVICE']);
+const rfqLineItemProductKindSchema = z.enum([
+  'MATERIAL_PRODUCT',
+  'SERVICE_PRODUCT',
+  'ASSEMBLY_PRODUCT',
+]);
+const rfqLineItemProductRefSchema = z.object({
+  kind: rfqLineItemProductKindSchema,
+  productId: z.string(),
+});
+const rfqLineItemTimeWindowSchema = z.object({
+  startAt: z.date().optional(),
+  endAt: z.date().optional(),
+});
+const rfqLineItemPlaceKindSchema = z.enum([
+  'JOBSITE',
+  'BRANCH',
+  'YARD',
+  'ADDRESS',
+  'GEOFENCE',
+  'OTHER',
+]);
+const rfqLineItemPlaceRefSchema = z.object({
+  kind: rfqLineItemPlaceKindSchema,
+  id: z.string(),
+});
+const normalizeRfqLineItemPlaceRefInput = (value: unknown) => {
+  if (value === null || value === undefined) return undefined;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    return { kind: 'OTHER', id: trimmed };
+  }
+  return value;
+};
+const rfqLineItemPlaceRefInputSchema = z
+  .preprocess(normalizeRfqLineItemPlaceRefInput, rfqLineItemPlaceRefSchema)
+  .optional();
+const rfqLineItemConstraintStrengthSchema = z.enum([
+  'REQUIRED',
+  'PREFERRED',
+  'EXCLUDED',
+]);
+const rfqLineItemConstraintSchema = z
+  .object({
+    strength: rfqLineItemConstraintStrengthSchema,
+  })
+  .passthrough();
+const rfqLineItemInputValueSchema = z.object({
+  attributeTypeId: z.string(),
+  value: z.union([z.string(), z.number(), z.boolean()]),
+  unitCode: z.string().optional(),
+  contextTags: z.array(z.string()).optional(),
+});
+const rfqServiceTargetSelectorSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('tags'),
+    tagIds: z.array(z.string()).min(1),
+  }),
+  z.object({
+    kind: z.literal('product'),
+    targetProductId: z.string(),
+  }),
+  z.object({
+    kind: z.literal('line_item'),
+    targetLineItemIds: z.array(z.string()).min(1),
+  }),
+]);
 
 // 1) common stuff that *every* line item has (RFQ only contains requirements, no pricing)
 const baseLineItemSchema = z.object({
   id: z.string().uuid().optional(), // or just z.string()
   description: z.string(),
   quantity: z.number().positive().default(1),
+  productRef: rfqLineItemProductRefSchema.optional(),
+  unitCode: z.string().optional(),
+  timeWindow: rfqLineItemTimeWindowSchema.optional(),
+  placeRef: rfqLineItemPlaceRefInputSchema,
+  constraints: z.array(rfqLineItemConstraintSchema).optional(),
+  inputs: z.array(rfqLineItemInputValueSchema).optional(),
+  notes: z.string().optional(),
 });
 
 // 2) service line
 const serviceLineItemSchema = baseLineItemSchema.extend({
   type: z.literal(rfqLineItemType.Values.SERVICE),
+  targetSelectors: z.array(rfqServiceTargetSelectorSchema).optional(),
 });
 
 // 3) rental line
 const rentalLineItemSchema = baseLineItemSchema.extend({
-  pimCategoryId: z.string(),
+  pimCategoryId: z.string().optional(),
   type: z.literal(rfqLineItemType.Values.RENTAL),
   rentalStartDate: z.date(),
   rentalEndDate: z.date(),
@@ -30,7 +105,7 @@ const rentalLineItemSchema = baseLineItemSchema.extend({
 
 // 4) sale line
 const saleLineItemSchema = baseLineItemSchema.extend({
-  pimCategoryId: z.string(),
+  pimCategoryId: z.string().optional(),
   type: z.literal(rfqLineItemType.Values.SALE),
 });
 

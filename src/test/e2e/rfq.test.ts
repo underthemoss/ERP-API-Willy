@@ -2,6 +2,7 @@ import { createTestEnvironment } from './test-environment';
 import { gql } from 'graphql-request';
 import { WorkspaceAccessType } from './generated/graphql';
 import { v4 } from 'uuid';
+import { normalizePlaceRefInput, type PlaceRefInput } from './place-ref';
 
 // GraphQL operations for codegen (for reference, not used directly in tests)
 
@@ -32,6 +33,10 @@ gql`
           description
           quantity
           type
+          placeRef {
+            kind
+            id
+          }
         }
         ... on RFQRentalLineItem {
           id
@@ -41,6 +46,10 @@ gql`
           pimCategoryId
           rentalStartDate
           rentalEndDate
+          placeRef {
+            kind
+            id
+          }
         }
         ... on RFQSaleLineItem {
           id
@@ -48,6 +57,10 @@ gql`
           quantity
           type
           pimCategoryId
+          placeRef {
+            kind
+            id
+          }
         }
       }
     }
@@ -70,6 +83,10 @@ gql`
           description
           quantity
           type
+          placeRef {
+            kind
+            id
+          }
         }
         ... on RFQRentalLineItem {
           id
@@ -79,6 +96,10 @@ gql`
           pimCategoryId
           rentalStartDate
           rentalEndDate
+          placeRef {
+            kind
+            id
+          }
         }
         ... on RFQSaleLineItem {
           id
@@ -86,6 +107,10 @@ gql`
           quantity
           type
           pimCategoryId
+          placeRef {
+            kind
+            id
+          }
         }
       }
     }
@@ -133,6 +158,10 @@ gql`
           }
           rentalStartDate
           rentalEndDate
+          placeRef {
+            kind
+            id
+          }
         }
       }
     }
@@ -158,6 +187,10 @@ gql`
             description
             quantity
             type
+            placeRef {
+              kind
+              id
+            }
           }
           ... on RFQRentalLineItem {
             id
@@ -167,6 +200,10 @@ gql`
             pimCategoryId
             rentalStartDate
             rentalEndDate
+            placeRef {
+              kind
+              id
+            }
           }
           ... on RFQSaleLineItem {
             id
@@ -174,6 +211,10 @@ gql`
             quantity
             type
             pimCategoryId
+            placeRef {
+              kind
+              id
+            }
           }
         }
       }
@@ -267,6 +308,10 @@ gql`
           quantity
           rentalStartDate
           rentalEndDate
+          placeRef {
+            kind
+            id
+          }
         }
       }
     }
@@ -421,6 +466,10 @@ gql`
           rentalStartDate
           rentalEndDate
           sellersPriceId
+          placeRef {
+            kind
+            id
+          }
         }
       }
     }
@@ -533,9 +582,11 @@ interface RentalLineItemParams {
   quantity?: number;
   rentalStartDate?: string;
   rentalEndDate?: string;
+  placeRef?: PlaceRefInput | string;
 }
 
 function createRentalLineItem(params: RentalLineItemParams) {
+  const placeRef = normalizePlaceRefInput(params.placeRef);
   return {
     type: 'RENTAL' as any,
     description: params.description || 'Test rental item',
@@ -547,19 +598,28 @@ function createRentalLineItem(params: RentalLineItemParams) {
     rentalEndDate: params.rentalEndDate
       ? new Date(params.rentalEndDate)
       : new Date(TEST_DATES.RENTAL_END),
+    placeRef,
   };
 }
 
 interface ServiceLineItemParams {
   description?: string;
   quantity?: number;
+  placeRef?: PlaceRefInput | string;
+  productId?: string;
 }
 
 function createServiceLineItem(params: ServiceLineItemParams = {}) {
+  const placeRef = normalizePlaceRefInput(params.placeRef);
   return {
     type: 'SERVICE' as any,
     description: params.description || 'Test service item',
     quantity: params.quantity || 1,
+    productRef: {
+      kind: 'SERVICE_PRODUCT' as any,
+      productId: params.productId || 'service-product-test',
+    },
+    placeRef,
   };
 }
 
@@ -567,14 +627,17 @@ interface SaleLineItemParams {
   pimCategoryId: string;
   description?: string;
   quantity?: number;
+  placeRef?: PlaceRefInput | string;
 }
 
 function createSaleLineItem(params: SaleLineItemParams) {
+  const placeRef = normalizePlaceRefInput(params.placeRef);
   return {
     type: 'SALE' as any,
     description: params.description || 'Test sale item',
     quantity: params.quantity || 1,
     pimCategoryId: params.pimCategoryId,
+    placeRef,
   };
 }
 
@@ -673,6 +736,7 @@ async function createTestQuoteWithRevision(
     rentalStartDate: new Date(TEST_DATES.RENTAL_START),
     rentalEndDate: new Date(TEST_DATES.RENTAL_END),
     sellersPriceId: rentalPriceId,
+    placeRef: normalizePlaceRefInput('rfq-jobsite-1'),
   };
 
   // Add delivery fields if provided
@@ -739,6 +803,7 @@ describe('RFQ CRUD e2e', () => {
             quantity: 2,
             rentalStartDate: '2025-12-01',
             rentalEndDate: '2025-12-15',
+            placeRef: 'jobsite-123',
           }),
         ],
       };
@@ -756,6 +821,7 @@ describe('RFQ CRUD e2e', () => {
         'Excavator rental for construction project',
       );
       expect(lineItem.quantity).toBe(2);
+      expect(lineItem.placeRef).toEqual({ kind: 'OTHER', id: 'jobsite-123' });
     });
 
     it('creates an RFQ with mixed line item types', async () => {

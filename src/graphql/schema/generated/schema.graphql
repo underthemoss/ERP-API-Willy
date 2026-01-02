@@ -29,6 +29,13 @@ input AddInvoiceChargesInput {
   invoiceId: ID!
 }
 
+input AddStudioConversationMessageInput {
+  content: String!
+  conversationId: String!
+  metadata: JSONObject
+  role: StudioConversationRole!
+}
+
 input AddTaxLineItemInput {
   description: String!
   invoiceId: ID!
@@ -56,6 +63,8 @@ type AdminMutationNamespace {
   ): CollectionSnapshotResult!
   createGlobalAttributeType(input: CreateGlobalAttributeTypeInput!): GlobalAttributeType
   createGlobalAttributeValue(input: CreateGlobalAttributeValueInput!): GlobalAttributeValue
+  createGlobalTag(input: CreateGlobalTagInput!): GlobalTag
+  createGlobalTagRelation(input: CreateGlobalTagRelationInput!): GlobalTagRelation
   createGlobalUnitDefinition(input: CreateGlobalUnitDefinitionInput!): GlobalUnitDefinition
 
   """Delete a specific SpiceDB relationship"""
@@ -75,6 +84,13 @@ type AdminMutationNamespace {
     """Subject type (e.g., "erp/user")"""
     subjectType: String!
   ): DeleteRelationshipResult!
+  mergeGlobalTag(input: MergeGlobalTagInput!): GlobalTag
+  promoteWorkspaceAttributeTypeToGlobal(input: PromoteWorkspaceAttributeTypeToGlobalInput!): GlobalAttributeType
+  promoteWorkspaceAttributeTypesToGlobal(input: PromoteWorkspaceAttributeTypesToGlobalInput!): PromoteWorkspaceAttributeTypesToGlobalResult
+  promoteWorkspaceAttributeValueToGlobal(input: PromoteWorkspaceAttributeValueToGlobalInput!): GlobalAttributeValue
+  promoteWorkspaceAttributeValuesToGlobal(input: PromoteWorkspaceAttributeValuesToGlobalInput!): PromoteWorkspaceAttributeValuesToGlobalResult
+  promoteWorkspaceTagToGlobal(input: PromoteWorkspaceTagToGlobalInput!): GlobalTag
+  promoteWorkspaceUnitDefinitionToGlobal(input: PromoteWorkspaceUnitDefinitionToGlobalInput!): GlobalUnitDefinition
 
   """Remove roles from a user (Admin only)"""
   removeRolesFromUser(
@@ -137,6 +153,7 @@ type AdminMutationNamespace {
   ): SendTestEmailResult!
   updateGlobalAttributeType(id: ID!, input: UpdateGlobalAttributeTypeInput!): GlobalAttributeType
   updateGlobalAttributeValue(id: ID!, input: UpdateGlobalAttributeValueInput!): GlobalAttributeValue
+  updateGlobalTag(id: ID!, input: UpdateGlobalTagInput!): GlobalTag
   updateGlobalUnitDefinition(code: String!, input: UpdateGlobalUnitDefinitionInput!): GlobalUnitDefinition
 
   """Create or update a SpiceDB relationship"""
@@ -166,6 +183,7 @@ type AdminMutationNamespace {
 type AdminQueryNamespace {
   getGlobalAttributeTypeById(id: ID!): GlobalAttributeType
   getGlobalAttributeValueById(id: ID!): GlobalAttributeValue
+  getGlobalTagById(id: ID!): GlobalTag
   getGlobalUnitDefinitionByCode(code: String!): GlobalUnitDefinition
 
   """Get a single Auth0 user by ID (Admin only)"""
@@ -187,6 +205,8 @@ type AdminQueryNamespace {
   ): [AvailableRelation!]!
   listGlobalAttributeTypes(filter: ListGlobalAttributeTypesFilter, page: PageInfoInput): GlobalAttributeTypeListResult
   listGlobalAttributeValues(filter: ListGlobalAttributeValuesFilter, page: PageInfoInput): GlobalAttributeValueListResult
+  listGlobalTagRelations(filter: ListGlobalTagRelationsFilter, page: PageInfoInput): GlobalTagRelationListResult
+  listGlobalTags(filter: ListGlobalTagsFilter, page: PageInfoInput): GlobalTagListResult
   listGlobalUnitDefinitions(filter: ListGlobalUnitsFilter, page: PageInfoInput): GlobalUnitDefinitionListResult
 
   """List SpiceDB relationships with optional filters"""
@@ -663,6 +683,12 @@ input CancelInvoiceInput {
   invoiceId: String!
 }
 
+enum CatalogProductKind {
+  ASSEMBLY_PRODUCT
+  MATERIAL_PRODUCT
+  SERVICE_PRODUCT
+}
+
 type Charge {
   amountInCents: Int!
   billingPeriodEnd: DateTime
@@ -779,6 +805,25 @@ input CreateGlobalAttributeValueInput {
   status: GlobalAttributeStatus
   synonyms: [String]
   value: String!
+}
+
+input CreateGlobalTagInput {
+  auditStatus: GlobalTagAuditStatus
+  displayName: String
+  label: String
+  notes: String
+  pos: GlobalTagPartOfSpeech
+  source: String
+  status: GlobalTagStatus
+  synonyms: [String]
+}
+
+input CreateGlobalTagRelationInput {
+  confidence: Float
+  fromTagId: String!
+  relationType: GlobalTagRelationType!
+  source: String
+  toTagId: String!
 }
 
 input CreateGlobalUnitDefinitionInput {
@@ -900,13 +945,15 @@ input CreateRentalFulfilmentInput {
 }
 
 input CreateRentalPriceInput {
+  catalogRef: PriceCatalogRefInput
   name: String
-  pimCategoryId: String!
+  pimCategoryId: String
   pimProductId: ID
   priceBookId: ID
   pricePerDayInCents: Int!
   pricePerMonthInCents: Int!
   pricePerWeekInCents: Int!
+  pricingSpec: PricingSpecInput
   workspaceId: ID!
 }
 
@@ -962,11 +1009,13 @@ input CreateSaleFulfilmentInput {
 }
 
 input CreateSalePriceInput {
+  catalogRef: PriceCatalogRefInput
   discounts: JSON
   name: String
-  pimCategoryId: String!
+  pimCategoryId: String
   pimProductId: ID
   priceBookId: ID
+  pricingSpec: PricingSpecInput
   unitCostInCents: Int!
   workspaceId: ID!
 }
@@ -998,6 +1047,14 @@ input CreateSaleSalesOrderLineItemInput {
   so_quantity: Int
 }
 
+input CreateServiceFulfilmentFromLineItemInput {
+  assignedToId: ID
+  lineItemId: ID!
+  serviceDate: DateTime
+  workflowColumnId: ID
+  workflowId: ID
+}
+
 input CreateServiceFulfilmentInput {
   assignedToId: String
 
@@ -1009,6 +1066,23 @@ input CreateServiceFulfilmentInput {
   unitCostInCents: Int!
   workflowColumnId: ID
   workflowId: ID
+}
+
+input CreateServicePriceInput {
+  catalogRef: PriceCatalogRefInput!
+  name: String
+  pimCategoryId: String
+  pimProductId: ID
+  priceBookId: ID
+  pricingSpec: PricingSpecInput!
+  workspaceId: ID!
+}
+
+input CreateStudioConversationInput {
+  pinnedCatalogPath: String
+  title: String
+  workingSet: JSONObject
+  workspaceId: String!
 }
 
 input CreateWorkflowConfigurationInput {
@@ -1200,17 +1274,25 @@ enum GlobalAttributeAuditStatus {
 }
 
 enum GlobalAttributeDimension {
+  ACCELERATION
+  ANGLE
   AREA
+  CURRENT
   DENSITY
   ENERGY
+  FLOW_RATE
   FORCE
+  FREQUENCY
   LENGTH
   MASS
   POWER
   PRESSURE
+  RESISTANCE
   SPEED
   TEMPERATURE
   TIME
+  TORQUE
+  VOLTAGE
   VOLUME
 }
 
@@ -1317,6 +1399,75 @@ enum GlobalAttributeValueType {
   STRING
 }
 
+type GlobalTag {
+  auditStatus: GlobalTagAuditStatus
+  createdAt: DateTime
+  createdBy: String
+  displayName: String
+  id: String!
+  label: String!
+  mergedIntoId: String
+  notes: String
+  pos: GlobalTagPartOfSpeech!
+  source: String
+  status: GlobalTagStatus!
+  synonyms: [String]
+  updatedAt: DateTime
+  updatedBy: String
+}
+
+enum GlobalTagAuditStatus {
+  FLAGGED
+  PENDING_REVIEW
+  REVIEWED
+}
+
+type GlobalTagIngestionResult {
+  parsed: JSONObject!
+  tag: GlobalTag!
+}
+
+type GlobalTagListResult {
+  items: [GlobalTag!]!
+  page: PaginationInfo!
+}
+
+enum GlobalTagPartOfSpeech {
+  NOUN
+  VERB
+}
+
+type GlobalTagRelation {
+  confidence: Float
+  createdAt: DateTime
+  createdBy: String
+  fromTagId: String!
+  id: String!
+  relationType: GlobalTagRelationType!
+  source: String
+  toTagId: String!
+  updatedAt: DateTime
+  updatedBy: String
+}
+
+type GlobalTagRelationListResult {
+  items: [GlobalTagRelation!]!
+  page: PaginationInfo!
+}
+
+enum GlobalTagRelationType {
+  ALIAS
+  BROADER
+  NARROWER
+  RELATED
+}
+
+enum GlobalTagStatus {
+  ACTIVE
+  DEPRECATED
+  PROPOSED
+}
+
 type GlobalUnitDefinition {
   canonicalUnitCode: String
   code: String!
@@ -1357,6 +1508,12 @@ input IngestGlobalAttributeStringInput {
   unitCode: String
   value: String
   valueType: GlobalAttributeValueType
+}
+
+input IngestGlobalTagStringInput {
+  posHint: GlobalTagPartOfSpeech
+  raw: String!
+  source: String
 }
 
 type IntakeForm {
@@ -1653,11 +1810,251 @@ The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](
 """
 scalar JSONObject @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
 
+type LineItem {
+  constraints: [LineItemConstraint]
+  createdAt: DateTime!
+  customPriceName: String
+  delivery: LineItemDelivery
+  deliveryChargeInCents: Int
+  description: String!
+  documentRef: LineItemDocumentRef!
+  id: ID!
+  inputs: [LineItemInputValue]
+  notes: String
+  placeRef: LineItemPlaceRef
+  pricingRef: LineItemPricingRef
+  pricingSpecSnapshot: PricingSpec
+  productRef: LineItemProductRef
+  quantity: String!
+  rateInCentsSnapshot: Int
+  scopeTasks: [ServiceScopeTask]
+  sourceLineItemId: ID
+  state: LineItemState!
+  subtotalInCents: Int
+  targetSelectors: [LineItemTargetSelector]
+  timeWindow: LineItemTimeWindow
+  type: LineItemType!
+  unitCode: String
+  updatedAt: DateTime!
+  workspaceId: String!
+}
+
+type LineItemConstraint {
+  data: LineItemConstraintData
+  kind: LineItemConstraintKind!
+  strength: LineItemConstraintStrength!
+}
+
+type LineItemConstraintAttribute {
+  attributeTypeId: ID!
+  contextTags: [String!]
+  op: LineItemConstraintAttributeOp!
+  unitCode: String
+  value: JSONObject!
+}
+
+input LineItemConstraintAttributeInput {
+  attributeTypeId: ID!
+  contextTags: [String!]
+  op: LineItemConstraintAttributeOp!
+  unitCode: String
+  value: JSONObject!
+}
+
+enum LineItemConstraintAttributeOp {
+  EQ
+  GT
+  GTE
+  IN
+  LT
+  LTE
+  NEQ
+  NOT_IN
+}
+
+type LineItemConstraintBrand {
+  brandId: ID
+  manufacturerId: ID
+}
+
+input LineItemConstraintBrandInput {
+  brandId: ID
+  manufacturerId: ID
+}
+
+type LineItemConstraintData {
+  attribute: LineItemConstraintAttribute
+  brand: LineItemConstraintBrand
+  location: LineItemConstraintLocation
+  other: LineItemConstraintOther
+  schedule: LineItemConstraintSchedule
+  tag: LineItemConstraintTag
+}
+
+input LineItemConstraintDataInput {
+  attribute: LineItemConstraintAttributeInput
+  brand: LineItemConstraintBrandInput
+  location: LineItemConstraintLocationInput
+  other: LineItemConstraintOtherInput
+  schedule: LineItemConstraintScheduleInput
+  tag: LineItemConstraintTagInput
+}
+
+input LineItemConstraintInput {
+  data: LineItemConstraintDataInput!
+  kind: LineItemConstraintKind!
+  strength: LineItemConstraintStrength!
+}
+
+enum LineItemConstraintKind {
+  ATTRIBUTE
+  BRAND
+  LOCATION
+  OTHER
+  SCHEDULE
+  TAG
+}
+
+type LineItemConstraintLocation {
+  placeRef: LineItemPlaceRef!
+}
+
+input LineItemConstraintLocationInput {
+  placeRef: LineItemPlaceRefInput!
+}
+
+type LineItemConstraintOther {
+  note: String!
+}
+
+input LineItemConstraintOtherInput {
+  note: String!
+}
+
+type LineItemConstraintSchedule {
+  endAt: DateTime
+  startAt: DateTime
+}
+
+input LineItemConstraintScheduleInput {
+  endAt: DateTime
+  startAt: DateTime
+}
+
+enum LineItemConstraintStrength {
+  EXCLUDED
+  PREFERRED
+  REQUIRED
+}
+
+type LineItemConstraintTag {
+  tagIds: [ID!]!
+}
+
+input LineItemConstraintTagInput {
+  tagIds: [ID!]!
+}
+
 type LineItemCostOptionDetails {
   exactSplitDistribution: LineItemRentalPeriod!
   optimalSplit: LineItemRentalPeriod!
   plainText: String!
   rates: LineItemPricing!
+}
+
+type LineItemDelivery {
+  location: String
+  method: LineItemDeliveryMethod
+  notes: String
+}
+
+input LineItemDeliveryInput {
+  location: String
+  method: LineItemDeliveryMethod
+  notes: String
+}
+
+enum LineItemDeliveryMethod {
+  DELIVERY
+  PICKUP
+}
+
+type LineItemDocumentRef {
+  id: ID!
+  revisionId: ID
+  type: LineItemDocumentType!
+}
+
+input LineItemDocumentRefInput {
+  id: ID!
+  revisionId: ID
+  type: LineItemDocumentType!
+}
+
+enum LineItemDocumentType {
+  INTAKE_SUBMISSION
+  PURCHASE_ORDER
+  QUOTE_REVISION
+  SALES_ORDER
+  WORK_ORDER
+}
+
+input LineItemInput {
+  constraints: [LineItemConstraintInput]
+  customPriceName: String
+  delivery: LineItemDeliveryInput
+  deliveryChargeInCents: Int
+  description: String!
+  documentRef: LineItemDocumentRefInput!
+  inputs: [LineItemInputValueInput]
+  notes: String
+  placeRef: LineItemPlaceRefInput
+  pricingRef: LineItemPricingRefInput
+  pricingSpecSnapshot: PricingSpecInput
+  productRef: LineItemProductRefInput
+  quantity: String!
+  rateInCentsSnapshot: Int
+  scopeTasks: [ServiceScopeTaskInput]
+  sourceLineItemId: ID
+  subtotalInCents: Int
+  targetSelectors: [LineItemTargetSelectorInput]
+  timeWindow: LineItemTimeWindowInput
+  type: LineItemType!
+  unitCode: String
+  workspaceId: String!
+}
+
+type LineItemInputValue {
+  attributeTypeId: String!
+  contextTags: [String!]
+  unitCode: String
+  value: JSONObject!
+}
+
+input LineItemInputValueInput {
+  attributeTypeId: String!
+  contextTags: [String!]
+  unitCode: String
+  value: JSONObject!
+}
+
+enum LineItemPlaceKind {
+  ADDRESS
+  BRANCH
+  GEOFENCE
+  JOBSITE
+  OTHER
+  YARD
+}
+
+type LineItemPlaceRef {
+  id: ID!
+  kind: LineItemPlaceKind!
+}
+
+input LineItemPlaceRefInput {
+  id: ID!
+  kind: LineItemPlaceKind!
 }
 
 type LineItemPriceForecast {
@@ -1683,10 +2080,49 @@ type LineItemPricing {
   pricePer28DaysInCents: Int!
 }
 
+type LineItemPricingRef {
+  priceBookId: ID
+  priceId: ID
+  priceType: LineItemType
+}
+
+input LineItemPricingRefInput {
+  priceBookId: ID
+  priceId: ID
+  priceType: LineItemType
+}
+
+enum LineItemProductKind {
+  ASSEMBLY_PRODUCT
+  CATALOG_PRODUCT
+  MATERIAL_PRODUCT
+  PIM_CATEGORY
+  PIM_PRODUCT
+  SERVICE_PRODUCT
+}
+
+type LineItemProductRef {
+  kind: LineItemProductKind!
+  productId: ID!
+}
+
+input LineItemProductRefInput {
+  kind: LineItemProductKind!
+  productId: ID!
+}
+
 type LineItemRentalPeriod {
   days1: Int!
   days7: Int!
   days28: Int!
+}
+
+enum LineItemState {
+  CANCELLED
+  COMPLETED
+  IN_PROGRESS
+  PLANNED
+  PROPOSED
 }
 
 enum LineItemStatus {
@@ -1695,9 +2131,42 @@ enum LineItemStatus {
   SUBMITTED
 }
 
+type LineItemTargetSelector {
+  kind: LineItemTargetSelectorKind!
+  tagIds: [String!]
+  targetLineItemIds: [String!]
+  targetProductId: String
+}
+
+input LineItemTargetSelectorInput {
+  kind: LineItemTargetSelectorKind!
+  tagIds: [String!]
+  targetLineItemIds: [String!]
+  targetProductId: String
+}
+
+enum LineItemTargetSelectorKind {
+  line_item
+  product
+  tags
+}
+
+type LineItemTimeWindow {
+  endAt: DateTime
+  startAt: DateTime
+}
+
+input LineItemTimeWindowInput {
+  endAt: DateTime
+  startAt: DateTime
+}
+
 enum LineItemType {
   RENTAL
   SALE
+  SERVICE
+  TRANSFER
+  WORK
 }
 
 input ListAssetsPage {
@@ -1780,6 +2249,18 @@ input ListGlobalAttributeValuesFilter {
   status: GlobalAttributeStatus
 }
 
+input ListGlobalTagRelationsFilter {
+  fromTagId: String
+  relationType: GlobalTagRelationType
+  toTagId: String
+}
+
+input ListGlobalTagsFilter {
+  pos: GlobalTagPartOfSpeech
+  searchTerm: String
+  status: GlobalTagStatus
+}
+
 input ListGlobalUnitsFilter {
   dimension: GlobalAttributeDimension
   searchTerm: String
@@ -1832,6 +2313,25 @@ input ListInvoicesPage {
 input ListInvoicesQuery {
   filter: ListInvoicesFilter!
   page: ListInvoicesPage
+}
+
+input ListLineItemsFilter {
+  documentId: String
+  documentType: LineItemDocumentType
+  revisionId: String
+  type: LineItemType
+  workspaceId: String!
+}
+
+type ListLineItemsResult {
+  items: [LineItem!]!
+  page: PaginationInfo!
+}
+
+input ListLogisticsServiceGroupsFilter {
+  documentRef: LineItemDocumentRefInput!
+  productId: LogisticsServiceProductId
+  workspaceId: ID!
 }
 
 type ListPersonContactsResult {
@@ -1889,6 +2389,8 @@ type ListPriceBooksResult {
 
 input ListPricesFilter {
   businessContactId: String
+  catalogRefId: String
+  catalogRefKind: CatalogProductKind
   name: String
   pimCategoryId: String
   priceBookId: String
@@ -1980,6 +2482,11 @@ type ListRentalViewsResult {
   page: PaginationInfo!
 }
 
+input ListStudioConversationsFilter {
+  searchTerm: String
+  workspaceId: String!
+}
+
 type ListTransactionResult {
   items: [Transaction!]!
   page: PaginationInfo!
@@ -1999,9 +2506,46 @@ type ListWorkflowConfigurationsResult {
   page: PaginationInfo!
 }
 
+input ListWorkspaceAttributeTypesFilter {
+  appliesTo: GlobalAttributeAppliesTo
+  dimension: GlobalAttributeDimension
+  kind: GlobalAttributeKind
+  promotedToGlobal: Boolean
+  searchTerm: String
+  status: GlobalAttributeStatus
+  usageHint: GlobalAttributeUsageHint
+  valueType: GlobalAttributeValueType
+  workspaceId: ID!
+}
+
+input ListWorkspaceAttributeValuesFilter {
+  attributeTypeId: ID
+  auditStatus: GlobalAttributeAuditStatus
+  promotedToGlobal: Boolean
+  searchTerm: String
+  status: GlobalAttributeStatus
+  workspaceId: ID!
+}
+
 type ListWorkspaceMembersResult {
   items: [WorkspaceMember!]!
   page: PaginationInfo!
+}
+
+input ListWorkspaceTagsFilter {
+  pos: GlobalTagPartOfSpeech
+  promotedToGlobal: Boolean
+  searchTerm: String
+  status: GlobalTagStatus
+  workspaceId: ID!
+}
+
+input ListWorkspaceUnitDefinitionsFilter {
+  dimension: GlobalAttributeDimension
+  promotedToGlobal: Boolean
+  searchTerm: String
+  status: GlobalUnitStatus
+  workspaceId: ID!
 }
 
 type ListWorkspacesResult {
@@ -2014,6 +2558,17 @@ type Llm {
   suggestTaxObligations(invoiceDescription: String!): TaxAnalysisResult
 }
 
+input LogisticsServiceAddOnSelectionInput {
+  enabled: Boolean!
+  priceId: String
+  serviceLineItemId: ID
+}
+
+enum LogisticsServiceProductId {
+  svc_delivery
+  svc_pickup
+}
+
 input MarkInvoiceAsPaidInput {
   date: DateTime!
   invoiceId: String!
@@ -2024,11 +2579,18 @@ input MarkInvoiceAsSentInput {
   invoiceId: String!
 }
 
+input MergeGlobalTagInput {
+  reason: String
+  sourceTagId: String!
+  targetTagId: String!
+}
+
 type Mutation {
   acceptQuote(input: AcceptQuoteInput!): AcceptQuoteResult!
   addFileToEntity(file_key: String!, file_name: String!, metadata: JSON, parent_entity_id: String!, parent_entity_type: ResourceTypes, workspace_id: String!): File!
   addInvoiceCharges(input: AddInvoiceChargesInput!): Invoice!
   addSearchRecent(searchDocumentId: String!, workspaceId: String!): SearchUserState!
+  addStudioConversationMessage(input: AddStudioConversationMessageInput!): StudioConversationMessage!
   addTaxLineItem(input: AddTaxLineItemInput!): Invoice!
 
   """Admin mutations (Admin only)"""
@@ -2051,6 +2613,8 @@ type Mutation {
   createGlobalAttributeRelation(input: CreateGlobalAttributeRelationInput!): GlobalAttributeRelation
   createGlobalAttributeType(input: CreateGlobalAttributeTypeInput!): GlobalAttributeType
   createGlobalAttributeValue(input: CreateGlobalAttributeValueInput!): GlobalAttributeValue
+  createGlobalTag(input: CreateGlobalTagInput!): GlobalTag
+  createGlobalTagRelation(input: CreateGlobalTagRelationInput!): GlobalTagRelation
   createGlobalUnitDefinition(input: CreateGlobalUnitDefinitionInput!): GlobalUnitDefinition
 
   """Create a new intake form"""
@@ -2063,6 +2627,7 @@ type Mutation {
   createIntakeFormSubmissionLineItem(input: IntakeFormLineItemInput!, submissionId: String!): IntakeFormLineItem
   createInventory(input: CreateInventoryInput!): Inventory!
   createInvoice(input: CreateInvoiceInput!): Invoice!
+  createLineItem(input: LineItemInput!): LineItem!
   createNote(input: NoteInput!): Note
 
   """Generate and save a PDF for an entity by path and entity_id"""
@@ -2087,6 +2652,9 @@ type Mutation {
   createSaleSalesOrderLineItem(input: CreateSaleSalesOrderLineItemInput): SaleSalesOrderLineItem
   createSalesOrder(input: SalesOrderInput): SalesOrder
   createServiceFulfilment(input: CreateServiceFulfilmentInput!): ServiceFulfilment
+  createServiceFulfilmentFromLineItem(input: CreateServiceFulfilmentFromLineItemInput!): ServiceFulfilment
+  createServicePrice(input: CreateServicePriceInput!): ServicePrice
+  createStudioConversation(input: CreateStudioConversationInput!): StudioConversation!
   createTransaction(input: TransactionInput!): Transaction
   createWorkflowConfiguration(input: CreateWorkflowConfigurationInput!): WorkflowConfiguration
   createWorkspace(accessType: WorkspaceAccessType!, archived: Boolean, bannerImageUrl: String, brandId: String, description: String, logoUrl: String, name: String!): Workspace
@@ -2100,18 +2668,21 @@ type Mutation {
   deleteIntakeFormSubmissionLineItem(id: String!): Boolean
   deleteInventory(id: String!, input: DeleteInventoryInput!): Boolean!
   deleteInvoice(id: String!): Boolean!
+  deleteLineItem(id: String!): LineItem!
   deleteNote(id: String!): Note
   deletePriceBookById(id: ID!): Boolean
   deletePriceById(id: ID!): Boolean
   deleteProject(id: String!): Project
   deleteReferenceNumberTemplate(id: String!): Boolean
   deleteResourceMapTag(cascade: Boolean, id: ID!): ResourceMapResource
+  deleteStudioConversation(id: String!): Boolean!
   deleteWorkflowConfigurationById(id: ID!): Boolean
   exportPrices(priceBookId: ID!): File
   generateReferenceNumber(input: GenerateReferenceNumberInput!): GenerateReferenceNumberResult
   getSignedReadUrl(fileId: ID!, type: FileUrlType): String
   importPrices(fileId: ID!, priceBookId: ID!): ImportPricesResult
   ingestGlobalAttributeString(input: IngestGlobalAttributeStringInput!): GlobalAttributeIngestionResult
+  ingestGlobalTagString(input: IngestGlobalTagStringInput!): GlobalTagIngestionResult
   inviteUserToWorkspace(email: String!, roles: [WorkspaceUserRole!]!, workspaceId: String!): WorkspaceMember
   joinWorkspace(workspaceId: String!): Workspace
   markInvoiceAsPaid(input: MarkInvoiceAsPaidInput!): Invoice!
@@ -2124,6 +2695,10 @@ type Mutation {
   removeUserFromWorkspace(userId: String!, workspaceId: String!): Boolean
   renameFile(file_id: String!, new_file_name: String!): File!
   resetSequenceNumber(newValue: Int = 1, templateId: String!): Boolean
+  resolveGlobalOrWorkspaceAttributeType(input: ResolveGlobalOrWorkspaceAttributeTypeInput!): ResolvedWorkspaceAttributeTypeResult
+  resolveGlobalOrWorkspaceAttributeValue(input: ResolveGlobalOrWorkspaceAttributeValueInput!): ResolvedWorkspaceAttributeValueResult
+  resolveGlobalOrWorkspaceTag(input: ResolveGlobalOrWorkspaceTagInput!): ResolvedWorkspaceTagResult
+  resolveGlobalOrWorkspaceUnitDefinition(input: ResolveGlobalOrWorkspaceUnitDefinitionInput!): ResolvedWorkspaceUnitDefinitionResult
   runNightlyRentalChargesJob: [RentalFulfilment!]!
   runNightlyRentalChargesJobAsync: Boolean
   sendQuote(input: SendQuoteInput!): Quote!
@@ -2143,6 +2718,17 @@ type Mutation {
   softDeletePurchaseOrderLineItem(id: String): PurchaseOrderLineItem
   softDeleteSalesOrder(id: String): SalesOrder
   softDeleteSalesOrderLineItem(id: String): SalesOrderLineItem
+  studioCatalogCompile(input: StudioCatalogCompileInput!): JSONObject!
+  studioCatalogCreateProduct(input: StudioCatalogCreateProductInput!): StudioCatalogCreateProductResult!
+  studioCatalogEnsureLogisticsServiceProducts(input: StudioCatalogEnsureLogisticsServiceProductsInput!): StudioCatalogEnsureLogisticsServiceProductsResult!
+  studioCatalogInit(input: StudioCatalogInitInput!): StudioCatalogInitResult!
+  studioCatalogPreview(input: StudioCatalogCompileInput!): JSONObject!
+  studioCatalogValidate(input: StudioCatalogValidateInput!): StudioCatalogValidateResult!
+  studioFsDelete(input: StudioFsDeleteInput!): Boolean!
+  studioFsMkdir(input: StudioFsMkdirInput!): JSONObject!
+  studioFsMove(input: StudioFsMoveInput!): JSONObject!
+  studioFsUpload(input: StudioFsUploadInput!): StudioFsWriteResult!
+  studioFsWrite(input: StudioFsWriteInput!): StudioFsWriteResult!
 
   """
   Submit an intake form submission (changes status from DRAFT to SUBMITTED)
@@ -2155,6 +2741,7 @@ type Mutation {
   Sync the current authenticated user to the database and assign domain permissions. This replicates the Auth0 post-login webhook logic for local development. Safe to call in any environment - idempotent operation.
   """
   syncCurrentUser: User
+  syncMaterialLogisticsAddOns(input: SyncMaterialLogisticsAddOnsInput!): SyncMaterialLogisticsAddOnsResult!
   toggleSearchFavorite(searchDocumentId: String!, workspaceId: String!): SearchUserState!
   touchAllContacts(batchSize: Int): TouchAllContactsResult
   unarchiveWorkspace(workspaceId: String!): Workspace
@@ -2170,6 +2757,7 @@ type Mutation {
   updateFulfilmentColumn(fulfilmentId: ID!, workflowColumnId: ID, workflowId: ID): FulfilmentBase
   updateGlobalAttributeType(id: ID!, input: UpdateGlobalAttributeTypeInput!): GlobalAttributeType
   updateGlobalAttributeValue(id: ID!, input: UpdateGlobalAttributeValueInput!): GlobalAttributeValue
+  updateGlobalTag(id: ID!, input: UpdateGlobalTagInput!): GlobalTag
   updateGlobalUnitDefinition(code: String!, input: UpdateGlobalUnitDefinitionInput!): GlobalUnitDefinition
 
   """Update an existing intake form"""
@@ -2183,6 +2771,7 @@ type Mutation {
   updateInventoryActualReturnDate(actualReturnDate: DateTime!, id: String!): Inventory
   updateInventoryExpectedReturnDate(expectedReturnDate: DateTime!, id: String!): Inventory
   updateInventorySerialisedId(id: String!, input: UpdateInventorySerialisedIdInput!): Inventory
+  updateLineItem(id: String!, input: UpdateLineItemInput!): LineItem!
   updateNote(id: String!, value: JSON!): Note
   updatePersonBusiness(businessId: ID!, id: ID!): PersonContact
   updatePersonContact(id: ID!, input: UpdatePersonContactInput!): PersonContact
@@ -2215,6 +2804,9 @@ type Mutation {
   updateSaleSalesOrderLineItem(input: UpdateSaleSalesOrderLineItemInput): SaleSalesOrderLineItem
   updateSalesOrder(input: UpdateSalesOrderInput): SalesOrder
   updateSalesOrderLineItem(input: UpdateSalesOrderLineItemInput): SalesOrderLineItem @deprecated(reason: "use updateSaleSalesOrderLineItem")
+  updateServiceFulfilmentTaskStatus(input: UpdateServiceFulfilmentTaskStatusInput!): ServiceFulfilment
+  updateServicePrice(input: UpdateServicePriceInput!): ServicePrice
+  updateStudioConversation(id: String!, input: UpdateStudioConversationInput!): StudioConversation!
   updateTaxLineItem(input: UpdateTaxLineItemInput!): Invoice!
   updateWorkflowConfiguration(id: ID!, input: UpdateWorkflowConfigurationInput!): WorkflowConfiguration
   updateWorkspaceAccessType(accessType: WorkspaceAccessType!, workspaceId: String!): Workspace
@@ -2222,6 +2814,10 @@ type Mutation {
   updateWorkspaceUserRoles(roles: [WorkspaceUserRole!]!, userId: String!, workspaceId: String!): WorkspaceMember
   upsertPimCategory(input: UpsertPimCategoryInput!): PimCategory
   upsertUser(id: String!, input: UserUpsertInput!): User
+  upsertWorkspaceAttributeType(input: UpsertWorkspaceAttributeTypeInput!): WorkspaceAttributeType
+  upsertWorkspaceAttributeValue(input: UpsertWorkspaceAttributeValueInput!): WorkspaceAttributeValue
+  upsertWorkspaceTag(input: UpsertWorkspaceTagInput!): WorkspaceTag
+  upsertWorkspaceUnitDefinition(input: UpsertWorkspaceUnitDefinitionInput!): WorkspaceUnitDefinition
 }
 
 type Note {
@@ -2428,7 +3024,7 @@ type PimProduct {
   year: String
 }
 
-union Price = RentalPrice | SalePrice
+union Price = RentalPrice | SalePrice | ServicePrice
 
 type PriceBook {
   businessContact: BusinessContact
@@ -2454,9 +3050,44 @@ type PriceBook {
   workspaceId: ID!
 }
 
+type PriceCatalogRef {
+  id: ID!
+  kind: CatalogProductKind!
+}
+
+input PriceCatalogRefInput {
+  id: ID!
+  kind: CatalogProductKind!
+}
+
 enum PriceType {
   RENTAL
   SALE
+  SERVICE
+}
+
+type PricingSpec {
+  kind: PricingSpecKind!
+  pricePerDayInCents: Int
+  pricePerMonthInCents: Int
+  pricePerWeekInCents: Int
+  rateInCents: Int
+  unitCode: String
+}
+
+input PricingSpecInput {
+  kind: PricingSpecKind!
+  pricePerDayInCents: Int
+  pricePerMonthInCents: Int
+  pricePerWeekInCents: Int
+  rateInCents: Int
+  unitCode: String
+}
+
+enum PricingSpecKind {
+  RENTAL_RATE_TABLE
+  TIME
+  UNIT
 }
 
 type Project {
@@ -2588,6 +3219,52 @@ enum ProjectStatusEnum {
   WARRANTY_MAINTENANCE
 }
 
+input PromoteWorkspaceAttributeTypeToGlobalInput {
+  targetGlobalAttributeTypeId: ID
+  workspaceAttributeTypeId: ID!
+}
+
+input PromoteWorkspaceAttributeTypesToGlobalInput {
+  workspaceAttributeTypeIds: [ID!]!
+}
+
+type PromoteWorkspaceAttributeTypesToGlobalResult {
+  items: [PromotedWorkspaceAttributeType!]!
+}
+
+input PromoteWorkspaceAttributeValueToGlobalInput {
+  targetGlobalAttributeValueId: ID
+  workspaceAttributeValueId: ID!
+}
+
+input PromoteWorkspaceAttributeValuesToGlobalInput {
+  workspaceAttributeValueIds: [ID!]!
+}
+
+type PromoteWorkspaceAttributeValuesToGlobalResult {
+  items: [PromotedWorkspaceAttributeValue!]!
+}
+
+input PromoteWorkspaceTagToGlobalInput {
+  targetGlobalTagId: ID
+  workspaceTagId: ID!
+}
+
+input PromoteWorkspaceUnitDefinitionToGlobalInput {
+  targetGlobalUnitCode: String
+  workspaceUnitDefinitionId: ID!
+}
+
+type PromotedWorkspaceAttributeType {
+  globalAttributeType: GlobalAttributeType!
+  workspaceAttributeTypeId: ID!
+}
+
+type PromotedWorkspaceAttributeValue {
+  globalAttributeValue: GlobalAttributeValue!
+  workspaceAttributeValueId: ID!
+}
+
 type PurchaseOrder {
   comments: [Note!]!
   company_id: String! @deprecated(reason: "Use workspaceId instead")
@@ -2605,6 +3282,9 @@ type PurchaseOrder {
 
   """All inventory items associated with this purchase order"""
   inventory: [Inventory!]!
+
+  """Canonical line items for this purchase order (source of truth)."""
+  lineItems: [LineItem!]!
   line_items: [PurchaseOrderLineItem]
 
   """Pricing summary for the sales order"""
@@ -2701,6 +3381,7 @@ type Query {
   admin: AdminQueryNamespace
   bulkCalculateSubTotal(inputs: [BulkCalculateSubTotalInput!]!): [LineItemPriceForecast!]!
   calculateSubTotal(durationInDays: Int!, priceId: ID!): LineItemPriceForecast!
+  computeServiceRequirementEnvelope(serviceLineItemId: String!): ServiceRequirementEnvelope!
   getBrandByDomain(domain: String!): Brand
   getBrandById(brandId: String!): Brand
   getBrandsByIds(brandIds: [String!]!): [Brand]
@@ -2711,6 +3392,7 @@ type Query {
   getDefaultTemplates(workspaceId: String!): [ReferenceNumberTemplate!]!
   getFulfilmentById(id: ID!): Fulfilment
   getGlobalAttributeTypeById(id: ID!): GlobalAttributeType
+  getGlobalTagById(id: ID!): GlobalTag
 
   """Get a single intake form by ID"""
   getIntakeFormById(id: String!): IntakeForm
@@ -2727,6 +3409,7 @@ type Query {
   """Get a single intake form submission line item by ID"""
   getIntakeFormSubmissionLineItem(id: String!): IntakeFormLineItem
   getInventoryReservationById(id: ID!): InventoryReservation
+  getLineItemById(id: String!): LineItem
   getNoteById(id: String!): Note
   getPimCategoryById(id: ID!): PimCategory
   getPimProductById(id: ID!): PimProduct
@@ -2745,9 +3428,14 @@ type Query {
   getSearchDocumentById(id: String!): SearchDocument
   getSearchUserState(workspaceId: String!): SearchUserState
   getSignedUploadUrl(contentType: SupportedContentType!, originalFilename: String): SignedUploadUrl!
+  getStudioConversationById(id: String!): StudioConversation
   getUsersById(userIds: [String!]!): [User]
   getWorkflowConfigurationById(id: ID!): WorkflowConfiguration
+  getWorkspaceAttributeTypeById(id: ID!): WorkspaceAttributeType
+  getWorkspaceAttributeValueById(id: ID!): WorkspaceAttributeValue
   getWorkspaceById(id: String!): Workspace
+  getWorkspaceTagById(id: ID!): WorkspaceTag
+  getWorkspaceUnitDefinitionById(id: ID!): WorkspaceUnitDefinition
   helloWorld: String
   inventoryById(id: String!): Inventory
   invoiceById(id: String!): Invoice
@@ -2760,6 +3448,8 @@ type Query {
   listGlobalAttributeRelations(filter: ListGlobalAttributeRelationsFilter, page: PageInfoInput): GlobalAttributeRelationListResult
   listGlobalAttributeTypes(filter: ListGlobalAttributeTypesFilter, page: PageInfoInput): GlobalAttributeTypeListResult
   listGlobalAttributeValues(filter: ListGlobalAttributeValuesFilter, page: PageInfoInput): GlobalAttributeValueListResult
+  listGlobalTagRelations(filter: ListGlobalTagRelationsFilter, page: PageInfoInput): GlobalTagRelationListResult
+  listGlobalTags(filter: ListGlobalTagsFilter, page: PageInfoInput): GlobalTagListResult
   listGlobalUnitDefinitions(filter: ListGlobalUnitsFilter, page: PageInfoInput): GlobalUnitDefinitionListResult
 
   """List all line items for an intake form submission"""
@@ -2781,6 +3471,8 @@ type Query {
   listInventoryReservations(filter: ListInventoryReservationsFilter, page: ListInventoryPage): InventoryReservationsResponse!
   listInvoices(query: ListInvoicesQuery): InvoicesResponse!
   listJoinableWorkspaces(page: PageInfoInput): ListWorkspacesResult!
+  listLineItems(filter: ListLineItemsFilter!, page: PageInfoInput): ListLineItemsResult
+  listLogisticsServiceGroups(filter: ListLogisticsServiceGroupsFilter!): [LineItem!]!
 
   """
   List intake form submissions created by the authenticated user that have no buyer workspace assigned.
@@ -2831,13 +3523,19 @@ type Query {
   Lists all possible scope_of_work codes and their descriptions, including recommended usage and stage meaning.
   """
   listScopeOfWorkCodes: [ScopeOfWorkCode]
+  listStudioConversationMessages(conversationId: String!, page: PageInfoInput): StudioConversationMessageListResult
+  listStudioConversations(filter: ListStudioConversationsFilter!, page: PageInfoInput): StudioConversationListResult
 
   """Lists all top-level projects (where parent_project is null)."""
   listTopLevelProjects(workspaceId: String!): [Project]
   listTransactions(workspaceId: ID!): ListTransactionResult!
   listUserResourcePermissions(resourceId: ID!, resourceType: ResourceType!): ListUserPermissionsResult!
   listWorkflowConfigurations(page: ListWorkflowConfigurationsPage): ListWorkflowConfigurationsResult
+  listWorkspaceAttributeTypes(filter: ListWorkspaceAttributeTypesFilter!, page: PageInfoInput): WorkspaceAttributeTypeListResult
+  listWorkspaceAttributeValues(filter: ListWorkspaceAttributeValuesFilter!, page: PageInfoInput): WorkspaceAttributeValueListResult
   listWorkspaceMembers(workspaceId: String!): ListWorkspaceMembersResult!
+  listWorkspaceTags(filter: ListWorkspaceTagsFilter!, page: PageInfoInput): WorkspaceTagListResult
+  listWorkspaceUnitDefinitions(filter: ListWorkspaceUnitDefinitionsFilter!, page: PageInfoInput): WorkspaceUnitDefinitionListResult
   listWorkspaces(page: PageInfoInput): ListWorkspacesResult!
   llm: Llm
   quoteById(id: String!): Quote
@@ -2845,11 +3543,19 @@ type Query {
   rfqById(id: String!): RFQ
   searchBrands(query: String!): [BrandSearchResult]
   searchDocuments(collections: [SearchableCollectionType!], page: Int = 1, pageSize: Int = 20, searchText: String, workspaceId: String!): SearchDocumentsResult!
+  studioFsList(input: StudioFsListInput!): [StudioFsNode!]!
+  studioFsRead(input: StudioFsReadInput!): StudioFsReadResult!
+  studioFsRoots(workspaceId: String!): [String!]!
   usersSearch(searchTerm: String): [User]
   validEnterpriseDomain(domain: String!): ValidEnterpriseDomainResult!
 }
 
 type Quote {
+  """
+  Seller-provided confirmation when accepting on behalf of the buyer (e.g., "Approved by phone on 2025-01-03")
+  """
+  approvalConfirmation: String
+
   """Buyer's full legal name as provided when accepting the quote"""
   buyerAcceptedFullLegalName: String
   buyerUserId: String
@@ -2884,9 +3590,83 @@ type Quote {
   validUntil: DateTime
 }
 
+type QuoteLineItemConstraint {
+  payload: JSONObject
+  strength: QuoteLineItemConstraintStrength!
+}
+
+input QuoteLineItemConstraintInput {
+  payload: JSONObject
+  strength: QuoteLineItemConstraintStrength!
+}
+
+enum QuoteLineItemConstraintStrength {
+  EXCLUDED
+  PREFERRED
+  REQUIRED
+}
+
 enum QuoteLineItemDeliveryMethod {
   DELIVERY
   PICKUP
+}
+
+type QuoteLineItemInputValue {
+  attributeTypeId: String!
+  contextTags: [String!]
+  unitCode: String
+  value: JSONObject!
+}
+
+input QuoteLineItemInputValueInput {
+  attributeTypeId: String!
+  contextTags: [String!]
+  unitCode: String
+  value: JSONObject!
+}
+
+type QuoteLineItemPricingRef {
+  priceBookId: String
+  priceId: String
+  priceType: QuoteLineItemPricingType
+}
+
+input QuoteLineItemPricingRefInput {
+  priceBookId: String
+  priceId: String
+  priceType: QuoteLineItemPricingType
+}
+
+enum QuoteLineItemPricingType {
+  RENTAL
+  SALE
+  SERVICE
+}
+
+enum QuoteLineItemProductKind {
+  ASSEMBLY_PRODUCT
+  MATERIAL_PRODUCT
+  SERVICE_PRODUCT
+}
+
+type QuoteLineItemProductRef {
+  kind: QuoteLineItemProductKind!
+  productId: String!
+}
+
+input QuoteLineItemProductRefInput {
+  kind: QuoteLineItemProductKind!
+  productId: String!
+}
+
+type QuoteLineItemTimeWindow {
+  endAt: DateTime
+  startAt: DateTime
+}
+
+input QuoteLineItemTimeWindowInput {
+  endAt: DateTime
+  startAt: DateTime
 }
 
 enum QuoteLineItemType {
@@ -2896,6 +3676,10 @@ enum QuoteLineItemType {
 }
 
 type QuoteRevision {
+  """
+  Canonical line items stored in the unified line_items collection for this quote revision.
+  """
+  canonicalLineItems: [LineItem!]!
   createdAt: DateTime!
   createdBy: String!
   createdByUser: User
@@ -2914,69 +3698,111 @@ type QuoteRevision {
 union QuoteRevisionLineItem = QuoteRevisionRentalLineItem | QuoteRevisionSaleLineItem | QuoteRevisionServiceLineItem
 
 input QuoteRevisionLineItemInput {
+  constraints: [QuoteLineItemConstraintInput]
   deliveryLocation: String
   deliveryMethod: QuoteLineItemDeliveryMethod
   deliveryNotes: String
   description: String!
   id: String
+  inputs: [QuoteLineItemInputValueInput]
   intakeFormSubmissionLineItemId: String
+  notes: String
   pimCategoryId: String
+  placeRef: LineItemPlaceRefInput
+  pricingRef: QuoteLineItemPricingRefInput
+  pricingSpecSnapshot: PricingSpecInput
+  productRef: QuoteLineItemProductRefInput
   quantity: Int
+  rateInCentsSnapshot: Int
   rentalEndDate: DateTime
   rentalStartDate: DateTime
   sellersPriceId: ID
+  targetSelectors: [ServiceTargetSelectorInput]
+  timeWindow: QuoteLineItemTimeWindowInput
   type: QuoteLineItemType!
+  unitCode: String
 }
 
 type QuoteRevisionRentalLineItem {
+  constraints: [QuoteLineItemConstraint]
   deliveryLocation: String
   deliveryMethod: QuoteLineItemDeliveryMethod
   deliveryNotes: String
   description: String!
   id: String
+  inputs: [QuoteLineItemInputValue]
   intakeFormSubmissionLineItem: IntakeFormLineItem
   intakeFormSubmissionLineItemId: String
+  notes: String
   pimCategory: PimCategory
-  pimCategoryId: String!
+  pimCategoryId: String
+  placeRef: LineItemPlaceRef
   price: Price
+  pricingRef: QuoteLineItemPricingRef
+  pricingSpecSnapshot: PricingSpec
+  productRef: QuoteLineItemProductRef
   quantity: Int!
+  rateInCentsSnapshot: Int
   rentalEndDate: DateTime!
   rentalStartDate: DateTime!
   sellersPriceId: ID
   subtotalInCents: Int!
+  timeWindow: QuoteLineItemTimeWindow
   type: QuoteLineItemType!
+  unitCode: String
 }
 
 type QuoteRevisionSaleLineItem {
+  constraints: [QuoteLineItemConstraint]
   deliveryLocation: String
   deliveryMethod: QuoteLineItemDeliveryMethod
   deliveryNotes: String
   description: String!
   id: String
+  inputs: [QuoteLineItemInputValue]
   intakeFormSubmissionLineItem: IntakeFormLineItem
   intakeFormSubmissionLineItemId: String
+  notes: String
   pimCategory: PimCategory
-  pimCategoryId: String!
+  pimCategoryId: String
+  placeRef: LineItemPlaceRef
   price: Price
+  pricingRef: QuoteLineItemPricingRef
+  pricingSpecSnapshot: PricingSpec
+  productRef: QuoteLineItemProductRef
   quantity: Int!
+  rateInCentsSnapshot: Int
   sellersPriceId: ID
   subtotalInCents: Int!
+  timeWindow: QuoteLineItemTimeWindow
   type: QuoteLineItemType!
+  unitCode: String
 }
 
 type QuoteRevisionServiceLineItem {
+  constraints: [QuoteLineItemConstraint]
   deliveryLocation: String
   deliveryMethod: QuoteLineItemDeliveryMethod
   deliveryNotes: String
   description: String!
   id: String
+  inputs: [QuoteLineItemInputValue]
   intakeFormSubmissionLineItem: IntakeFormLineItem
   intakeFormSubmissionLineItemId: String
+  notes: String
+  placeRef: LineItemPlaceRef
   price: Price
+  pricingRef: QuoteLineItemPricingRef
+  pricingSpecSnapshot: PricingSpec
+  productRef: QuoteLineItemProductRef
   quantity: Int!
+  rateInCentsSnapshot: Int
   sellersPriceId: ID
   subtotalInCents: Int!
+  targetSelectors: [ServiceTargetSelector]
+  timeWindow: QuoteLineItemTimeWindow
   type: QuoteLineItemType!
+  unitCode: String
 }
 
 enum QuoteStatus {
@@ -3011,40 +3837,70 @@ type RFQ {
 union RFQLineItem = RFQRentalLineItem | RFQSaleLineItem | RFQServiceLineItem
 
 input RFQLineItemInput {
+  constraints: [QuoteLineItemConstraintInput]
   description: String!
   id: String
+  inputs: [QuoteLineItemInputValueInput]
+  notes: String
   pimCategoryId: String
+  placeRef: LineItemPlaceRefInput
+  productRef: QuoteLineItemProductRefInput
   quantity: Int
   rentalEndDate: DateTime
   rentalStartDate: DateTime
+  targetSelectors: [ServiceTargetSelectorInput]
+  timeWindow: QuoteLineItemTimeWindowInput
   type: QuoteLineItemType!
+  unitCode: String
 }
 
 type RFQRentalLineItem {
+  constraints: [QuoteLineItemConstraint]
   description: String!
   id: String
+  inputs: [QuoteLineItemInputValue]
+  notes: String
   pimCategory: PimCategory
-  pimCategoryId: String!
+  pimCategoryId: String
+  placeRef: LineItemPlaceRef
+  productRef: QuoteLineItemProductRef
   quantity: Int!
   rentalEndDate: DateTime!
   rentalStartDate: DateTime!
+  timeWindow: QuoteLineItemTimeWindow
   type: QuoteLineItemType!
+  unitCode: String
 }
 
 type RFQSaleLineItem {
+  constraints: [QuoteLineItemConstraint]
   description: String!
   id: String
+  inputs: [QuoteLineItemInputValue]
+  notes: String
   pimCategory: PimCategory
-  pimCategoryId: String!
+  pimCategoryId: String
+  placeRef: LineItemPlaceRef
+  productRef: QuoteLineItemProductRef
   quantity: Int!
+  timeWindow: QuoteLineItemTimeWindow
   type: QuoteLineItemType!
+  unitCode: String
 }
 
 type RFQServiceLineItem {
+  constraints: [QuoteLineItemConstraint]
   description: String!
   id: String
+  inputs: [QuoteLineItemInputValue]
+  notes: String
+  placeRef: LineItemPlaceRef
+  productRef: QuoteLineItemProductRef
   quantity: Int!
+  targetSelectors: [ServiceTargetSelector]
+  timeWindow: QuoteLineItemTimeWindow
   type: QuoteLineItemType!
+  unitCode: String
 }
 
 enum RFQStatus {
@@ -3150,6 +4006,7 @@ type RentalMaterializedView {
 
 type RentalPrice {
   calculateSubTotal(durationInDays: Int!): LineItemPriceForecast!
+  catalogRef: PriceCatalogRef
   createdAt: DateTime!
   createdBy: String!
   id: ID!
@@ -3158,9 +4015,9 @@ type RentalPrice {
   parentPriceId: ID
   parentPriceIdPercentageFactor: Float
   pimCategory: PimCategory
-  pimCategoryId: String!
-  pimCategoryName: String!
-  pimCategoryPath: String!
+  pimCategoryId: String
+  pimCategoryName: String
+  pimCategoryPath: String
   pimProduct: PimProduct
   pimProductId: ID
   priceBook: PriceBook
@@ -3169,6 +4026,7 @@ type RentalPrice {
   pricePerMonthInCents: Int!
   pricePerWeekInCents: Int!
   priceType: PriceType!
+  pricingSpec: PricingSpec
   updatedAt: DateTime!
   workspaceId: ID!
 }
@@ -3466,6 +4324,92 @@ enum ResetFrequency {
   yearly
 }
 
+input ResolveGlobalOrWorkspaceAttributeTypeInput {
+  allowedUnits: [String]
+  appliesTo: GlobalAttributeAppliesTo
+  auditStatus: GlobalAttributeAuditStatus
+  canonicalUnit: String
+  canonicalValueSetId: String
+  dimension: GlobalAttributeDimension
+  kind: GlobalAttributeKind!
+  name: String!
+  notes: String
+  preferGlobal: Boolean
+  source: String
+  status: GlobalAttributeStatus
+  synonyms: [String]
+  usageHints: [GlobalAttributeUsageHint]
+  validationRules: JSONObject
+  valueType: GlobalAttributeValueType!
+  workspaceId: ID!
+}
+
+input ResolveGlobalOrWorkspaceAttributeValueInput {
+  attributeTypeId: ID!
+  auditStatus: GlobalAttributeAuditStatus
+  codes: JSONObject
+  preferGlobal: Boolean
+  source: String
+  status: GlobalAttributeStatus
+  synonyms: [String]
+  value: String!
+  workspaceId: ID!
+}
+
+input ResolveGlobalOrWorkspaceTagInput {
+  auditStatus: GlobalTagAuditStatus
+  displayName: String
+  label: String!
+  notes: String
+  pos: GlobalTagPartOfSpeech
+  preferGlobal: Boolean
+  source: String
+  status: GlobalTagStatus
+  synonyms: [String]
+  workspaceId: ID!
+}
+
+input ResolveGlobalOrWorkspaceUnitDefinitionInput {
+  canonicalUnitCode: String
+  code: String!
+  dimension: GlobalAttributeDimension
+  name: String
+  offset: Float
+  preferGlobal: Boolean
+  source: String
+  status: GlobalUnitStatus
+  toCanonicalFactor: Float
+  workspaceId: ID!
+}
+
+type ResolvedWorkspaceAttributeTypeResult {
+  created: Boolean!
+  globalAttributeType: GlobalAttributeType
+  scope: VocabularyScope!
+  workspaceAttributeType: WorkspaceAttributeType
+}
+
+type ResolvedWorkspaceAttributeValueResult {
+  created: Boolean!
+  globalAttributeValue: GlobalAttributeValue
+  scope: VocabularyScope!
+  workspaceAttributeValue: WorkspaceAttributeValue
+}
+
+type ResolvedWorkspaceTagResult {
+  created: Boolean!
+  globalTag: GlobalTag
+  scope: VocabularyScope!
+  workspaceTag: WorkspaceTag
+}
+
+type ResolvedWorkspaceUnitDefinitionResult {
+  created: Boolean!
+  globalUnitDefinition: GlobalUnitDefinition
+  scope: VocabularyScope!
+  workspaceUnitDefinition: WorkspaceUnitDefinition
+}
+
 type ResourceMapAddress {
   city: String
   country: String
@@ -3708,6 +4652,7 @@ type SaleFulfilment implements FulfilmentBase {
 }
 
 type SalePrice {
+  catalogRef: PriceCatalogRef
   createdAt: DateTime!
   createdBy: String!
   discounts: JSON
@@ -3717,14 +4662,15 @@ type SalePrice {
   parentPriceId: ID
   parentPriceIdPercentageFactor: Float
   pimCategory: PimCategory
-  pimCategoryId: String!
-  pimCategoryName: String!
-  pimCategoryPath: String!
+  pimCategoryId: String
+  pimCategoryName: String
+  pimCategoryPath: String
   pimProduct: PimProduct
   pimProductId: ID
   priceBook: PriceBook
   priceBookId: ID
   priceType: PriceType!
+  pricingSpec: PricingSpec
   unitCostInCents: Int!
   updatedAt: DateTime!
   workspaceId: ID!
@@ -3827,6 +4773,9 @@ type SalesOrder {
   """The intake form submission associated with this sales order"""
   intakeFormSubmission: IntakeFormSubmission
   intake_form_submission_id: String
+
+  """Canonical line items for this sales order (source of truth)."""
+  lineItems: [LineItem!]!
   line_items: [SalesOrderLineItem]
 
   """Pricing summary for the sales order"""
@@ -4039,11 +4988,114 @@ type ServiceFulfilment implements FulfilmentBase {
   salesOrderPONumber: String
   salesOrderType: FulfilmentType!
   serviceDate: DateTime
+  tasks: [ServiceFulfilmentTask]
   unitCostInCents: Int!
   updatedAt: DateTime!
   workflowColumnId: ID
   workflowId: ID
   workspaceId: ID!
+}
+
+type ServiceFulfilmentTask {
+  activityTagIds: [String!]!
+  completedAt: DateTime
+  completedBy: String
+  contextTagIds: [String!]
+  id: String!
+  notes: String
+  status: ServiceFulfilmentTaskStatus!
+  title: String!
+}
+
+enum ServiceFulfilmentTaskStatus {
+  DONE
+  OPEN
+  SKIPPED
+}
+
+type ServicePrice {
+  catalogRef: PriceCatalogRef
+  createdAt: DateTime!
+  createdBy: String!
+  id: ID!
+  name: String
+  parentPrice: Price
+  parentPriceId: ID
+  parentPriceIdPercentageFactor: Float
+  pimCategory: PimCategory
+  pimCategoryId: String
+  pimCategoryName: String
+  pimCategoryPath: String
+  pimProduct: PimProduct
+  pimProductId: ID
+  priceBook: PriceBook
+  priceBookId: ID
+  priceType: PriceType!
+  pricingSpec: PricingSpec
+  updatedAt: DateTime!
+  workspaceId: ID!
+}
+
+type ServiceRequirementEnvelope {
+  maxHeight: ServiceRequirementMeasurement
+  maxItemWeight: ServiceRequirementMeasurement
+  maxLength: ServiceRequirementMeasurement
+  maxWidth: ServiceRequirementMeasurement
+  missingTargets: [ServiceRequirementMissingTarget!]!
+  targetLineItemCount: Int!
+  targetLineItemIds: [String!]!
+  targetQuantity: Float
+  totalWeight: ServiceRequirementMeasurement
+  warnings: [String!]!
+}
+
+type ServiceRequirementMeasurement {
+  unitCode: String!
+  value: Float!
+}
+
+type ServiceRequirementMissingTarget {
+  missingAttributeKeys: [String!]!
+  reason: String!
+  targetLineItemId: String!
+}
+
+type ServiceScopeTask {
+  activityTagIds: [String!]!
+  contextTagIds: [String!]
+  id: String!
+  notes: String
+  sourceTemplateId: String
+  title: String!
+}
+
+input ServiceScopeTaskInput {
+  activityTagIds: [String!]!
+  contextTagIds: [String!]
+  id: String!
+  notes: String
+  sourceTemplateId: String
+  title: String!
+}
+
+type ServiceTargetSelector {
+  kind: ServiceTargetSelectorKind!
+  tagIds: [String!]
+  targetLineItemIds: [String!]
+  targetProductId: String
+}
+
+input ServiceTargetSelectorInput {
+  kind: ServiceTargetSelectorKind!
+  tagIds: [String!]
+  targetLineItemIds: [String!]
+  targetProductId: String
+}
+
+enum ServiceTargetSelectorKind {
+  LINE_ITEM
+  PRODUCT
+  TAGS
 }
 
 type ServiceTask {
@@ -4104,6 +5156,252 @@ type SpiceDBSubjectReference {
   type: String!
 }
 
+input StudioCatalogCompileInput {
+  catalogPath: String!
+  workspaceId: String!
+}
+
+input StudioCatalogCreateProductInput {
+  catalogPath: String
+  product: StudioCatalogProductInput!
+  workspaceId: String!
+}
+
+type StudioCatalogCreateProductResult {
+  catalogPath: String!
+  product: StudioCatalogProductSummary!
+}
+
+input StudioCatalogEnsureLogisticsServiceProductsInput {
+  workspaceId: String!
+}
+
+type StudioCatalogEnsureLogisticsServiceProductsResult {
+  catalogPath: String!
+  products: [StudioCatalogSeededProduct!]!
+}
+
+input StudioCatalogInitInput {
+  name: String
+  slug: String!
+  workspaceId: String!
+}
+
+type StudioCatalogInitResult {
+  catalogPath: String!
+}
+
+input StudioCatalogProductAttributeInput {
+  contextTags: [String!]
+  key: String!
+  sourceRef: String
+  unit: String
+  value: JSON!
+}
+
+input StudioCatalogProductImageInput {
+  alt: String
+  uri: String!
+}
+
+input StudioCatalogProductInput {
+  activityTags: [String!]
+  attributes: [StudioCatalogProductAttributeInput!]
+  categoryPath: String
+  description: String
+  id: String!
+  images: [StudioCatalogProductImageInput!]
+  kind: StudioCatalogProductKind
+  name: String!
+  notes: String
+  sourcePaths: [String!]
+  sourceRefs: [String!]
+  status: StudioCatalogProductStatus
+  tags: [String!]
+  targetSpecs: [StudioCatalogProductTargetSpecInput!]
+  taskTemplates: [StudioCatalogProductTaskTemplateInput!]
+}
+
+enum StudioCatalogProductKind {
+  ASSEMBLY
+  MATERIAL
+  SERVICE
+}
+
+enum StudioCatalogProductOrigin {
+  SYSTEM
+  WORKSPACE
+}
+
+enum StudioCatalogProductStatus {
+  ACTIVE
+  ARCHIVED
+  DRAFT
+}
+
+type StudioCatalogProductSummary {
+  categoryPath: String
+  id: String!
+  kind: StudioCatalogProductKind
+  name: String!
+  origin: StudioCatalogProductOrigin!
+  path: String!
+  status: StudioCatalogProductStatus
+  tags: [String!]
+}
+
+enum StudioCatalogProductTargetKind {
+  PRODUCT
+  TAGS
+}
+
+input StudioCatalogProductTargetSpecInput {
+  kind: StudioCatalogProductTargetKind!
+  productId: String
+  tagIds: [String!]
+}
+
+input StudioCatalogProductTaskTemplateInput {
+  activityTagIds: [String!]!
+  contextTagIds: [String!]
+  id: String!
+  notes: String
+  title: String!
+}
+
+enum StudioCatalogSeedStatus {
+  CREATED
+  EXISTING
+}
+
+type StudioCatalogSeededProduct {
+  product: StudioCatalogProductSummary!
+  status: StudioCatalogSeedStatus!
+}
+
+input StudioCatalogValidateInput {
+  catalogPath: String!
+  workspaceId: String!
+}
+
+type StudioCatalogValidateResult {
+  errors: [StudioCatalogValidationIssue!]!
+  warnings: [StudioCatalogValidationIssue!]!
+}
+
+type StudioCatalogValidationIssue {
+  message: String!
+  path: String
+}
+
+type StudioConversation {
+  createdAt: DateTime!
+  createdBy: String!
+  id: String!
+  lastMessageAt: DateTime
+  messageCount: Int!
+  pinnedCatalogPath: String
+  title: String
+  updatedAt: DateTime!
+  updatedBy: String!
+  workingSet: JSONObject
+  workspaceId: String!
+}
+
+type StudioConversationListResult {
+  items: [StudioConversation!]!
+  page: PaginationInfo!
+}
+
+type StudioConversationMessage {
+  content: String!
+  conversationId: String!
+  createdAt: DateTime!
+  createdBy: String
+  id: String!
+  metadata: JSONObject
+  role: StudioConversationRole!
+}
+
+type StudioConversationMessageListResult {
+  items: [StudioConversationMessage!]!
+  page: PaginationInfo!
+}
+
+enum StudioConversationRole {
+  ASSISTANT
+  SYSTEM
+  TOOL
+  USER
+}
+
+input StudioFsDeleteInput {
+  path: String!
+  workspaceId: String!
+}
+
+input StudioFsListInput {
+  path: String!
+  workspaceId: String!
+}
+
+input StudioFsMkdirInput {
+  path: String!
+  workspaceId: String!
+}
+
+input StudioFsMoveInput {
+  from: String!
+  to: String!
+  workspaceId: String!
+}
+
+type StudioFsNode {
+  etag: String!
+  mimeType: String
+  name: String!
+  path: String!
+  sizeBytes: Int
+  type: StudioFsNodeType!
+  updatedAt: DateTime!
+}
+
+enum StudioFsNodeType {
+  FILE
+  FOLDER
+}
+
+input StudioFsReadInput {
+  path: String!
+  workspaceId: String!
+}
+
+type StudioFsReadResult {
+  content: String!
+  etag: String!
+  mimeType: String
+}
+
+input StudioFsUploadInput {
+  bytes: String!
+  expectedEtag: String
+  mimeType: String
+  path: String!
+  workspaceId: String!
+}
+
+input StudioFsWriteInput {
+  content: String!
+  expectedEtag: String
+  mimeType: String
+  path: String!
+  workspaceId: String!
+}
+
+type StudioFsWriteResult {
+  etag: String!
+}
+
 type SubmissionSalesOrder {
   created_at: String!
   deleted_at: DateTime
@@ -4131,6 +5429,20 @@ enum SupportedContentType {
   IMAGE_JPEG
   IMAGE_PNG
   TEXT_CSV
+}
+
+input SyncMaterialLogisticsAddOnsInput {
+  delivery: LogisticsServiceAddOnSelectionInput
+  materialLineItemId: ID!
+  pickup: LogisticsServiceAddOnSelectionInput
+}
+
+type SyncMaterialLogisticsAddOnsResult {
+  deliveryLineItem: LineItem
+  materialLineItemId: ID!
+  pickupLineItem: LineItem
+  serviceAddOns: [LineItem!]!
+  warnings: [String!]!
 }
 
 type TaxAnalysisResult {
@@ -4242,6 +5554,17 @@ input UpdateGlobalAttributeValueInput {
   value: String
 }
 
+input UpdateGlobalTagInput {
+  auditStatus: GlobalTagAuditStatus
+  displayName: String
+  label: String
+  notes: String
+  pos: GlobalTagPartOfSpeech
+  source: String
+  status: GlobalTagStatus
+  synonyms: [String]
+}
+
 input UpdateGlobalUnitDefinitionInput {
   canonicalUnitCode: String
   dimension: GlobalAttributeDimension
@@ -4274,6 +5597,28 @@ input UpdateIntakeFormSubmissionInput {
 
 input UpdateInventorySerialisedIdInput {
   assetId: String!
+}
+
+input UpdateLineItemInput {
+  constraints: [LineItemConstraintInput]
+  customPriceName: String
+  delivery: LineItemDeliveryInput
+  deliveryChargeInCents: Int
+  description: String
+  inputs: [LineItemInputValueInput]
+  notes: String
+  placeRef: LineItemPlaceRefInput
+  pricingRef: LineItemPricingRefInput
+  pricingSpecSnapshot: PricingSpecInput
+  productRef: LineItemProductRefInput
+  quantity: String
+  rateInCentsSnapshot: Int
+  scopeTasks: [ServiceScopeTaskInput]
+  sourceLineItemId: ID
+  subtotalInCents: Int
+  targetSelectors: [LineItemTargetSelectorInput]
+  timeWindow: LineItemTimeWindowInput
+  unitCode: String
 }
 
 input UpdatePersonContactInput {
@@ -4361,6 +5706,7 @@ input UpdateReferenceNumberTemplateInput {
 }
 
 input UpdateRentalPriceInput {
+  catalogRef: PriceCatalogRefInput
   id: ID!
   name: String
   pimCategoryId: String
@@ -4368,6 +5714,7 @@ input UpdateRentalPriceInput {
   pricePerDayInCents: Int
   pricePerMonthInCents: Int
   pricePerWeekInCents: Int
+  pricingSpec: PricingSpecInput
 }
 
 input UpdateRentalPurchaseOrderLineItemInput {
@@ -4407,11 +5754,13 @@ input UpdateResourceMapTagInput {
 }
 
 input UpdateSalePriceInput {
+  catalogRef: PriceCatalogRefInput
   discounts: JSON
   id: ID!
   name: String
   pimCategoryId: String
   pimProductId: ID
+  pricingSpec: PricingSpecInput
   unitCostInCents: Int
 }
 
@@ -4465,6 +5814,27 @@ input UpdateSalesOrderLineItemInput {
   so_quantity: Int
 }
 
+input UpdateServiceFulfilmentTaskStatusInput {
+  fulfilmentId: ID!
+  status: ServiceFulfilmentTaskStatus!
+  taskId: String!
+}
+
+input UpdateServicePriceInput {
+  catalogRef: PriceCatalogRefInput
+  id: ID!
+  name: String
+  pimCategoryId: String
+  pimProductId: ID
+  pricingSpec: PricingSpecInput
+}
+
+input UpdateStudioConversationInput {
+  pinnedCatalogPath: String
+  title: String
+  workingSet: JSONObject
+}
+
 input UpdateTaxLineItemInput {
   description: String
   invoiceId: ID!
@@ -4486,6 +5856,60 @@ input UpsertPimCategoryInput {
   name: String!
   path: String!
   platform_id: String!
+}
+
+input UpsertWorkspaceAttributeTypeInput {
+  allowedUnits: [String]
+  appliesTo: GlobalAttributeAppliesTo
+  auditStatus: GlobalAttributeAuditStatus
+  canonicalUnit: String
+  canonicalValueSetId: String
+  dimension: GlobalAttributeDimension
+  kind: GlobalAttributeKind!
+  name: String!
+  notes: String
+  source: String
+  status: GlobalAttributeStatus
+  synonyms: [String]
+  usageHints: [GlobalAttributeUsageHint]
+  validationRules: JSONObject
+  valueType: GlobalAttributeValueType!
+  workspaceId: ID!
+}
+
+input UpsertWorkspaceAttributeValueInput {
+  attributeTypeId: ID!
+  auditStatus: GlobalAttributeAuditStatus
+  codes: JSONObject
+  source: String
+  status: GlobalAttributeStatus
+  synonyms: [String]
+  value: String!
+  workspaceId: ID!
+}
+
+input UpsertWorkspaceTagInput {
+  auditStatus: GlobalTagAuditStatus
+  displayName: String
+  label: String!
+  notes: String
+  pos: GlobalTagPartOfSpeech
+  source: String
+  status: GlobalTagStatus
+  synonyms: [String]
+  workspaceId: ID!
+}
+
+input UpsertWorkspaceUnitDefinitionInput {
+  canonicalUnitCode: String
+  code: String!
+  dimension: GlobalAttributeDimension
+  name: String
+  offset: Float
+  source: String
+  status: GlobalUnitStatus
+  toCanonicalFactor: Float
+  workspaceId: ID!
 }
 
 type User {
@@ -4617,6 +6041,11 @@ type ValidEnterpriseDomainResult {
   reason: String
 }
 
+enum VocabularyScope {
+  GLOBAL
+  WORKSPACE
+}
+
 type Workflow {
   id: ID
   name: String
@@ -4676,6 +6105,58 @@ enum WorkspaceAccessType {
   SAME_DOMAIN
 }
 
+type WorkspaceAttributeType {
+  allowedUnits: [String]
+  appliesTo: GlobalAttributeAppliesTo
+  auditStatus: GlobalAttributeAuditStatus
+  canonicalUnit: String
+  canonicalValueSetId: String
+  createdAt: DateTime
+  createdBy: String
+  dimension: GlobalAttributeDimension
+  globalAttributeTypeId: ID
+  id: ID!
+  kind: GlobalAttributeKind!
+  name: String!
+  notes: String
+  source: String
+  status: GlobalAttributeStatus!
+  synonyms: [String]
+  updatedAt: DateTime
+  updatedBy: String
+  usageHints: [GlobalAttributeUsageHint]
+  validationRules: JSONObject
+  valueType: GlobalAttributeValueType!
+  workspaceId: ID!
+}
+
+type WorkspaceAttributeTypeListResult {
+  items: [WorkspaceAttributeType!]!
+  page: PaginationInfo!
+}
+
+type WorkspaceAttributeValue {
+  attributeTypeId: ID!
+  auditStatus: GlobalAttributeAuditStatus
+  codes: JSONObject
+  createdAt: DateTime
+  createdBy: String
+  globalAttributeValueId: String
+  id: ID!
+  source: String
+  status: GlobalAttributeStatus!
+  synonyms: [String]
+  updatedAt: DateTime
+  updatedBy: String
+  value: String!
+  workspaceId: ID!
+}
+
+type WorkspaceAttributeValueListResult {
+  items: [WorkspaceAttributeValue!]!
+  page: PaginationInfo!
+}
+
 type WorkspaceMember {
   roles: [WorkspaceUserRole!]!
   user: User
@@ -4686,6 +6167,52 @@ type WorkspaceRoleInfo {
   description: String
   label: String
   role: WorkspaceUserRole!
+}
+
+type WorkspaceTag {
+  auditStatus: GlobalTagAuditStatus
+  createdAt: DateTime
+  createdBy: String
+  displayName: String
+  globalTagId: ID
+  id: ID!
+  label: String!
+  notes: String
+  pos: GlobalTagPartOfSpeech!
+  source: String
+  status: GlobalTagStatus!
+  synonyms: [String]
+  updatedAt: DateTime
+  updatedBy: String
+  workspaceId: ID!
+}
+
+type WorkspaceTagListResult {
+  items: [WorkspaceTag!]!
+  page: PaginationInfo!
+}
+
+type WorkspaceUnitDefinition {
+  canonicalUnitCode: String
+  code: String!
+  createdAt: DateTime
+  createdBy: String
+  dimension: GlobalAttributeDimension
+  globalUnitCode: String
+  id: ID!
+  name: String
+  offset: Float
+  source: String
+  status: GlobalUnitStatus!
+  toCanonicalFactor: Float
+  updatedAt: DateTime
+  updatedBy: String
+  workspaceId: ID!
+}
+
+type WorkspaceUnitDefinitionListResult {
+  items: [WorkspaceUnitDefinition!]!
+  page: PaginationInfo!
 }
 
 """

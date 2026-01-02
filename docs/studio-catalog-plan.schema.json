@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://equipmentshare.com/schemas/studio-catalog-plan.json",
+  "title": "Studio Catalog Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Plan schema version",
+      "default": "1.0"
+    },
+    "catalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "Catalog slug (kebab or snake case)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable catalog name"
+        }
+      },
+      "required": ["slug", "name"]
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "domain": {
+          "type": "string",
+          "description": "Project domain (e.g., bathroom remodels)"
+        },
+        "region": {
+          "type": "string",
+          "description": "Region/market (e.g., US, Midwest, Austin)"
+        },
+        "priceTier": {
+          "type": "string",
+          "description": "Target tier (value, mid, premium)",
+          "enum": ["value", "mid", "premium", "mixed"]
+        },
+        "includeServices": {
+          "type": "boolean",
+          "description": "Whether to include labor/services items"
+        },
+        "brands": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "preferred": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "avoid": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "required": ["preferred", "avoid"]
+        },
+        "constraints": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Style/material constraints (e.g., brushed nickel only)"
+        }
+      },
+      "required": [
+        "domain",
+        "region",
+        "priceTier",
+        "includeServices",
+        "brands",
+        "constraints"
+      ]
+    },
+    "categories": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Top-level catalog categories"
+    },
+    "assemblies": {
+      "type": "array",
+      "description": "Planned assemblies/BOMs",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "components": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Component names or categories"
+          }
+        },
+        "required": ["name", "components"]
+      }
+    },
+    "attributePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "atomicPhysical": {
+          "type": "boolean",
+          "description": "Enforce atomic physical attributes"
+        },
+        "noUnitsAsTags": {
+          "type": "boolean",
+          "description": "Units must be values, not tags"
+        },
+        "noMeasurableTags": {
+          "type": "boolean",
+          "description": "Measurable concepts must be attributes, not tags"
+        },
+        "contextTagsAllowed": {
+          "type": "boolean",
+          "description": "Allow context tags for attributes"
+        }
+      },
+      "required": [
+        "atomicPhysical",
+        "noUnitsAsTags",
+        "noMeasurableTags",
+        "contextTagsAllowed"
+      ]
+    },
+    "sources": {
+      "type": "array",
+      "description": "Planned information sources (sites/manufacturers)",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "url": { "type": "string" },
+          "notes": { "type": "string" }
+        },
+        "required": ["name"]
+      }
+    },
+    "openQuestions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Questions to resolve before writing the catalog"
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["draft", "approved", "rejected"]
+        },
+        "approvedBy": { "type": "string" },
+        "approvedAt": { "type": "string" }
+      },
+      "required": ["status"]
+    }
+  },
+  "required": [
+    "version",
+    "catalog",
+    "scope",
+    "categories",
+    "assemblies",
+    "attributePolicy",
+    "sources",
+    "openQuestions",
+    "approval"
+  ]
+}

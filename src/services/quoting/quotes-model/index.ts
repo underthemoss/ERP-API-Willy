@@ -136,6 +136,7 @@ export class QuotesModel {
         | 'currentRevisionId'
         | 'validUntil'
         | 'buyerUserId'
+        | 'approvalConfirmation'
         | 'signatureS3Key'
         | 'buyerAcceptedFullLegalName'
       >

@@ -1,6 +1,12 @@
 import { createTestEnvironment } from './test-environment';
 import { gql } from 'graphql-request';
-import { QuoteLineItemType, QuoteStatus } from './generated/graphql';
+import {
+  QuoteLineItemType,
+  QuoteStatus,
+  RevisionStatus,
+  ServiceTargetSelectorKind,
+} from './generated/graphql';
+import { normalizePlaceRefInput } from './place-ref';
 
 // Define GraphQL operations for codegen
 gql`
@@ -56,6 +62,10 @@ gql`
           subtotalInCents
           type
           sellersPriceId
+          placeRef {
+            kind
+            id
+          }
         }
         ... on QuoteRevisionRentalLineItem {
           id
@@ -67,6 +77,10 @@ gql`
           rentalStartDate
           rentalEndDate
           sellersPriceId
+          placeRef {
+            kind
+            id
+          }
         }
         ... on QuoteRevisionSaleLineItem {
           id
@@ -76,6 +90,10 @@ gql`
           type
           pimCategoryId
           sellersPriceId
+          placeRef {
+            kind
+            id
+          }
         }
       }
     }
@@ -101,6 +119,10 @@ gql`
           subtotalInCents
           type
           sellersPriceId
+          placeRef {
+            kind
+            id
+          }
         }
         ... on QuoteRevisionRentalLineItem {
           id
@@ -112,6 +134,10 @@ gql`
           rentalStartDate
           rentalEndDate
           sellersPriceId
+          placeRef {
+            kind
+            id
+          }
         }
         ... on QuoteRevisionSaleLineItem {
           id
@@ -121,6 +147,10 @@ gql`
           type
           pimCategoryId
           sellersPriceId
+          placeRef {
+            kind
+            id
+          }
         }
       }
     }
@@ -149,6 +179,25 @@ gql`
       priceBookId
       pimCategoryId
       unitCostInCents
+    }
+  }
+`;
+
+gql`
+  mutation CreateServicePriceForTests($input: CreateServicePriceInput!) {
+    createServicePrice(input: $input) {
+      id
+      workspaceId
+      priceBookId
+      catalogRef {
+        kind
+        id
+      }
+      pricingSpec {
+        kind
+        unitCode
+        rateInCents
+      }
     }
   }
 `;
@@ -228,6 +277,10 @@ gql`
           rentalStartDate
           rentalEndDate
           sellersPriceId
+          placeRef {
+            kind
+            id
+          }
         }
         ... on QuoteRevisionSaleLineItem {
           id
@@ -237,6 +290,10 @@ gql`
           type
           pimCategoryId
           sellersPriceId
+          placeRef {
+            kind
+            id
+          }
         }
         ... on QuoteRevisionServiceLineItem {
           id
@@ -245,6 +302,10 @@ gql`
           subtotalInCents
           type
           sellersPriceId
+          placeRef {
+            kind
+            id
+          }
         }
       }
     }
@@ -260,6 +321,30 @@ gql`
       validUntil
       updatedAt
       updatedBy
+    }
+  }
+`;
+
+gql`
+  mutation AcceptQuoteOfflineForTests($input: AcceptQuoteInput!) {
+    acceptQuote(input: $input) {
+      quote {
+        id
+        status
+        approvalConfirmation
+      }
+      salesOrder {
+        id
+      }
+    }
+  }
+`;
+
+gql`
+  query QuoteRevisionStatusForTests($id: String!) {
+    quoteRevisionById(id: $id) {
+      id
+      status
     }
   }
 `;
@@ -420,6 +505,7 @@ describe('createQuoteRevision e2e', () => {
     // Define rental dates
     const rentalStartDate = new Date('2025-06-01T00:00:00Z');
     const rentalEndDate = new Date('2025-06-15T00:00:00Z'); // 15 days
+    const rentalPlaceRef = normalizePlaceRefInput('jobsite-789');
 
     // Create quote revision with rental line item
     const { createQuoteRevision } = await sdk.CreateQuoteRevision({
@@ -436,6 +522,7 @@ describe('createQuoteRevision e2e', () => {
             pimCategoryId,
             rentalStartDate: rentalStartDate.toISOString(),
             rentalEndDate: rentalEndDate.toISOString(),
+            placeRef: rentalPlaceRef,
           },
         ],
       },
@@ -458,6 +545,10 @@ describe('createQuoteRevision e2e', () => {
       expect(rentalItem.quantity).toBe(2);
       expect(rentalItem.sellersPriceId).toBe(rentalPriceId);
       expect(rentalItem.pimCategoryId).toBe(pimCategoryId);
+      expect(rentalItem.placeRef).toEqual({
+        kind: 'OTHER',
+        id: 'jobsite-789',
+      });
 
       // Verify subtotal was calculated server-side (not zero, and greater than 0)
       expect(rentalItem.subtotalInCents).toBeGreaterThan(0);
@@ -474,6 +565,490 @@ describe('createQuoteRevision e2e', () => {
 
       expect(rentalItem.subtotalInCents).toBe(expectedSubtotal);
     }
+  });
+
+  it('allows a priced rental line item without pimCategoryId or productRef', async () => {
+    const { sdk, utils } = await createClient();
+
+    const { quoteId, rentalPriceId } = await setupQuotingTestData(sdk, utils);
+
+    const rentalStartDate = new Date('2025-06-01T00:00:00Z');
+    const rentalEndDate = new Date('2025-06-02T00:00:00Z');
+
+    const { createQuoteRevision } = await sdk.CreateQuoteRevision({
+      input: {
+        quoteId,
+        revisionNumber: 1,
+        lineItems: [
+          {
+            type: QuoteLineItemType.Rental,
+            description: 'Unbound rental (priced)',
+            quantity: 1,
+            sellersPriceId: rentalPriceId,
+            rentalStartDate: rentalStartDate.toISOString(),
+            rentalEndDate: rentalEndDate.toISOString(),
+          },
+        ],
+      },
+    });
+
+    expect(createQuoteRevision.lineItems).toHaveLength(1);
+    const lineItem = createQuoteRevision.lineItems[0];
+    expect(lineItem.__typename).toBe('QuoteRevisionRentalLineItem');
+
+    if (lineItem.__typename === 'QuoteRevisionRentalLineItem') {
+      expect(lineItem.sellersPriceId).toBe(rentalPriceId);
+      expect(lineItem.pimCategoryId).toBeNull();
+      expect(lineItem.subtotalInCents).toBeGreaterThan(0);
+    }
+  });
+
+  it('calculates service subtotals for UNIT and TIME pricing specs with unitCode matching', async () => {
+    const { sdk, utils } = await createClient();
+
+    const { quoteId, priceBookId, workspaceId } = await setupQuotingTestData(
+      sdk,
+      utils,
+    );
+
+    const serviceUnitProductId = `service-unit-${Date.now()}`;
+    const serviceTimeProductId = `service-time-${Date.now()}`;
+
+    const { createServicePrice: unitPrice } =
+      await sdk.CreateServicePriceForTests({
+        input: {
+          workspaceId,
+          priceBookId,
+          catalogRef: {
+            kind: 'SERVICE_PRODUCT' as any,
+            id: serviceUnitProductId,
+          },
+          pricingSpec: {
+            kind: 'UNIT' as any,
+            unitCode: 'unit:MI',
+            rateInCents: 400,
+          },
+        },
+      });
+    if (!unitPrice) {
+      throw new Error('failed to create UNIT service price');
+    }
+
+    const { createServicePrice: timePrice } =
+      await sdk.CreateServicePriceForTests({
+        input: {
+          workspaceId,
+          priceBookId,
+          catalogRef: {
+            kind: 'SERVICE_PRODUCT' as any,
+            id: serviceTimeProductId,
+          },
+          pricingSpec: {
+            kind: 'TIME' as any,
+            unitCode: 'unit:H',
+            rateInCents: 12500,
+          },
+        },
+      });
+    if (!timePrice) {
+      throw new Error('failed to create TIME service price');
+    }
+
+    const { createQuoteRevision } = await sdk.CreateQuoteRevision({
+      input: {
+        quoteId,
+        revisionNumber: 1,
+        lineItems: [
+          {
+            type: QuoteLineItemType.Service,
+            description: 'Delivery service',
+            quantity: 10,
+            unitCode: 'unit:MI',
+            productRef: {
+              kind: 'SERVICE_PRODUCT' as any,
+              productId: serviceUnitProductId,
+            },
+            sellersPriceId: unitPrice.id,
+          },
+          {
+            type: QuoteLineItemType.Service,
+            description: 'Labor service',
+            quantity: 3,
+            unitCode: 'unit:H',
+            productRef: {
+              kind: 'SERVICE_PRODUCT' as any,
+              productId: serviceTimeProductId,
+            },
+            sellersPriceId: timePrice.id,
+          },
+        ],
+      },
+    });
+
+    expect(createQuoteRevision).toBeDefined();
+    expect(createQuoteRevision.lineItems).toHaveLength(2);
+
+    const deliveryItem = createQuoteRevision.lineItems.find(
+      (item) => item.description === 'Delivery service',
+    );
+    const laborItem = createQuoteRevision.lineItems.find(
+      (item) => item.description === 'Labor service',
+    );
+
+    expect(deliveryItem?.__typename).toBe('QuoteRevisionServiceLineItem');
+    expect(laborItem?.__typename).toBe('QuoteRevisionServiceLineItem');
+
+    if (deliveryItem?.__typename === 'QuoteRevisionServiceLineItem') {
+      expect(deliveryItem.sellersPriceId).toBe(unitPrice.id);
+      expect(deliveryItem.subtotalInCents).toBe(400 * 10);
+    }
+
+    if (laborItem?.__typename === 'QuoteRevisionServiceLineItem') {
+      expect(laborItem.sellersPriceId).toBe(timePrice.id);
+      expect(laborItem.subtotalInCents).toBe(12500 * 3);
+    }
+  });
+
+  it('acceptQuote projects SERVICE line items into the sales order and materializes a service fulfilment', async () => {
+    const { sdk, client, utils } = await createClient();
+
+    const {
+      quoteId,
+      priceBookId,
+      workspaceId,
+      rentalPriceId,
+      pimCategoryId,
+    } = await setupQuotingTestData(sdk, utils);
+
+    const serviceProductId = `service-${Date.now()}`;
+    const serviceStartAt = new Date('2025-06-01T10:00:00Z').toISOString();
+    const rentalStartAt = new Date('2025-06-01T00:00:00Z').toISOString();
+    const rentalEndAt = new Date('2025-06-05T00:00:00Z').toISOString();
+    const rentalQuoteLineItemId = `rental-line-${Date.now()}`;
+    const deliveryQuoteLineItemId = `delivery-line-${Date.now()}`;
+
+    const { createServicePrice } = await sdk.CreateServicePriceForTests({
+      input: {
+        workspaceId,
+        priceBookId,
+        catalogRef: {
+          kind: 'SERVICE_PRODUCT' as any,
+          id: serviceProductId,
+        },
+        pricingSpec: {
+          kind: 'TIME' as any,
+          unitCode: 'unit:H',
+          rateInCents: 12500,
+        },
+      },
+    });
+    if (!createServicePrice) {
+      throw new Error('failed to create service price');
+    }
+
+    const { createQuoteRevision } = await sdk.CreateQuoteRevision({
+      input: {
+        quoteId,
+        revisionNumber: 1,
+        lineItems: [
+          {
+            id: rentalQuoteLineItemId,
+            type: QuoteLineItemType.Rental,
+            description: 'Excavator rental',
+            quantity: 1,
+            sellersPriceId: rentalPriceId,
+            pimCategoryId,
+            rentalStartDate: rentalStartAt,
+            rentalEndDate: rentalEndAt,
+          },
+          {
+            id: deliveryQuoteLineItemId,
+            type: QuoteLineItemType.Service,
+            description: 'Delivery service',
+            quantity: 2,
+            unitCode: 'unit:H',
+            productRef: {
+              kind: 'SERVICE_PRODUCT' as any,
+              productId: serviceProductId,
+            },
+            sellersPriceId: createServicePrice.id,
+            timeWindow: { startAt: serviceStartAt },
+            targetSelectors: [
+              {
+                kind: ServiceTargetSelectorKind.LineItem,
+                targetLineItemIds: [rentalQuoteLineItemId],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const listQuoteRevisionLineItemsQuery = /* GraphQL */ `
+      query ListServiceLineItemsForQuoteRevision(
+        $workspaceId: String!
+        $quoteId: String!
+        $revisionId: String!
+      ) {
+        listLineItems(
+          filter: {
+            workspaceId: $workspaceId
+            documentType: QUOTE_REVISION
+            documentId: $quoteId
+            revisionId: $revisionId
+            type: SERVICE
+          }
+          page: { number: 1, size: 50 }
+        ) {
+          items {
+            id
+          }
+        }
+      }
+    `;
+
+    const { listLineItems: quoteRevisionCanonical } = await client.request<{
+      listLineItems: { items: Array<{ id: string }> };
+    }>(listQuoteRevisionLineItemsQuery, {
+      workspaceId,
+      quoteId,
+      revisionId: createQuoteRevision.id,
+    });
+
+    const canonicalQuoteRevisionLineItemId =
+      quoteRevisionCanonical.items[0]?.id ?? null;
+    if (!canonicalQuoteRevisionLineItemId) {
+      throw new Error('Expected canonical quote revision line item mirror');
+    }
+
+    await sdk.SendQuoteForTests({
+      input: { quoteId, revisionId: createQuoteRevision.id },
+    });
+
+    const { acceptQuote } = await sdk.AcceptQuoteForRFQTest({
+      input: {
+        quoteId,
+        approvalConfirmation: 'Accepted on behalf of buyer',
+      },
+    });
+
+    expect(acceptQuote.quote.status).toBe(QuoteStatus.Accepted);
+
+    const listLineItemsQuery = /* GraphQL */ `
+      query ListServiceLineItemsForSalesOrder(
+        $workspaceId: String!
+        $salesOrderId: String!
+      ) {
+        listLineItems(
+          filter: {
+            workspaceId: $workspaceId
+            documentType: SALES_ORDER
+            documentId: $salesOrderId
+          }
+          page: { number: 1, size: 50 }
+        ) {
+          items {
+            id
+            type
+            documentRef {
+              type
+              id
+            }
+            sourceLineItemId
+            rateInCentsSnapshot
+            timeWindow {
+              startAt
+            }
+            targetSelectors {
+              kind
+              targetLineItemIds
+            }
+          }
+        }
+      }
+    `;
+
+    const salesOrderId = acceptQuote.salesOrder.id;
+
+    const { listLineItems } = await client.request<{
+      listLineItems: {
+        items: Array<{
+          id: string;
+          type: string;
+          documentRef: { type: string; id: string };
+          sourceLineItemId?: string | null;
+          rateInCentsSnapshot?: number | null;
+          timeWindow?: { startAt?: string | null } | null;
+          targetSelectors?: Array<{
+            kind: string;
+            targetLineItemIds?: string[] | null;
+          }> | null;
+        }>;
+      };
+    }>(listLineItemsQuery, { workspaceId, salesOrderId });
+
+    expect(listLineItems.items).toHaveLength(2);
+
+    const serviceSalesOrderLineItem = listLineItems.items.find(
+      (item) => item.type === 'SERVICE',
+    );
+    const rentalSalesOrderLineItem = listLineItems.items.find(
+      (item) => item.type === 'RENTAL',
+    );
+
+    expect(serviceSalesOrderLineItem).toBeDefined();
+    expect(rentalSalesOrderLineItem).toBeDefined();
+    expect(serviceSalesOrderLineItem?.documentRef.id).toBe(salesOrderId);
+    expect(serviceSalesOrderLineItem?.sourceLineItemId).toBe(
+      canonicalQuoteRevisionLineItemId,
+    );
+    expect(serviceSalesOrderLineItem?.rateInCentsSnapshot).toBe(12500);
+    expect(serviceSalesOrderLineItem?.timeWindow?.startAt).toBe(serviceStartAt);
+
+    const remappedSelector = serviceSalesOrderLineItem?.targetSelectors?.find(
+      (selector) => selector.kind === 'line_item',
+    );
+    expect(remappedSelector?.targetLineItemIds).toContain(rentalSalesOrderLineItem!.id);
+    expect(remappedSelector?.targetLineItemIds).not.toContain(rentalQuoteLineItemId);
+
+    const serviceSalesOrderLineItemId = serviceSalesOrderLineItem?.id;
+    if (!serviceSalesOrderLineItemId) {
+      throw new Error('Expected service sales order line item id');
+    }
+
+    const listFulfilmentsQuery = /* GraphQL */ `
+      query ListServiceFulfilmentsForLineItem(
+        $workspaceId: ID!
+        $salesOrderLineItemId: ID!
+      ) {
+        listFulfilments(
+          filter: {
+            workspaceId: $workspaceId
+            salesOrderType: SERVICE
+            salesOrderLineItemId: $salesOrderLineItemId
+          }
+          page: { number: 1, size: 10 }
+        ) {
+          items {
+            __typename
+            ... on ServiceFulfilment {
+              id
+              salesOrderType
+              salesOrderLineItemId
+              serviceDate
+              unitCostInCents
+            }
+          }
+        }
+      }
+    `;
+
+    const { listFulfilments } = await client.request<{
+      listFulfilments: {
+        items: Array<{ __typename: 'ServiceFulfilment'; serviceDate?: string | null }>;
+      };
+    }>(listFulfilmentsQuery, {
+      workspaceId,
+      salesOrderLineItemId: serviceSalesOrderLineItemId,
+    });
+
+    expect(listFulfilments.items).toHaveLength(1);
+    expect(listFulfilments.items[0]?.__typename).toBe('ServiceFulfilment');
+    expect(listFulfilments.items[0]?.serviceDate).toBe(serviceStartAt);
+  });
+
+  it('acceptQuote allows seller to convert quote to order without sending to buyer (offline approval)', async () => {
+    const { sdk, utils } = await createClient();
+
+    const { quoteId, priceBookId, workspaceId, rentalPriceId, pimCategoryId } =
+      await setupQuotingTestData(sdk, utils);
+
+    const serviceProductId = `service-${Date.now()}`;
+    const serviceStartAt = new Date('2025-06-01T10:00:00Z').toISOString();
+    const rentalStartAt = new Date('2025-06-01T00:00:00Z').toISOString();
+    const rentalEndAt = new Date('2025-06-05T00:00:00Z').toISOString();
+    const rentalQuoteLineItemId = `rental-line-${Date.now()}`;
+    const deliveryQuoteLineItemId = `delivery-line-${Date.now()}`;
+
+    const { createServicePrice } = await sdk.CreateServicePriceForTests({
+      input: {
+        workspaceId,
+        priceBookId,
+        catalogRef: {
+          kind: 'SERVICE_PRODUCT' as any,
+          id: serviceProductId,
+        },
+        pricingSpec: {
+          kind: 'TIME' as any,
+          unitCode: 'unit:H',
+          rateInCents: 12500,
+        },
+      },
+    });
+    if (!createServicePrice) {
+      throw new Error('failed to create service price');
+    }
+
+    const { createQuoteRevision } = await sdk.CreateQuoteRevision({
+      input: {
+        quoteId,
+        revisionNumber: 1,
+        lineItems: [
+          {
+            id: rentalQuoteLineItemId,
+            type: QuoteLineItemType.Rental,
+            description: 'Excavator rental',
+            quantity: 1,
+            sellersPriceId: rentalPriceId,
+            pimCategoryId,
+            rentalStartDate: rentalStartAt,
+            rentalEndDate: rentalEndAt,
+          },
+          {
+            id: deliveryQuoteLineItemId,
+            type: QuoteLineItemType.Service,
+            description: 'Delivery service',
+            quantity: 2,
+            unitCode: 'unit:H',
+            productRef: {
+              kind: 'SERVICE_PRODUCT' as any,
+              productId: serviceProductId,
+            },
+            sellersPriceId: createServicePrice.id,
+            timeWindow: { startAt: serviceStartAt },
+            targetSelectors: [
+              {
+                kind: ServiceTargetSelectorKind.LineItem,
+                targetLineItemIds: [rentalQuoteLineItemId],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    // Offline conversion path relies on quote.currentRevisionId being set, but does not require sendQuote.
+    await sdk.UpdateQuoteForTests({
+      input: { id: quoteId, currentRevisionId: createQuoteRevision.id },
+    });
+
+    const approvalConfirmation = 'Buyer verbally approved';
+
+    const { acceptQuote } = await sdk.AcceptQuoteOfflineForTests({
+      input: { quoteId, approvalConfirmation },
+    });
+
+    expect(acceptQuote.quote.status).toBe(QuoteStatus.Accepted);
+    expect(acceptQuote.quote.approvalConfirmation).toBe(approvalConfirmation);
+    expect(acceptQuote.salesOrder.id).toBeTruthy();
+
+    const { quoteRevisionById } = await sdk.QuoteRevisionStatusForTests({
+      id: createQuoteRevision.id,
+    });
+    if (!quoteRevisionById) {
+      throw new Error('Expected quote revision to exist');
+    }
+    expect(quoteRevisionById.status).toBe(RevisionStatus.Sent);
   });
 
   it('creates a quote revision with sale line items and calculates subtotals', async () => {

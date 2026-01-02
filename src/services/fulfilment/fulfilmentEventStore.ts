@@ -3,6 +3,19 @@ import { EventReducer, EventStore } from '../../lib/eventStore';
 import { z } from 'zod';
 import { FulfilmentDoc } from './model';
 
+const serviceTaskSchema = z
+  .object({
+    id: z.string(),
+    title: z.string(),
+    activityTagIds: z.array(z.string()).min(1),
+    contextTagIds: z.array(z.string()).optional(),
+    notes: z.string().optional(),
+    status: z.enum(['OPEN', 'DONE', 'SKIPPED']),
+    completedAt: z.date().optional(),
+    completedBy: z.string().optional(),
+  })
+  .strict();
+
 const sharedCreateFields = {
   workspace_id: z.string(),
   projectId: z.string().optional(),
@@ -11,12 +24,23 @@ const sharedCreateFields = {
   purchaseOrderNumber: z.string().optional(),
   priceId: z.string().optional(),
   priceName: z.string().optional(),
-  pimCategoryId: z.string(),
-  pimCategoryPath: z.string(),
-  pimCategoryName: z.string(),
   salesOrderLineItemId: z.string().optional(),
   workflowId: z.string().nullable().optional(),
   workflowColumnId: z.string().nullable().optional(),
+};
+
+const pimFields = {
+  pimCategoryId: z.string(),
+  pimCategoryPath: z.string(),
+  pimCategoryName: z.string(),
+  pimProductId: z.string().optional(),
+};
+
+const optionalPimFields = {
+  pimCategoryId: z.string().optional(),
+  pimCategoryPath: z.string().optional(),
+  pimCategoryName: z.string().optional(),
+  pimProductId: z.string().optional(),
 };
 
 const createSalesFulfilmentEventSchema = z.object({
@@ -24,6 +48,7 @@ const createSalesFulfilmentEventSchema = z.object({
   salesOrderType: z.literal('SALE'),
   unitCostInCents: z.number(),
   quantity: z.number(),
+  ...pimFields,
   ...sharedCreateFields,
 });
 
@@ -37,6 +62,7 @@ const createRentalFulfilmentEventSchema = z.object({
   pricePerDayInCents: z.number(),
   pricePerWeekInCents: z.number(),
   pricePerMonthInCents: z.number(),
+  ...pimFields,
   ...sharedCreateFields,
 });
 
@@ -45,7 +71,15 @@ const createServiceFulfilmentEventSchema = z.object({
   salesOrderType: z.literal('SERVICE'),
   serviceDate: z.date().optional(),
   unitCostInCents: z.number(),
+  tasks: z.array(serviceTaskSchema).optional(),
+  ...optionalPimFields,
   ...sharedCreateFields,
+});
+
+const updateServiceTaskStatusEventSchema = z.object({
+  type: z.literal('UPDATE_SERVICE_TASK_STATUS'),
+  taskId: z.string(),
+  status: z.enum(['OPEN', 'DONE', 'SKIPPED']),
 });
 
 const updateFulfilmentColumnEventSchema = z.object({
@@ -105,6 +139,7 @@ const fulfilmentEventSchema = z.discriminatedUnion('type', [
   createSalesFulfilmentEventSchema,
   createRentalFulfilmentEventSchema,
   createServiceFulfilmentEventSchema,
+  updateServiceTaskStatusEventSchema,
   updateFulfilmentColumnEventSchema,
   updateFulfilmentAssigneeEventSchema,
   deleteFulfilmentEventSchema,
@@ -149,6 +184,44 @@ const reducer: EventReducer<FulfilmentDoc, typeof fulfilmentEventSchema> = (
       updatedBy: event.principalId,
     };
   }
+
+  if (event.payload.type === 'UPDATE_SERVICE_TASK_STATUS') {
+    const payload = event.payload as z.infer<typeof updateServiceTaskStatusEventSchema>;
+    if (state.salesOrderType !== 'SERVICE') {
+      throw new Error('Cannot update tasks for non-service fulfilment');
+    }
+
+    const tasks = Array.isArray(state.tasks) ? state.tasks : [];
+    const taskIndex = tasks.findIndex((task) => task.id === payload.taskId);
+    if (taskIndex === -1) {
+      throw new Error(
+        `Task "${payload.taskId}" not found on fulfilment ${state._id}`,
+      );
+    }
+
+    const status = payload.status;
+    const completedAt = status === 'OPEN' ? undefined : new Date(event.ts);
+    const completedBy = status === 'OPEN' ? undefined : event.principalId;
+
+    const nextTasks = tasks.map((task, index) =>
+      index === taskIndex
+        ? {
+            ...task,
+            status,
+            completedAt,
+            completedBy,
+          }
+        : task,
+    );
+
+    return {
+      ...state,
+      tasks: nextTasks,
+      updatedAt: new Date(event.ts),
+      updatedBy: event.principalId,
+    };
+  }
+
   if (event.payload.type === 'UPDATE_COLUMN') {
     return {
       ...state,

@@ -108,8 +108,8 @@ export class InventoryService {
       };
     }
 
-    const { entries } = await this.resourceMapResourcesService.validateResourceMapIds(
-      {
+    const { entries } =
+      await this.resourceMapResourcesService.validateResourceMapIds({
         ids: resourceMapIds,
         allowedTypes: [
           RESOURCE_MAP_TAG_TYPE.LOCATION,
@@ -119,8 +119,7 @@ export class InventoryService {
           ? [RESOURCE_MAP_TAG_TYPE.LOCATION]
           : undefined,
         user,
-      },
-    );
+      });
 
     const locationEntry = entries.find(
       (entry) =>

@@ -2,7 +2,7 @@ FROM node:20-bullseye-slim AS base
 
 # Declaring envs
 ENV LEVEL=${LEVEL}
-ENV PORT=5000
+ENV PORT=5001
 
 # Configure Puppeteer to use system Chromium
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
@@ -43,7 +43,7 @@ RUN npm run build
 ENV NODE_ENV=production
 
 # Starting our application
-CMD ["npm", "run", "start", "--", "-p", "5000"]
+CMD ["npm", "run", "start", "--", "-p", "5001"]
 
 # Exposing server port
-EXPOSE 5000
+EXPOSE 5001

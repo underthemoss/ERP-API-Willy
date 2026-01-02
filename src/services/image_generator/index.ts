@@ -6,6 +6,9 @@ import {
 } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
 import sharp from 'sharp';
+import fs from 'fs/promises';
+import os from 'os';
+import path from 'path';
 import { logger } from '../../lib/logger';
 import { EnvConfig } from '../../config';
 
@@ -35,9 +38,19 @@ export class ImageGeneratorService {
   private openaiClient: OpenAI;
   public readonly s3Client: S3Client;
   public readonly bucket: string;
+  private readonly storageMode: 's3' | 'fs';
+  private readonly localCacheRoot: string;
 
   constructor(config: EnvConfig) {
     this.openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    const hasRealS3Config =
+      config.FILE_SERVICE_BUCKET !== 'dummy' &&
+      config.FILE_SERVICE_KEY !== 'dummy' &&
+      config.FILE_SERVICE_SECRET !== 'dummy';
+
+    this.storageMode = hasRealS3Config ? 's3' : 'fs';
+    this.localCacheRoot = path.join(os.tmpdir(), 'es-erp-api', 'image-cache');
 
     // Initialize S3 client
     const s3Config: any = {
@@ -55,6 +68,54 @@ export class ImageGeneratorService {
 
     this.s3Client = new S3Client(s3Config);
     this.bucket = config.FILE_SERVICE_BUCKET;
+  }
+
+  private async getObject(key: string): Promise<{
+    body: Buffer;
+    contentLength: number;
+  }> {
+    if (this.storageMode === 'fs') {
+      const filePath = path.join(this.localCacheRoot, key);
+      try {
+        const body = await fs.readFile(filePath);
+        return { body, contentLength: body.length };
+      } catch (error: any) {
+        if (error?.code === 'ENOENT') {
+          const noSuchKeyError: any = new Error('NoSuchKey');
+          noSuchKeyError.name = 'NoSuchKey';
+          throw noSuchKeyError;
+        }
+        throw error;
+      }
+    }
+
+    const response = await this.s3Client.send(
+      new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      }),
+    );
+
+    const body = await streamToBuffer(response.Body as Readable);
+    return { body, contentLength: response.ContentLength || 0 };
+  }
+
+  private async putObject(key: string, body: Buffer): Promise<void> {
+    if (this.storageMode === 'fs') {
+      const filePath = path.join(this.localCacheRoot, key);
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
+      await fs.writeFile(filePath, body);
+      return;
+    }
+
+    await this.s3Client.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: body,
+        ContentType: 'image/png',
+      }),
+    );
   }
 
   /**
@@ -113,21 +174,18 @@ export class ImageGeneratorService {
 
           logger.info(
             { entityType, entityId, promptHash, size, key },
-            'Uploading image size to S3',
+            this.storageMode === 's3'
+              ? 'Uploading image size to S3'
+              : 'Writing image size to local cache',
           );
 
-          await this.s3Client.send(
-            new PutObjectCommand({
-              Bucket: this.bucket,
-              Key: key,
-              Body: imageBuffer,
-              ContentType: 'image/png',
-            }),
-          );
+          await this.putObject(key, imageBuffer);
 
           logger.info(
             { entityType, entityId, promptHash, size },
-            'Uploaded image size to S3',
+            this.storageMode === 's3'
+              ? 'Uploaded image size to S3'
+              : 'Wrote image size to local cache',
           );
         },
       );
@@ -172,20 +230,13 @@ export class ImageGeneratorService {
 
     // Try to get from S3 first
     try {
-      const command = new GetObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-      });
-      const response = await this.s3Client.send(command);
-
-      // Convert S3 stream to Buffer for proper HTTP response
-      const imageBuffer = await streamToBuffer(response.Body as Readable);
+      const { body: imageBuffer, contentLength } = await this.getObject(key);
 
       return {
         imageBody: imageBuffer,
         hash: promptHash,
         contentType: 'image/png',
-        contentLength: response.ContentLength || 0,
+        contentLength,
       };
     } catch (err: any) {
       // Not found, generate all sizes
@@ -204,20 +255,13 @@ export class ImageGeneratorService {
         );
 
         // Fetch and return the requested size
-        const command = new GetObjectCommand({
-          Bucket: this.bucket,
-          Key: key,
-        });
-        const response = await this.s3Client.send(command);
-
-        // Convert S3 stream to Buffer for proper HTTP response
-        const imageBuffer = await streamToBuffer(response.Body as Readable);
+        const { body: imageBuffer, contentLength } = await this.getObject(key);
 
         return {
           imageBody: imageBuffer,
           hash: promptHash,
           contentType: 'image/png',
-          contentLength: response.ContentLength || 0,
+          contentLength,
         };
       }
       throw err;

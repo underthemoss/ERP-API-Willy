@@ -72,10 +72,7 @@ export const deleteResourceMapTagTool = createMcpTool({
     'Deletes a resource map tag. Set cascade=true to delete all child tags.',
   inputSchema: {
     id: z.string().describe('The resource map tag ID to delete'),
-    cascade: z
-      .boolean()
-      .optional()
-      .describe('Delete child tags as well'),
+    cascade: z.boolean().optional().describe('Delete child tags as well'),
   },
   handler: async (sdk, args) => {
     try {

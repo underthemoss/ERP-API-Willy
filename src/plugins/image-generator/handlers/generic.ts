@@ -110,7 +110,10 @@ export function createEntityImageHandler<TEntity>(
       return reply.send(imageBody);
     } catch (err) {
       // Check if it's an authorization error
-      if (err instanceof Error && err.message.includes('Unauthorized')) {
+      if (
+        err instanceof Error &&
+        /unauthorized|not authorized/i.test(err.message)
+      ) {
         return reply.code(403).send({ error: 'Forbidden' });
       }
 
